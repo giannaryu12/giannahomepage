@@ -24,7 +24,7 @@
   function cardHtml(label, value, unit) {
     const inner = value === null
       ? '<span class="gi-card-value is-empty">기록 없음</span>'
-      : '<span class="gi-card-value">' + value + '<span class="gi-unit">' + unit + '</span></span>';
+      : '<span class="gi-card-value">' + esc(value) + '<span class="gi-unit">' + unit + '</span></span>';
     return '<div class="gi-card"><div class="gi-card-label">' + label + '</div>' + inner + '</div>';
   }
 
