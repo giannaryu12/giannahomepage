@@ -2,8 +2,9 @@
  * 학생·반 조회와 학생 등록/수정/토큰 재발급.
  */
 
-function listClasses_() {
-  return readTable(SHEETS.CLASSES)
+/** rows를 넘기면 시트를 다시 읽지 않는다. */
+function listClasses_(rows) {
+  return (rows || readTable(SHEETS.CLASSES))
     .filter(function (c) { return String(c.active).toUpperCase() !== 'FALSE'; })
     .map(function (c) {
       return { classId: c.classId, className: c.className, schedule: c.schedule };
@@ -15,6 +16,7 @@ function classNameOf_(classId) {
   return row ? row.className : '';
 }
 
+
 function handleAdminClasses(body) {
   requireSession_(body.sessionKey);
   return ok({ classes: listClasses_() });
@@ -24,19 +26,23 @@ function handleAdminClasses(body) {
 function handleAdminStudents(body) {
   requireSession_(body.sessionKey);
 
+  // Classes는 학생 수와 무관하게 딱 한 번만 읽는다.
+  const classRows = readTable(SHEETS.CLASSES);
+  const names = classNameMap(classRows);
+
   const students = readTable(SHEETS.STUDENTS).map(function (s) {
     return {
       studentId: s.studentId,
       name: s.name,
       grade: s.grade,
       classId: s.classId,
-      className: classNameOf_(s.classId),
+      className: names[String(s.classId)] || '',
       parentToken: s.parentToken,
       active: String(s.active).toUpperCase() === 'TRUE',
       note: s.note,
     };
   });
-  return ok({ students: students, classes: listClasses_() });
+  return ok({ students: students, classes: listClasses_(classRows) });
 }
 
 function handleAdminUpsertStudent(body) {
@@ -49,13 +55,10 @@ function handleAdminUpsertStudent(body) {
   lock.waitLock(10000);
   try {
     if (input.studentId) {
-      const patch = {
-        name: input.name,
-        grade: input.grade || '',
-        classId: input.classId || '',
-        note: input.note || '',
-      };
-      if (typeof input.active === 'boolean') patch.active = input.active ? 'TRUE' : 'FALSE';
+      // 요청에 없는 필드는 건드리지 않는다 (gas/lib/students.js 참고).
+      // 특히 note: 프런트는 note를 보내지 않으므로, 예전처럼 ''로 덮어쓰면
+      // 선생님이 시트에 직접 적은 메모가 저장할 때마다 지워졌다.
+      const patch = buildStudentPatch(input);
 
       const updated = updateRowById(SHEETS.STUDENTS, 'studentId', input.studentId, patch);
       if (!updated) return fail('NOT_FOUND', '학생을 찾을 수 없습니다.');
