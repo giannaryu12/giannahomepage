@@ -22,6 +22,18 @@ function getSheet_(name) {
   return sheet;
 }
 
+/** Sheets가 날짜로 파싱한 셀을 문자열로 되돌린다. 시각 성분이 있으면 보존한다. */
+function normalizeCell_(v) {
+  if (v === null || v === undefined) return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    const hasTime = v.getHours() || v.getMinutes() || v.getSeconds();
+    return hasTime
+      ? Utilities.formatDate(v, 'Asia/Seoul', "yyyy-MM-dd'T'HH:mm:ss")
+      : Utilities.formatDate(v, 'Asia/Seoul', 'yyyy-MM-dd');
+  }
+  return v;
+}
+
 /** 1행을 헤더로 삼아 객체 배열로 읽는다. */
 function readTable(sheetName) {
   const values = getSheet_(sheetName).getDataRange().getValues();
@@ -36,7 +48,7 @@ function readTable(sheetName) {
 
     const obj = { _rowIndex: i + 1 };
     header.forEach(function (key, j) {
-      if (key) obj[key] = row[j] === null || row[j] === undefined ? '' : row[j];
+      if (key) obj[key] = normalizeCell_(row[j]);
     });
     rows.push(obj);
   }
@@ -68,6 +80,8 @@ function findRow(sheetName, column, value) {
 
 /** 지정 컬럼의 값이 일치하는 첫 행을 부분 갱신한다. 갱신했으면 true. */
 function updateRowById(sheetName, idColumn, idValue, patch) {
+  if (idValue === '' || idValue === null || idValue === undefined) return false;
+
   const sheet = getSheet_(sheetName);
   const header = getHeader_(sheetName);
   const target = findRow(sheetName, idColumn, idValue);
