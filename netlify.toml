@@ -1,0 +1,15 @@
+[build]
+  publish = "public"
+
+# 학부모 링크를 짧게: /p/<토큰> → /parent/?t=<토큰>
+[[redirects]]
+  from = "/p/:token"
+  to = "/parent/index.html?t=:token"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
