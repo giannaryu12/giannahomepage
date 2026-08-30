@@ -48,10 +48,15 @@ function dispatch_(parsed) {
   }
 }
 
+/**
+ * 라이브 스모크 테스트. 스프레드시트에 실제로 붙는지까지 확인한다.
+ * 예전에는 Config 시트의 행 수를 셌지만 Config는 어디서도 쓰지 않으므로
+ * 시트 개수로 바꿨다. 응답 필드 이름은 그대로 둔다.
+ */
 function handlePing(body) {
   return ok({
     pong: true,
     echo: body.echo || '',
-    sheets: readTable(SHEETS.CONFIG).length,
+    sheets: getSpreadsheet_().getSheets().length,
   });
 }

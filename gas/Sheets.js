@@ -7,7 +7,6 @@ const SHEETS = {
   STUDENTS: 'Students',
   CLASSES: 'Classes',
   RECORDS: 'Records',
-  CONFIG: 'Config',
 };
 
 function getSpreadsheet_() {
@@ -122,9 +121,4 @@ function updateRowById(sheetName, idColumn, idValue, patch) {
     }
   });
   return true;
-}
-
-function getConfig(key, fallback) {
-  const row = findRow(SHEETS.CONFIG, 'key', key);
-  return row && row.value !== '' ? row.value : fallback;
 }

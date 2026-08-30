@@ -31,7 +31,7 @@ npx clasp push
 
 ## 최초 설정
 
-1. 구글시트 생성 — 시트 4장(`Students` `Classes` `Records` `Config`), 헤더는 설계 문서 §6 참조
+1. 구글시트 생성 — 시트 3장(`Students` `Classes` `Records`), 헤더는 설계 문서 §6 참조
 2. 시트 공유를 선생님 계정 단독으로 제한
 3. Apps Script API 활성화 (https://script.google.com/home/usersettings) → `npx clasp login` →
    `npx clasp create-script --parentId <시트ID>` (`--type`는 쓰지 않는다 — 붙이면 새 시트가
