@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "vitest": "^2.1.8",
-    "@google/clasp": "^2.4.2"
+    "@google/clasp": "^3.4.1"
   }
 }
