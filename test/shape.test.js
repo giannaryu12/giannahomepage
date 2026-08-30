@@ -20,6 +20,16 @@ describe('toParentRecord', () => {
   it('없는 값은 빈 문자열로 채운다', () => {
     expect(toParentRecord({ date: '2026-08-30' }).comment).toBe('');
   });
+
+  it('영역별 교재·진도를 학부모에게 전달한다', () => {
+    const out = toParentRecord({
+      date: '2026-08-30', vocabBook: '능률보카', vocabProgress: 'Day 12',
+      listeningBook: '', listeningProgress: '',
+    });
+    expect(out.vocabBook).toBe('능률보카');
+    expect(out.vocabProgress).toBe('Day 12');
+    expect(out.listeningProgress).toBe('');
+  });
 });
 
 describe('toParentStudent', () => {

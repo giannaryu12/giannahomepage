@@ -4,6 +4,7 @@
  */
 (function () {
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
+  const PA = window.GI_PROGRESS_AREAS;
   const $state = document.getElementById('state');
   const $content = document.getElementById('content');
 
@@ -103,6 +104,21 @@
     return '<div class="gi-rec-row"><dt>' + label + '</dt><dd>' + esc(value) + '</dd></div>';
   }
 
+  /**
+   * 영역별 진도 줄. 진도가 적힌 영역만 나온다.
+   * 영역이 하나도 없는 옛 기록은 예전처럼 progress 한 줄로 보여준다.
+   */
+  function progressRows(r) {
+    const lines = PA.areaLines(r);
+    if (!lines.length) return row('진도', r.progress);
+
+    return lines.map(function (l) {
+      const book = l.book ? '<span class="gi-area-book">' + esc(l.book) + '</span> · ' : '';
+      return '<div class="gi-rec-row"><dt>' + esc(l.label) + '</dt><dd>' +
+        book + esc(l.progress) + '</dd></div>';
+    }).join('');
+  }
+
   function recordHtml(r, index) {
     const scoreText = (r.testScore !== '' && r.testMax !== '')
       ? (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax
@@ -120,12 +136,12 @@
       '<article class="gi-rec">' +
         '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
           '<span class="gi-rec-date">' + esc(r.date.slice(5).replace('-', '/')) + '</span>' +
-          '<span class="gi-rec-progress">' + esc(r.progress || '진도 미기록') + '</span>' +
+          '<span class="gi-rec-progress">' + esc(PA.areaSummary(r) || '진도 미기록') + '</span>' +
         '</button>' +
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
           '<dl style="margin:0">' +
             '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
-            row('진도', r.progress) +
+            progressRows(r) +
             row('시험', scoreText) +
             row('다음 과제', r.nextHomework) +
           '</dl>' + comment +

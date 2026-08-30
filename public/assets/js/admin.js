@@ -10,6 +10,7 @@
 (function () {
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
   const RF = window.GI_RECORD_FORM;
+  const AREAS = window.GI_PROGRESS_AREAS.PROGRESS_AREAS;
   const SESSION_STORE = 'gi.session';
   const DRAFT_PREFIX = 'gi.draft.';
 
@@ -198,10 +199,40 @@
     }).join('');
   }
 
+  /** 영역별 교재·진도 칸을 그린다. 값은 fillAreaValues가 채운다. */
+  function renderAreas() {
+    $('recAreas').innerHTML = AREAS.map(function (a) {
+      return '' +
+        '<div class="gi-area">' +
+          '<span class="gi-area-label">' + esc(a.label) + '</span>' +
+          '<input class="gi-input" type="text" data-field="' + a.key + 'Book"' +
+            ' placeholder="교재" aria-label="' + esc(a.label) + ' 교재">' +
+          '<input class="gi-input" type="text" data-field="' + a.key + 'Progress"' +
+            ' placeholder="진도" aria-label="' + esc(a.label) + ' 진도">' +
+        '</div>';
+    }).join('');
+  }
+
+  function fillAreaValues() {
+    // value는 속성 문자열이 아니라 프로퍼티로 넣는다. 따옴표가 든 교재명이
+    // 마크업을 깨뜨리지 않는다.
+    $('recAreas').querySelectorAll('[data-field]').forEach(function (el) {
+      el.value = recordForm[el.dataset.field] || '';
+    });
+  }
+
   function fillRecordView() {
     $('recordWho').textContent = currentStudent.name + (currentStudent.grade ? ' · ' + currentStudent.grade : '');
     $('recordDateInput').value = currentDate;
-    $('recProgress').value = recordForm.progress;
+    renderAreas();
+    fillAreaValues();
+
+    // 영역 구분이 생기기 전에 쌓인 진도. 입력칸은 없지만 저장할 때 그대로
+    // 다시 실려 나가므로, 무엇이 남아 있는지 보여만 준다.
+    const legacy = recordForm.progress;
+    $('recLegacyProgress').hidden = !legacy;
+    $('recLegacyProgress').textContent = legacy ? '이전 진도 기록: ' + legacy : '';
+
     $('recTestName').value = recordForm.testName;
     $('recTestScore').value = recordForm.testScore;
     $('recTestMax').value = recordForm.testMax;
@@ -248,6 +279,10 @@
     const rec = RF.findRecordFor(lookupRecords, student.studentId);
     let values = RF.toFormValues(rec);
 
+    // 교재 자동 채움은 그날 기록이 아직 없을 때만. 이미 저장된 기록에
+    // 채워 넣으면 그날 하지 않은 영역에 교재가 슬쩍 붙는다.
+    if (!rec) values = RF.withBookDefaults(values, student.lastBooks);
+
     const saved = loadRecordDraft(classId, date, student.studentId);
     if (saved) values = Object.assign({}, values, saved);
 
@@ -261,7 +296,13 @@
     const date = todayIso();
     return api.call('admin.roster', { sessionKey: sessionKey, classId: student.classId, date: date })
       .then(function (data) {
-        openRecord(student, student.classId, date, 'students', data.existingRecords);
+        // 학생 관리 탭의 학생 객체에는 직전 교재가 없다. 명단 응답에서 가져온다.
+        const inRoster = (data.students || []).filter(function (s) {
+          return s.studentId === student.studentId;
+        })[0];
+        const withBooks = Object.assign({}, student, { lastBooks: inRoster && inRoster.lastBooks });
+
+        openRecord(withBooks, student.classId, date, 'students', data.existingRecords);
       });
   }
 

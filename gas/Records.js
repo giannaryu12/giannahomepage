@@ -21,16 +21,27 @@ function recordsOfStudent_(studentId) {
 function handleAdminRoster(body) {
   requireSession_(body.sessionKey);
 
+  // Records는 한 번만 읽는다. 그날 기록과 직전 교재를 여기서 함께 뽑는다.
+  const allRecords = readTable(SHEETS.RECORDS);
+
   const students = readTable(SHEETS.STUDENTS)
     .filter(function (s) {
       return String(s.classId) === String(body.classId)
         && String(s.active).toUpperCase() === 'TRUE';
     })
     .map(function (s) {
-      return { studentId: s.studentId, name: s.name, grade: s.grade };
+      const mine = allRecords.filter(function (r) {
+        return String(r.studentId) === String(s.studentId);
+      });
+      return {
+        studentId: s.studentId,
+        name: s.name,
+        grade: s.grade,
+        lastBooks: lastBooksOf(mine),
+      };
     });
 
-  const existing = readTable(SHEETS.RECORDS).filter(function (r) {
+  const existing = allRecords.filter(function (r) {
     return String(r.classId) === String(body.classId)
       && String(r.date) === String(body.date);
   });
@@ -62,6 +73,10 @@ function handleAdminSaveBatch(body) {
     // setValue 280회가 나갔고 프런트의 15초 타임아웃을 넘길 수 있었다.
     const view = readTableView_(SHEETS.RECORDS);
 
+    // 진도 영역 컬럼이 아직 없으면 여기서 만든다. 없는 채로 쓰면 값이
+    // 조용히 버려지면서 저장에 성공한 것처럼 보인다.
+    const header = ensureColumns_(view.sheet, view.header, PROGRESS_FIELDS);
+
     const plan = planRecordBatch({
       existingRows: view.rows,
       records: body.records,
@@ -72,9 +87,9 @@ function handleAdminSaveBatch(body) {
     });
 
     plan.updates.forEach(function (u) {
-      writeRowValues_(view.sheet, view.header, u.rowIndex, u.row);
+      writeRowValues_(view.sheet, header, u.rowIndex, u.row);
     });
-    appendRowsValues_(view.sheet, view.header, plan.appends);
+    appendRowsValues_(view.sheet, header, plan.appends);
 
     SpreadsheetApp.flush();
     return ok({ saved: plan.saved });

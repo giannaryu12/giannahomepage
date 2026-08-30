@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { findRecordMatch, buildRecordPayload } from '../gas/lib/records.js';
+import {
+  findRecordMatch,
+  buildRecordPayload,
+  PROGRESS_FIELDS,
+  lastBooksOf,
+} from '../gas/lib/records.js';
 
 describe('findRecordMatch', () => {
   const rows = [
@@ -38,11 +43,16 @@ describe('findRecordMatch', () => {
 });
 
 describe('buildRecordPayload', () => {
-  it('16개 Records 컬럼 중 buildRecordPayload가 채우는 필드를 모두 매핑한다', () => {
+  it('Records 컬럼 중 buildRecordPayload가 채우는 필드를 모두 매핑한다', () => {
     const rec = {
       studentId: 'S001',
       date: '2026-08-30',
       progress: 'Unit 7',
+      vocabBook: '능률보카', vocabProgress: 'Day 12',
+      readingBook: '리딩튜터', readingProgress: 'Unit 5',
+      grammarBook: '', grammarProgress: '',
+      listeningBook: '', listeningProgress: '',
+      etcBook: '', etcProgress: '',
       homeworkStatus: '제출',
       homeworkLevel: '상',
       testName: '단어시험',
@@ -60,6 +70,11 @@ describe('buildRecordPayload', () => {
       classId: 'C01',
       date: '2026-08-30',
       progress: 'Unit 7',
+      vocabBook: '능률보카', vocabProgress: 'Day 12',
+      readingBook: '리딩튜터', readingProgress: 'Unit 5',
+      grammarBook: '', grammarProgress: '',
+      listeningBook: '', listeningProgress: '',
+      etcBook: '', etcProgress: '',
       homeworkStatus: '제출',
       homeworkLevel: '상',
       testName: '단어시험',
@@ -71,6 +86,24 @@ describe('buildRecordPayload', () => {
       clientRequestId: 'req-1',
       updatedAt: '2026-08-30T01:00:00.000Z',
     });
+  });
+
+  it('영역 필드를 안 보내면 빈 문자열로 채운다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30' },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    PROGRESS_FIELDS.forEach((f) => expect(payload[f]).toBe(''));
+  });
+
+  it('영역 구분 없이 쌓인 옛 progress는 화면이 그대로 돌려주면 보존된다', () => {
+    // 화면에서 안 보낸다는 이유로 지워지면 이미 쌓인 기록이 사라진다.
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', progress: '예전 진도 메모', vocabProgress: 'Day 1' },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    expect(payload.progress).toBe('예전 진도 메모');
+    expect(payload.vocabProgress).toBe('Day 1');
   });
 
   it('testScore/testMax가 빈 문자열이면 0이 아니라 빈 문자열로 남는다', () => {
@@ -103,5 +136,42 @@ describe('buildRecordPayload', () => {
     expect(payload.attendance).toBe('');
     expect(payload.nextHomework).toBe('');
     expect(payload.comment).toBe('');
+  });
+});
+
+describe('lastBooksOf', () => {
+  it('가장 최근 날짜의 교재를 영역별로 돌려준다', () => {
+    const books = lastBooksOf([
+      { date: '2026-08-16', vocabBook: '옛 단어책', readingBook: '옛 독해책' },
+      { date: '2026-08-23', vocabBook: '새 단어책' },
+    ]);
+    expect(books.vocab).toBe('새 단어책');
+  });
+
+  it('최근 기록에 그 영역 교재가 비어 있으면 더 예전 기록에서 찾는다', () => {
+    // 그날 독해를 안 했다고 해서 독해 교재가 바뀐 것은 아니다.
+    const books = lastBooksOf([
+      { date: '2026-08-16', readingBook: '리딩튜터' },
+      { date: '2026-08-23', readingBook: '' },
+    ]);
+    expect(books.reading).toBe('리딩튜터');
+  });
+
+  it('날짜 순서와 무관하게 최신 것이 이긴다', () => {
+    const books = lastBooksOf([
+      { date: '2026-08-30', vocabBook: '최신' },
+      { date: '2026-08-02', vocabBook: '옛것' },
+      { date: '2026-08-16', vocabBook: '중간' },
+    ]);
+    expect(books.vocab).toBe('최신');
+  });
+
+  it('기록이 없으면 다섯 영역이 모두 빈 문자열이다', () => {
+    expect(lastBooksOf([])).toEqual({ vocab: '', reading: '', grammar: '', listening: '', etc: '' });
+    expect(lastBooksOf(null).vocab).toBe('');
+  });
+
+  it('공백만 있는 교재는 값으로 치지 않는다', () => {
+    expect(lastBooksOf([{ date: '2026-08-30', vocabBook: '   ' }]).vocab).toBe('');
   });
 });

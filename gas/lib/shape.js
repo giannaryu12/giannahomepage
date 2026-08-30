@@ -5,9 +5,22 @@
  * 늘어날 때 조용히 유출되므로 쓰지 않는다.
  */
 
+// 진도 영역 필드는 일부러 하나씩 적는다. records.js의 PROGRESS_FIELDS를
+// 이어 붙이면 그쪽에 필드가 늘 때 학부모에게 조용히 새어 나간다. 두 목록이
+// 어긋나지 않는지는 test/field-parity.test.js가 확인한다.
 const PARENT_RECORD_FIELDS = [
   'date',
   'progress',
+  'vocabBook',
+  'vocabProgress',
+  'readingBook',
+  'readingProgress',
+  'grammarBook',
+  'grammarProgress',
+  'listeningBook',
+  'listeningProgress',
+  'etcBook',
+  'etcProgress',
   'homeworkStatus',
   'homeworkLevel',
   'testName',

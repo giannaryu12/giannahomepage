@@ -81,6 +81,21 @@ function appendRowsValues_(sheet, header, rows) {
   sheet.getRange(sheet.getLastRow() + 1, 1, values.length, header.length).setValues(values);
 }
 
+/**
+ * 헤더에 없는 컬럼을 시트 오른쪽 끝에 덧붙이고 갱신된 헤더를 돌려준다.
+ *
+ * rowValuesFor는 헤더에 없는 필드를 조용히 버린다. 즉 컬럼을 만들지 않으면
+ * 선생님이 입력한 값이 사라진 채로 "저장했습니다"가 뜬다. 새 필드가 생겼을 때
+ * 시트를 손으로 고치게 하는 대신 저장 직전에 맞춘다.
+ */
+function ensureColumns_(sheet, header, required) {
+  const missing = required.filter(function (k) { return header.indexOf(k) === -1; });
+  if (!missing.length) return header;
+
+  sheet.getRange(1, header.length + 1, 1, missing.length).setValues([missing]);
+  return header.concat(missing);
+}
+
 function getHeader_(sheetName) {
   const sheet = getSheet_(sheetName);
   return sheet.getRange(1, 1, 1, sheet.getLastColumn())

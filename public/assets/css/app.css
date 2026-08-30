@@ -194,6 +194,28 @@ body.gi{
   outline-offset:1px;
 }
 
+/* 진도 영역 한 줄: 영역명 · 교재 · 진도.
+   좁은 화면에서는 영역명이 위로 올라가고 두 칸이 나란히 남는다. */
+.gi-area{
+  display:grid;
+  grid-template-columns:3.2rem minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  gap:0.35rem;
+  margin-bottom:0.35rem;
+}
+.gi-area-label{
+  font-size:0.82rem;
+  font-weight:700;
+  color:var(--text-soft);
+}
+@media (max-width:400px){
+  .gi-area{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .gi-area-label{ grid-column:1 / -1; margin-top:0.3rem; }
+}
+
+/* 학부모 리포트의 영역별 진도 한 줄 */
+.gi-area-book{ color:var(--text-soft); }
+
 /* 선택형 버튼 그룹 */
 .gi-choices{ display:flex; flex-wrap:wrap; gap:0.3rem; }
 .gi-choice{

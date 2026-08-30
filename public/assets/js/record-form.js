@@ -4,6 +4,12 @@
  * api.js와 같은 이중 로드 패턴(IIFE + module.exports)을 쓴다.
  */
 (function (global) {
+  // 브라우저에서는 progress-areas.js가 먼저 실행돼 전역에 올려 둔다.
+  // Node(테스트)에서는 그 전역이 없으므로 직접 읽는다.
+  const AREAS = typeof module !== 'undefined'
+    ? require('./progress-areas.js').PROGRESS_AREAS
+    : global.GI_PROGRESS_AREAS.PROGRESS_AREAS;
+
   function str(v) {
     return v === null || v === undefined ? '' : String(v);
   }
@@ -19,7 +25,9 @@
 
   function toFormValues(record) {
     const r = record || {};
-    return {
+    const out = {
+      // 영역 구분이 생기기 전에 쌓인 진도. 화면에 입력칸은 없지만 그대로
+      // 실어 보내야 저장할 때 서버가 빈 값으로 덮어쓰지 않는다.
       progress: str(r.progress),
       attendance: str(r.attendance),
       homeworkStatus: str(r.homeworkStatus),
@@ -30,11 +38,34 @@
       nextHomework: str(r.nextHomework),
       comment: str(r.comment),
     };
+
+    AREAS.forEach(function (a) {
+      out[a.key + 'Book'] = str(r[a.key + 'Book']);
+      out[a.key + 'Progress'] = str(r[a.key + 'Progress']);
+    });
+
+    return out;
+  }
+
+  /**
+   * 빈 교재 칸만 직전 수업 교재로 채운다. 이미 적힌 값은 건드리지 않는다.
+   *
+   * 이미 저장된 기록을 열 때는 부르지 않는다. 그날 안 한 영역에 교재만
+   * 슬쩍 채워 넣으면 하지도 않은 수업이 기록에 남는다.
+   */
+  function withBookDefaults(values, lastBooks) {
+    const out = Object.assign({}, values);
+    const books = lastBooks || {};
+    AREAS.forEach(function (a) {
+      const field = a.key + 'Book';
+      if (!out[field]) out[field] = str(books[a.key]);
+    });
+    return out;
   }
 
   function buildRecord(studentId, date, form) {
     const f = form || {};
-    return {
+    const out = {
       studentId: str(studentId),
       date: str(date),
       progress: str(f.progress),
@@ -47,6 +78,13 @@
       testMax: str(f.testMax),
       comment: str(f.comment),
     };
+
+    AREAS.forEach(function (a) {
+      out[a.key + 'Book'] = str(f[a.key + 'Book']);
+      out[a.key + 'Progress'] = str(f[a.key + 'Progress']);
+    });
+
+    return out;
   }
 
   function rosterStatus(students, existingRecords) {
@@ -61,7 +99,7 @@
     });
   }
 
-  const api = { findRecordFor, toFormValues, buildRecord, rosterStatus };
+  const api = { findRecordFor, toFormValues, buildRecord, rosterStatus, withBookDefaults };
 
   global.GI_RECORD_FORM = api;
 
