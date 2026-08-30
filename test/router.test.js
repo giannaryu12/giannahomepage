@@ -53,6 +53,12 @@ describe('parseRequest', () => {
     expect(r.auth).toBe('none');
   });
 
+  it('ping은 인증이 필요 없다', () => {
+    const r = parseRequest(JSON.stringify({ action: 'ping' }));
+    expect(r.ok).toBe(true);
+    expect(r.auth).toBe('none');
+  });
+
   it('모든 action이 auth와 required를 갖는다', () => {
     Object.keys(ACTIONS).forEach((k) => {
       expect(['none', 'token', 'session']).toContain(ACTIONS[k].auth);
