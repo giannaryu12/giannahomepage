@@ -84,15 +84,16 @@
         <div class="gi-choices" id="recHomeworkLevel"></div>
       </div>
 
-      <div class="gi-field" style="display:flex;gap:.4rem">
-        <input class="gi-input" style="flex:2" type="text" id="recTestName" data-field="testName" placeholder="시험명">
-        <input class="gi-input" style="flex:1" type="number" inputmode="numeric" id="recTestScore" data-field="testScore" placeholder="점수">
-        <input class="gi-input" style="flex:1" type="number" inputmode="numeric" id="recTestMax" data-field="testMax" placeholder="만점">
+      <div class="gi-field">
+        <span class="gi-label">시험</span>
+        <div id="recTests"></div>
+        <p class="gi-note" id="recLegacyTest" hidden></p>
       </div>
 
       <div class="gi-field">
-        <label class="gi-label" for="recNextHomework">다음 과제</label>
-        <input class="gi-input" type="text" id="recNextHomework" data-field="nextHomework">
+        <span class="gi-label">다음 과제</span>
+        <div id="recNext"></div>
+        <p class="gi-note" id="recLegacyNext" hidden></p>
       </div>
 
       <div class="gi-field">

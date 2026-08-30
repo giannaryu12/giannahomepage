@@ -95,3 +95,36 @@ describe('validateBatch', () => {
     expect(validateBatch(null)).toHaveLength(1);
   });
 });
+
+describe('영역별 시험 점수', () => {
+  const valid = (extra) => Object.assign({ studentId: 'S001', date: '2026-08-30' }, extra);
+
+  it('단어 시험 점수만 있고 만점이 없으면 오류다', () => {
+    expect(validateRecord(valid({ vocabTestScore: '18' })))
+      .toContain('vocabTestMax 오류');
+  });
+
+  it('듣기 시험 점수가 만점보다 크면 오류다', () => {
+    expect(validateRecord(valid({ listeningTestScore: '11', listeningTestMax: '10' })))
+      .toContain('listeningTestScore가 listeningTestMax보다 큽니다');
+  });
+
+  it('두 시험이 다 비어 있으면 오류가 없다', () => {
+    expect(validateRecord(valid({
+      vocabTestScore: '', vocabTestMax: '', listeningTestScore: '', listeningTestMax: '',
+    }))).toEqual([]);
+  });
+
+  it('0점은 정상이다', () => {
+    expect(validateRecord(valid({ vocabTestScore: '0', vocabTestMax: '20' }))).toEqual([]);
+  });
+
+  it('한 시험의 오류가 다른 시험 검사를 막지 않는다', () => {
+    const errors = validateRecord(valid({
+      vocabTestScore: '18', vocabTestMax: '',
+      listeningTestScore: '-1', listeningTestMax: '10',
+    }));
+    expect(errors).toContain('vocabTestMax 오류');
+    expect(errors).toContain('listeningTestScore 오류');
+  });
+});

@@ -9,12 +9,25 @@
  * 조용히 일어나므로 여기서 막는다.
  */
 import { describe, it, expect } from 'vitest';
-import { PROGRESS_FIELDS as UI_FIELDS } from '../public/assets/js/progress-areas.js';
-import { PROGRESS_FIELDS as GAS_FIELDS } from '../gas/lib/records.js';
+import {
+  PROGRESS_FIELDS as UI_PROGRESS,
+  NEXT_FIELDS as UI_NEXT,
+  TEST_FIELDS as UI_TEST,
+  RECORD_AREA_FIELDS as UI_FIELDS,
+} from '../public/assets/js/progress-areas.js';
+import {
+  PROGRESS_FIELDS as GAS_PROGRESS,
+  NEXT_FIELDS as GAS_NEXT,
+  TEST_FIELDS as GAS_TEST,
+  RECORD_AREA_FIELDS as GAS_FIELDS,
+} from '../gas/lib/records.js';
 import { PARENT_RECORD_FIELDS } from '../gas/lib/shape.js';
 
 describe('진도 영역 필드 목록', () => {
   it('화면과 저장이 같은 필드를 같은 순서로 갖는다', () => {
+    expect(UI_PROGRESS).toEqual(GAS_PROGRESS);
+    expect(UI_NEXT).toEqual(GAS_NEXT);
+    expect(UI_TEST).toEqual(GAS_TEST);
     expect(UI_FIELDS).toEqual(GAS_FIELDS);
   });
 

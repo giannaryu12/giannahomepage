@@ -49,9 +49,10 @@ body.gi{
 }
 
 /* ---------- 요약 카드 ---------- */
+/* 카드 수가 넷~다섯으로 늘 수 있어 고정 3열 대신 접히게 둔다. */
 .gi-cards{
   display:grid;
-  grid-template-columns:repeat(3, 1fr);
+  grid-template-columns:repeat(auto-fit, minmax(6.5rem, 1fr));
   gap:0.6rem;
   margin-bottom:1.6rem;
 }
@@ -203,6 +204,7 @@ body.gi{
   gap:0.35rem;
   margin-bottom:0.35rem;
 }
+.gi-area.is-single{ grid-template-columns:3.2rem minmax(0,1fr); }
 .gi-area-label{
   font-size:0.82rem;
   font-weight:700;
@@ -210,11 +212,22 @@ body.gi{
 }
 @media (max-width:400px){
   .gi-area{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .gi-area.is-single{ grid-template-columns:minmax(0,1fr); }
   .gi-area-label{ grid-column:1 / -1; margin-top:0.3rem; }
 }
 
 /* 학부모 리포트의 영역별 진도 한 줄 */
 .gi-area-book{ color:var(--text-soft); }
+
+/* 성적 추이 범례 */
+.gi-legend{ display:flex; flex-wrap:wrap; align-items:center; gap:0.2rem 0.8rem; }
+.gi-legend-item{ display:inline-flex; align-items:center; gap:0.3rem; }
+.gi-legend-dot{
+  width:0.5rem;
+  height:0.5rem;
+  border-radius:50%;
+  display:inline-block;
+}
 
 /* 선택형 버튼 그룹 */
 .gi-choices{ display:flex; flex-wrap:wrap; gap:0.3rem; }

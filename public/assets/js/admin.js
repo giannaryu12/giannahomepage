@@ -10,7 +10,12 @@
 (function () {
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
   const RF = window.GI_RECORD_FORM;
-  const AREAS = window.GI_PROGRESS_AREAS.PROGRESS_AREAS;
+  const PA = window.GI_PROGRESS_AREAS;
+  const AREAS = PA.PROGRESS_AREAS;
+  const TEST_AREAS = PA.TEST_AREAS;
+
+  // 값을 채워 넣어야 하는, JS가 그리는 입력칸 묶음
+  const FIELD_CONTAINERS = ['recAreas', 'recTests', 'recNext'];
   const SESSION_STORE = 'gi.session';
   const DRAFT_PREFIX = 'gi.draft.';
 
@@ -199,44 +204,81 @@
     }).join('');
   }
 
-  /** 영역별 교재·진도 칸을 그린다. 값은 fillAreaValues가 채운다. */
-  function renderAreas() {
+  function textInput(field, placeholder, label) {
+    return '<input class="gi-input" type="text" data-field="' + field +
+      '" placeholder="' + placeholder + '" aria-label="' + esc(label) + '">';
+  }
+
+  function numberInput(field, placeholder, label) {
+    return '<input class="gi-input" type="number" inputmode="numeric" data-field="' + field +
+      '" placeholder="' + placeholder + '" aria-label="' + esc(label) + '">';
+  }
+
+  /** 영역별 입력칸을 그린다. 값은 fillFieldValues가 채운다. */
+  function renderFieldGroups() {
     $('recAreas').innerHTML = AREAS.map(function (a) {
-      return '' +
-        '<div class="gi-area">' +
-          '<span class="gi-area-label">' + esc(a.label) + '</span>' +
-          '<input class="gi-input" type="text" data-field="' + a.key + 'Book"' +
-            ' placeholder="교재" aria-label="' + esc(a.label) + ' 교재">' +
-          '<input class="gi-input" type="text" data-field="' + a.key + 'Progress"' +
-            ' placeholder="진도" aria-label="' + esc(a.label) + ' 진도">' +
+      return '<div class="gi-area">' +
+        '<span class="gi-area-label">' + esc(a.label) + '</span>' +
+        textInput(a.key + 'Book', '교재', a.label + ' 교재') +
+        textInput(a.key + 'Progress', '진도', a.label + ' 진도') +
+        '</div>';
+    }).join('');
+
+    $('recTests').innerHTML = TEST_AREAS.map(function (a) {
+      return '<div class="gi-area">' +
+        '<span class="gi-area-label">' + esc(a.label) + '</span>' +
+        numberInput(a.key + 'TestScore', '점수', a.label + ' 시험 점수') +
+        numberInput(a.key + 'TestMax', '만점', a.label + ' 시험 만점') +
+        '</div>';
+    }).join('');
+
+    $('recNext').innerHTML = AREAS.map(function (a) {
+      return '<div class="gi-area is-single">' +
+        '<span class="gi-area-label">' + esc(a.label) + '</span>' +
+        textInput(a.key + 'Next', '다음 과제', a.label + ' 다음 과제') +
         '</div>';
     }).join('');
   }
 
-  function fillAreaValues() {
+  function fillFieldValues() {
     // value는 속성 문자열이 아니라 프로퍼티로 넣는다. 따옴표가 든 교재명이
     // 마크업을 깨뜨리지 않는다.
-    $('recAreas').querySelectorAll('[data-field]').forEach(function (el) {
-      el.value = recordForm[el.dataset.field] || '';
+    FIELD_CONTAINERS.forEach(function (id) {
+      $(id).querySelectorAll('[data-field]').forEach(function (el) {
+        el.value = recordForm[el.dataset.field] || '';
+      });
     });
+  }
+
+  /**
+   * 영역 구분이 생기기 전에 쌓인 값. 입력칸은 없지만 저장할 때 그대로 다시
+   * 실려 나가므로, 무엇이 남아 있는지 보여만 준다.
+   */
+  function showLegacy(elId, prefix, text) {
+    $(elId).hidden = !text;
+    $(elId).textContent = text ? prefix + text : '';
+  }
+
+  function legacyTestText() {
+    const score = recordForm.testScore;
+    const max = recordForm.testMax;
+    const name = recordForm.testName;
+    if (!name && score === '' && max === '') return '';
+
+    const scoreText = (score !== '' && max !== '') ? score + '/' + max : '';
+    return [name, scoreText].filter(Boolean).join(' ');
   }
 
   function fillRecordView() {
     $('recordWho').textContent = currentStudent.name + (currentStudent.grade ? ' · ' + currentStudent.grade : '');
     $('recordDateInput').value = currentDate;
-    renderAreas();
-    fillAreaValues();
+    renderFieldGroups();
+    fillFieldValues();
 
-    // 영역 구분이 생기기 전에 쌓인 진도. 입력칸은 없지만 저장할 때 그대로
-    // 다시 실려 나가므로, 무엇이 남아 있는지 보여만 준다.
-    const legacy = recordForm.progress;
-    $('recLegacyProgress').hidden = !legacy;
-    $('recLegacyProgress').textContent = legacy ? '이전 진도 기록: ' + legacy : '';
+    showLegacy('recLegacyProgress', '이전 진도 기록: ', recordForm.progress);
+    showLegacy('recLegacyTest', '이전 시험 기록: ', legacyTestText());
+    showLegacy('recLegacyNext', '이전 다음 과제: ', recordForm.nextHomework);
 
-    $('recTestName').value = recordForm.testName;
-    $('recTestScore').value = recordForm.testScore;
-    $('recTestMax').value = recordForm.testMax;
-    $('recNextHomework').value = recordForm.nextHomework;
     $('recComment').value = recordForm.comment;
     renderChoiceGroup('recAttendance', ATTENDANCE, 'attendance');
     renderChoiceGroup('recHomeworkStatus', HOMEWORK, 'homeworkStatus');

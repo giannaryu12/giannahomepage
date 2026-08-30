@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   findRecordFor, toFormValues, buildRecord, rosterStatus, withBookDefaults,
 } from '../public/assets/js/record-form.js';
-import { PROGRESS_FIELDS } from '../public/assets/js/progress-areas.js';
+import { RECORD_AREA_FIELDS } from '../public/assets/js/progress-areas.js';
 
-/** 진도 영역 열 개가 전부 빈 상태. 아래 전체 모양 비교에 쓴다. */
-const EMPTY_AREAS = Object.fromEntries(PROGRESS_FIELDS.map((f) => [f, '']));
+/** 영역 필드(진도·다음 과제·시험)가 전부 빈 상태. 아래 전체 모양 비교에 쓴다. */
+const EMPTY_AREAS = Object.fromEntries(RECORD_AREA_FIELDS.map((f) => [f, '']));
 
 describe('findRecordFor', () => {
   const records = [
@@ -154,7 +154,7 @@ describe('진도 영역', () => {
 
   it('buildRecord가 열 개 영역 필드를 모두 담는다', () => {
     const rec = buildRecord('s1', '2026-08-30', toFormValues(record));
-    PROGRESS_FIELDS.forEach((f) => expect(rec[f]).toBeDefined());
+    RECORD_AREA_FIELDS.forEach((f) => expect(rec[f]).toBeDefined());
     expect(rec.readingProgress).toBe('Unit 5');
   });
 
@@ -197,5 +197,38 @@ describe('withBookDefaults', () => {
     const out = withBookDefaults(src, lastBooks);
     expect(src.vocabBook).toBe('');
     expect(out).not.toBe(src);
+  });
+});
+
+describe('다음 과제·시험 영역', () => {
+  it('toFormValues가 영역별 다음 과제와 두 시험 점수를 채운다', () => {
+    const v = toFormValues({
+      vocabNext: 'Day 14 외우기', etcNext: '영어 일기',
+      vocabTestScore: 18, vocabTestMax: 20,
+      listeningTestScore: 0, listeningTestMax: 10,
+    });
+    expect(v.vocabNext).toBe('Day 14 외우기');
+    expect(v.etcNext).toBe('영어 일기');
+    expect(v.readingNext).toBe('');
+    expect(v.vocabTestScore).toBe('18');
+    // 0점이 빈 칸으로 바뀌면 안 된다.
+    expect(v.listeningTestScore).toBe('0');
+  });
+
+  it('영역 구분 없던 옛 시험명·점수와 옛 다음 과제를 그대로 실어 보낸다', () => {
+    const v = toFormValues({
+      testName: '중간고사', testScore: 85, testMax: 100, nextHomework: '옛 과제',
+    });
+    const rec = buildRecord('s1', '2026-08-30', v);
+    expect(rec.testName).toBe('중간고사');
+    expect(rec.testScore).toBe('85');
+    expect(rec.testMax).toBe('100');
+    expect(rec.nextHomework).toBe('옛 과제');
+  });
+
+  it('교재 자동 채움이 다음 과제·시험 칸을 건드리지 않는다', () => {
+    const v = withBookDefaults(toFormValues(null), { vocab: '능률보카', listening: '' });
+    expect(v.vocabNext).toBe('');
+    expect(v.vocabTestScore).toBe('');
   });
 });

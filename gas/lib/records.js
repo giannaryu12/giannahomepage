@@ -16,6 +16,19 @@ const PROGRESS_FIELDS = PROGRESS_AREA_KEYS.reduce(function (acc, k) {
   return acc;
 }, []);
 
+const NEXT_FIELDS = PROGRESS_AREA_KEYS.map(function (k) { return k + 'Next'; });
+
+/** 시험은 단어·듣기 둘만 본다. */
+const TEST_AREA_KEYS = ['vocab', 'listening'];
+
+const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
+  acc.push(k + 'TestScore', k + 'TestMax');
+  return acc;
+}, []);
+
+/** 시트 컬럼과 저장 페이로드가 챙겨야 할 영역 필드 전부. */
+const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
+
 /** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
 function findRecordMatch(rows, studentId, date) {
   const match = (rows || []).filter(function (r) {
@@ -46,8 +59,10 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     updatedAt: now,
   };
 
-  PROGRESS_FIELDS.forEach(function (f) {
-    payload[f] = rec[f] || '';
+  // `|| ''`를 쓰면 안 된다. 시험 점수 0점이 빈 칸이 되어 사라진다.
+  RECORD_AREA_FIELDS.forEach(function (f) {
+    const v = rec[f];
+    payload[f] = v === '' || v === null || v === undefined ? '' : v;
   });
 
   return payload;
@@ -81,6 +96,9 @@ if (typeof module !== 'undefined') {
   module.exports = {
     PROGRESS_AREA_KEYS,
     PROGRESS_FIELDS,
+    NEXT_FIELDS,
+    TEST_FIELDS,
+    RECORD_AREA_FIELDS,
     findRecordMatch,
     buildRecordPayload,
     lastBooksOf,

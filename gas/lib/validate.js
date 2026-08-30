@@ -30,19 +30,26 @@ function validateRecord(rec) {
     errors.push('homeworkLevel 값 오류');
   }
 
-  // 점수는 셋 다 비어 있거나, score/max가 함께 유효해야 한다.
-  if (!isBlank(rec.testScore) || !isBlank(rec.testMax)) {
-    const score = Number(rec.testScore);
-    const max = Number(rec.testMax);
-    const scoreOk = !isBlank(rec.testScore) && isFinite(score) && score >= 0;
-    const maxOk = !isBlank(rec.testMax) && isFinite(max) && max > 0;
-
-    if (!scoreOk) errors.push('testScore 오류');
-    if (!maxOk) errors.push('testMax 오류');
-    if (scoreOk && maxOk && score > max) errors.push('testScore가 testMax보다 큽니다');
-  }
+  // 점수 짝은 둘 다 비어 있거나, 둘 다 유효해야 한다.
+  // testScore/testMax는 시험이 단어·듣기로 나뉘기 전에 쓰던 칸이다.
+  checkScorePair_(rec, 'testScore', 'testMax', errors);
+  checkScorePair_(rec, 'vocabTestScore', 'vocabTestMax', errors);
+  checkScorePair_(rec, 'listeningTestScore', 'listeningTestMax', errors);
 
   return errors;
+}
+
+function checkScorePair_(rec, scoreField, maxField, errors) {
+  if (isBlank(rec[scoreField]) && isBlank(rec[maxField])) return;
+
+  const score = Number(rec[scoreField]);
+  const max = Number(rec[maxField]);
+  const scoreOk = !isBlank(rec[scoreField]) && isFinite(score) && score >= 0;
+  const maxOk = !isBlank(rec[maxField]) && isFinite(max) && max > 0;
+
+  if (!scoreOk) errors.push(scoreField + ' 오류');
+  if (!maxOk) errors.push(maxField + ' 오류');
+  if (scoreOk && maxOk && score > max) errors.push(scoreField + '가 ' + maxField + '보다 큽니다');
 }
 
 function validateBatch(records) {

@@ -16,10 +16,25 @@
     { key: 'etc', label: '기타' },
   ];
 
+  // 시험은 단어·듣기 둘만 본다. 진도 영역의 부분집합이라 label을 그대로 쓴다.
+  const TEST_AREAS = PROGRESS_AREAS.filter(function (a) {
+    return a.key === 'vocab' || a.key === 'listening';
+  });
+
   const PROGRESS_FIELDS = [];
   PROGRESS_AREAS.forEach(function (a) {
     PROGRESS_FIELDS.push(a.key + 'Book', a.key + 'Progress');
   });
+
+  const NEXT_FIELDS = PROGRESS_AREAS.map(function (a) { return a.key + 'Next'; });
+
+  const TEST_FIELDS = [];
+  TEST_AREAS.forEach(function (a) {
+    TEST_FIELDS.push(a.key + 'TestScore', a.key + 'TestMax');
+  });
+
+  /** 시트 컬럼과 저장 페이로드가 챙겨야 할 영역 필드 전부. */
+  const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
 
   function trimmed(v) {
     return v === null || v === undefined ? '' : String(v).trim();
@@ -51,7 +66,46 @@
     return trimmed((record || {}).progress);
   }
 
-  const api = { PROGRESS_AREAS, PROGRESS_FIELDS, areaLines, areaSummary };
+  /** 내용이 적힌 다음 과제만 진도와 같은 순서로. */
+  function nextLines(record) {
+    const r = record || {};
+    const out = [];
+    PROGRESS_AREAS.forEach(function (a) {
+      const text = trimmed(r[a.key + 'Next']);
+      if (text) out.push({ key: a.key, label: a.label, text: text });
+    });
+    return out;
+  }
+
+  /**
+   * 점수와 만점이 모두 있는 시험만. 0점은 기록으로 본다 —
+   * "안 봤음"으로 뭉개면 학부모가 볼 기록이 사라진다.
+   */
+  function testLines(record) {
+    const r = record || {};
+    const out = [];
+    TEST_AREAS.forEach(function (a) {
+      const rawScore = r[a.key + 'TestScore'];
+      const score = Number(rawScore);
+      const max = Number(r[a.key + 'TestMax']);
+      if (trimmed(rawScore) === '' || !isFinite(score) || !isFinite(max) || !(max > 0)) return;
+
+      out.push({
+        key: a.key,
+        label: a.label,
+        score: String(score),
+        max: String(max),
+        pct: Math.round((score / max) * 100),
+      });
+    });
+    return out;
+  }
+
+  const api = {
+    PROGRESS_AREAS, PROGRESS_FIELDS,
+    TEST_AREAS, TEST_FIELDS, NEXT_FIELDS, RECORD_AREA_FIELDS,
+    areaLines, areaSummary, nextLines, testLines,
+  };
 
   global.GI_PROGRESS_AREAS = api;
 

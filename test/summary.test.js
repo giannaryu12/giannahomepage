@@ -14,7 +14,8 @@ function rec(over) {
 describe('computeSummary', () => {
   it('기록이 없으면 전부 null이다', () => {
     expect(computeSummary([], '2026-08')).toEqual({
-      attendanceRate: null, homeworkRate: null, avgScore: null, recordCount: 0,
+      attendanceRate: null, homeworkRate: null, avgScore: null,
+      vocabAvg: null, listeningAvg: null, recordCount: 0,
     });
   });
 
@@ -96,5 +97,44 @@ describe('computeSummary', () => {
 
   it('records가 배열이 아니면 빈 결과를 낸다', () => {
     expect(computeSummary(null, '2026-08').recordCount).toBe(0);
+  });
+});
+
+describe('영역별 평균 점수', () => {
+  it('단어와 듣기를 따로 평균낸다', () => {
+    const s = computeSummary([
+      { vocabTestScore: 18, vocabTestMax: 20, listeningTestScore: 5, listeningTestMax: 10 },
+      { vocabTestScore: 16, vocabTestMax: 20 },
+    ], '');
+    expect(s.vocabAvg).toBe(85);   // 90, 80
+    expect(s.listeningAvg).toBe(50);
+  });
+
+  it('기록이 없는 영역은 0이 아니라 null이다', () => {
+    // "0점"과 "아직 안 봤다"는 다르다.
+    const s = computeSummary([{ vocabTestScore: 20, vocabTestMax: 20 }], '');
+    expect(s.vocabAvg).toBe(100);
+    expect(s.listeningAvg).toBeNull();
+  });
+
+  it('0점도 평균에 들어간다', () => {
+    const s = computeSummary([
+      { vocabTestScore: 0, vocabTestMax: 20 },
+      { vocabTestScore: 20, vocabTestMax: 20 },
+    ], '');
+    expect(s.vocabAvg).toBe(50);
+  });
+
+  it('만점이 0이면 세지 않는다', () => {
+    expect(computeSummary([{ vocabTestScore: 5, vocabTestMax: 0 }], '').vocabAvg).toBeNull();
+  });
+
+  it('옛 시험 평균은 영역 점수와 섞이지 않는다', () => {
+    const s = computeSummary([
+      { testScore: 50, testMax: 100 },
+      { vocabTestScore: 20, vocabTestMax: 20 },
+    ], '');
+    expect(s.avgScore).toBe(50);
+    expect(s.vocabAvg).toBe(100);
   });
 });

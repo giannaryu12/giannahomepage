@@ -6,9 +6,11 @@
 (function (global) {
   // 브라우저에서는 progress-areas.js가 먼저 실행돼 전역에 올려 둔다.
   // Node(테스트)에서는 그 전역이 없으므로 직접 읽는다.
-  const AREAS = typeof module !== 'undefined'
-    ? require('./progress-areas.js').PROGRESS_AREAS
-    : global.GI_PROGRESS_AREAS.PROGRESS_AREAS;
+  const PA = typeof module !== 'undefined'
+    ? require('./progress-areas.js')
+    : global.GI_PROGRESS_AREAS;
+  const AREAS = PA.PROGRESS_AREAS;
+  const AREA_FIELDS = PA.RECORD_AREA_FIELDS;
 
   function str(v) {
     return v === null || v === undefined ? '' : String(v);
@@ -39,10 +41,7 @@
       comment: str(r.comment),
     };
 
-    AREAS.forEach(function (a) {
-      out[a.key + 'Book'] = str(r[a.key + 'Book']);
-      out[a.key + 'Progress'] = str(r[a.key + 'Progress']);
-    });
+    AREA_FIELDS.forEach(function (f) { out[f] = str(r[f]); });
 
     return out;
   }
@@ -79,10 +78,7 @@
       comment: str(f.comment),
     };
 
-    AREAS.forEach(function (a) {
-      out[a.key + 'Book'] = str(f[a.key + 'Book']);
-      out[a.key + 'Progress'] = str(f[a.key + 'Progress']);
-    });
+    AREA_FIELDS.forEach(function (k) { out[k] = str(f[k]); });
 
     return out;
   }

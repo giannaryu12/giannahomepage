@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   findRecordMatch,
   buildRecordPayload,
-  PROGRESS_FIELDS,
+  RECORD_AREA_FIELDS,
   lastBooksOf,
 } from '../gas/lib/records.js';
 
@@ -75,6 +75,9 @@ describe('buildRecordPayload', () => {
       grammarBook: '', grammarProgress: '',
       listeningBook: '', listeningProgress: '',
       etcBook: '', etcProgress: '',
+      vocabNext: '', readingNext: '', grammarNext: '', listeningNext: '', etcNext: '',
+      vocabTestScore: '', vocabTestMax: '',
+      listeningTestScore: '', listeningTestMax: '',
       homeworkStatus: '제출',
       homeworkLevel: '상',
       testName: '단어시험',
@@ -93,7 +96,16 @@ describe('buildRecordPayload', () => {
       { studentId: 'S001', date: '2026-08-30' },
       'C01', 'req-1', '2026-08-30T01:00:00.000Z'
     );
-    PROGRESS_FIELDS.forEach((f) => expect(payload[f]).toBe(''));
+    RECORD_AREA_FIELDS.forEach((f) => expect(payload[f]).toBe(''));
+  });
+
+  it('시험 점수 0점이 빈 칸으로 뭉개지지 않는다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', vocabTestScore: 0, vocabTestMax: 20 },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    expect(payload.vocabTestScore).toBe(0);
+    expect(payload.vocabTestMax).toBe(20);
   });
 
   it('영역 구분 없이 쌓인 옛 progress는 화면이 그대로 돌려주면 보존된다', () => {
