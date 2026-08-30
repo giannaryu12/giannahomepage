@@ -162,7 +162,15 @@
     // 짧은 링크 /p/<토큰>. netlify.toml의 재작성(status 200)은 브라우저 주소를
     // /p/<토큰> 그대로 두므로 location.search가 비어 있다. 경로에서 직접 읽는다.
     const m = /^\/p\/([^/?#]+)\/?$/.exec(window.location.pathname);
-    return m ? decodeURIComponent(m[1]) : '';
+    if (!m) return '';
+
+    // 깨진 이스케이프(/p/%E0%A4)면 decodeURIComponent가 던진다.
+    // 여기서 새어나가면 안내 문구 대신 빈 화면이 남는다.
+    try {
+      return decodeURIComponent(m[1]);
+    } catch (e) {
+      return '';
+    }
   }
 
   function start() {

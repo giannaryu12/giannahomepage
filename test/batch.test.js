@@ -87,6 +87,31 @@ describe('planRecordBatch', () => {
     expect(p.appends.map(function (a) { return a.recordId; })).toEqual(['R-A', 'R-B']);
   });
 
+  it('update와 append가 한 배치에 섞여도 서로의 행을 침범하지 않는다', () => {
+    // 반 절반은 이미 저장돼 있고 나머지는 처음 저장하는, 실제로 가장 흔한 상황.
+    const rows = [
+      { _rowIndex: 2, recordId: 'R1', studentId: 'S001', date: '2026-08-30' },
+      { _rowIndex: 3, recordId: 'R2', studentId: 'S002', date: '2026-08-30' },
+    ];
+    const p = plan(rows, [
+      { studentId: 'S001', date: '2026-08-30', comment: '기존A' },
+      { studentId: 'S003', date: '2026-08-30', comment: '신규C' },
+      { studentId: 'S002', date: '2026-08-30', comment: '기존B' },
+      { studentId: 'S004', date: '2026-08-30', comment: '신규D' },
+    ], ['R-C', 'R-D']);
+
+    expect(p.saved).toBe(4);
+    expect(p.updates.map(function (u) { return u.rowIndex; })).toEqual([2, 3]);
+    expect(p.updates.map(function (u) { return u.row.comment; })).toEqual(['기존A', '기존B']);
+
+    // append는 기존 행을 건드리지 않고, 저마다 새 id를 받는다.
+    expect(p.appends.map(function (a) { return a.studentId; })).toEqual(['S003', 'S004']);
+    expect(p.appends.map(function (a) { return a.recordId; })).toEqual(['R-C', 'R-D']);
+
+    // append 대상은 _rowIndex를 갖지 않는다 — 가졌다면 기존 행을 덮어쓰게 된다.
+    expect(p.appends.every(function (a) { return a._rowIndex === undefined; })).toBe(true);
+  });
+
   it('레코드가 없으면 아무것도 쓰지 않는다', () => {
     const p = plan([], []);
     expect(p.saved).toBe(0);
