@@ -47,21 +47,57 @@
         <label class="gi-label" for="dateInput">날짜</label>
         <input class="gi-input" type="date" id="dateInput">
       </div>
-      <div class="gi-field">
-        <label class="gi-label" for="progressAll">진도 (반 전체 일괄 적용)</label>
-        <input class="gi-input" type="text" id="progressAll" placeholder="예: Unit 7 관계대명사">
-      </div>
-      <div class="gi-field">
-        <label class="gi-label" for="nextAll">다음 과제 (반 전체 일괄 적용)</label>
-        <input class="gi-input" type="text" id="nextAll" placeholder="예: Unit 8 단어 1~40">
-      </div>
 
       <div id="entryError" class="gi-error" hidden></div>
       <div id="roster"></div>
+    </div>
 
-      <div class="gi-savebar" id="saveBar" hidden>
-        <span class="gi-note" id="saveStatus"></span>
-        <button class="gi-btn gi-btn-primary" id="saveBtn" type="button">전체 저장</button>
+    <div id="recordView" hidden>
+      <button class="gi-btn gi-btn-outline" id="recordBack" type="button">← 돌아가기</button>
+      <h2 class="gi-h2" id="recordWho"></h2>
+      <p class="gi-note" id="recordDate"></p>
+
+      <div id="recordError" class="gi-error" hidden></div>
+
+      <div class="gi-field">
+        <label class="gi-label" for="recProgress">진도</label>
+        <input class="gi-input" type="text" id="recProgress" data-field="progress">
+      </div>
+
+      <div class="gi-field">
+        <span class="gi-label">출결</span>
+        <div class="gi-choices" id="recAttendance"></div>
+      </div>
+
+      <div class="gi-field">
+        <span class="gi-label">과제</span>
+        <div class="gi-choices" id="recHomeworkStatus"></div>
+      </div>
+
+      <div class="gi-field">
+        <span class="gi-label">완성도</span>
+        <div class="gi-choices" id="recHomeworkLevel"></div>
+      </div>
+
+      <div class="gi-field" style="display:flex;gap:.4rem">
+        <input class="gi-input" style="flex:2" type="text" id="recTestName" data-field="testName" placeholder="시험명">
+        <input class="gi-input" style="flex:1" type="number" inputmode="numeric" id="recTestScore" data-field="testScore" placeholder="점수">
+        <input class="gi-input" style="flex:1" type="number" inputmode="numeric" id="recTestMax" data-field="testMax" placeholder="만점">
+      </div>
+
+      <div class="gi-field">
+        <label class="gi-label" for="recNextHomework">다음 과제</label>
+        <input class="gi-input" type="text" id="recNextHomework" data-field="nextHomework">
+      </div>
+
+      <div class="gi-field">
+        <label class="gi-label" for="recComment">코멘트</label>
+        <textarea class="gi-textarea" id="recComment" data-field="comment"></textarea>
+      </div>
+
+      <div class="gi-savebar">
+        <span class="gi-note" id="recordStatus"></span>
+        <button class="gi-btn gi-btn-primary" id="recordSaveBtn" type="button">저장</button>
       </div>
     </div>
 
@@ -72,6 +108,7 @@
 
 <script src="/assets/js/config.js"></script>
 <script src="/assets/js/api.js"></script>
+<script src="/assets/js/record-form.js"></script>
 <script src="/assets/js/admin.js"></script>
 <script src="/assets/js/admin-students.js"></script>
 </body>

@@ -1,11 +1,15 @@
 /**
  * 선생님 입력 화면.
  *
- * 입력 중인 내용은 localStorage에 계속 저장한다. 수업 직후 20명분을
- * 입력하다 네트워크 오류로 날리는 것이 이 앱에서 가장 나쁜 시나리오다.
+ * 반은 1~2명뿐이라 일괄 입력의 이점이 없다. 수업 탭은 그날 누가 입력됐는지
+ * 보여주는 조회 화면이고, 실제 입력·저장은 학생 한 명 단위 기록 화면에서 한다.
+ *
+ * 입력 중인 내용은 학생 단위로 localStorage에 계속 저장한다. 네트워크 오류로
+ * 입력한 내용을 날리는 것이 이 앱에서 가장 나쁜 시나리오다.
  */
 (function () {
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
+  const RF = window.GI_RECORD_FORM;
   const SESSION_STORE = 'gi.session';
   const DRAFT_PREFIX = 'gi.draft.';
 
@@ -14,8 +18,17 @@
   const LEVELS = ['상', '중', '하'];
 
   let sessionKey = sessionStorage.getItem(SESSION_STORE) || '';
-  let roster = [];
-  let draft = {};
+
+  // 수업 탭(조회 전용) 상태
+  let entryRoster = [];
+  let entryExistingRecords = [];
+
+  // 기록 입력 화면 상태
+  let currentStudent = null;
+  let currentClassId = '';
+  let currentDate = '';
+  let recordOrigin = 'entry'; // 'entry' | 'students' — 돌아가기 목적지
+  let recordForm = {};
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -90,81 +103,26 @@
     });
   }
 
-  /* ---------- 초안 저장 ---------- */
+  /* ---------- 수업 탭 명단 (조회 전용) ---------- */
 
-  function draftKey() {
-    return DRAFT_PREFIX + $('classSelect').value + '.' + $('dateInput').value;
-  }
-
-  function saveDraft() {
-    try {
-      localStorage.setItem(draftKey(), JSON.stringify({
-        progressAll: $('progressAll').value,
-        nextAll: $('nextAll').value,
-        rows: draft,
-      }));
-    } catch (e) { /* 저장 공간이 없으면 조용히 넘어간다 */ }
-  }
-
-  function loadDraft() {
-    try {
-      const raw = localStorage.getItem(draftKey());
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-
-  function clearDraft() {
-    try { localStorage.removeItem(draftKey()); } catch (e) { /* noop */ }
-  }
-
-  /* ---------- 명단 ---------- */
-
-  function choiceGroup(studentId, field, values) {
-    return '<div class="gi-choices" data-student="' + esc(studentId) + '" data-field="' + field + '">' +
-      values.map(function (v) {
-        const on = draft[studentId] && draft[studentId][field] === v;
-        return '<button type="button" class="gi-choice" data-value="' + esc(v) + '" aria-pressed="' +
-          (on ? 'true' : 'false') + '">' + esc(v) + '</button>';
-      }).join('') + '</div>';
-  }
-
-  function studentHtml(s) {
-    const d = draft[s.studentId] || {};
+  function rosterRowHtml(s) {
     return '' +
-      '<article class="gi-rec" style="padding:.9rem">' +
-        '<div class="gi-rec-date" style="margin-bottom:.6rem">' +
-          esc(s.name) + ' <span class="gi-note">' + esc(s.grade || '') + '</span></div>' +
-
-        '<div class="gi-field"><span class="gi-label">출결</span>' +
-          choiceGroup(s.studentId, 'attendance', ATTENDANCE) + '</div>' +
-
-        '<div class="gi-field"><span class="gi-label">과제</span>' +
-          choiceGroup(s.studentId, 'homeworkStatus', HOMEWORK) + '</div>' +
-
-        '<div class="gi-field"><span class="gi-label">완성도</span>' +
-          choiceGroup(s.studentId, 'homeworkLevel', LEVELS) + '</div>' +
-
-        '<div class="gi-field" style="display:flex;gap:.4rem">' +
-          '<input class="gi-input" style="flex:2" type="text" placeholder="시험명" ' +
-            'data-student="' + esc(s.studentId) + '" data-field="testName" value="' + esc(d.testName || '') + '">' +
-          '<input class="gi-input" style="flex:1" type="number" inputmode="numeric" placeholder="점수" ' +
-            'data-student="' + esc(s.studentId) + '" data-field="testScore" value="' + esc(d.testScore || '') + '">' +
-          '<input class="gi-input" style="flex:1" type="number" inputmode="numeric" placeholder="만점" ' +
-            'data-student="' + esc(s.studentId) + '" data-field="testMax" value="' + esc(d.testMax || '') + '">' +
-        '</div>' +
-
-        '<div class="gi-field" style="margin-bottom:0">' +
-          '<textarea class="gi-textarea" placeholder="코멘트" ' +
-            'data-student="' + esc(s.studentId) + '" data-field="comment">' + esc(d.comment || '') + '</textarea>' +
-        '</div>' +
-      '</article>';
+      '<div class="gi-rec">' +
+        '<button type="button" class="gi-rec-top" data-student="' + esc(s.studentId) + '">' +
+          '<span class="gi-rec-date">' + esc(s.name) + '</span>' +
+          '<span class="gi-note">' + esc(s.grade || '') + '</span>' +
+          '<span class="gi-badge ' + (s.hasRecord ? 'is-good' : 'is-none') + '" style="margin-left:auto">' +
+            (s.hasRecord ? '입력됨' : '미입력') +
+          '</span>' +
+        '</button>' +
+      '</div>';
   }
 
   function renderRoster() {
-    $('roster').innerHTML = roster.length
-      ? roster.map(studentHtml).join('')
+    const statuses = RF.rosterStatus(entryRoster, entryExistingRecords);
+    $('roster').innerHTML = statuses.length
+      ? statuses.map(rosterRowHtml).join('')
       : '<p class="gi-note">이 반에 등록된 학생이 없습니다. 학생 관리 탭에서 등록해 주세요.</p>';
-    $('saveBar').hidden = !roster.length;
   }
 
   function loadRoster() {
@@ -177,32 +135,8 @@
 
     api.call('admin.roster', { sessionKey: sessionKey, classId: classId, date: date })
       .then(function (data) {
-        roster = data.students;
-        draft = {};
-
-        // 서버에 이미 저장된 값을 먼저 채운다
-        data.existingRecords.forEach(function (r) {
-          draft[r.studentId] = {
-            attendance: r.attendance, homeworkStatus: r.homeworkStatus,
-            homeworkLevel: r.homeworkLevel, testName: r.testName,
-            testScore: r.testScore === '' ? '' : String(r.testScore),
-            testMax: r.testMax === '' ? '' : String(r.testMax),
-            comment: r.comment,
-          };
-          if (r.progress) $('progressAll').value = r.progress;
-          if (r.nextHomework) $('nextAll').value = r.nextHomework;
-        });
-
-        // 저장 못 하고 남은 초안이 있으면 그것으로 덮는다
-        const saved = loadDraft();
-        if (saved) {
-          if (saved.progressAll) $('progressAll').value = saved.progressAll;
-          if (saved.nextAll) $('nextAll').value = saved.nextAll;
-          Object.keys(saved.rows || {}).forEach(function (id) {
-            draft[id] = Object.assign({}, draft[id], saved.rows[id]);
-          });
-        }
-
+        entryRoster = data.students;
+        entryExistingRecords = data.existingRecords;
         renderRoster();
       })
       .catch(function (err) {
@@ -211,94 +145,186 @@
       });
   }
 
-  /* ---------- 입력 이벤트 (위임) ---------- */
+  function upsertExistingRecord(rec) {
+    const idx = entryExistingRecords.findIndex(function (r) { return r.studentId === rec.studentId; });
+    if (idx >= 0) entryExistingRecords[idx] = rec;
+    else entryExistingRecords.push(rec);
+  }
 
   $('roster').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-student]');
+    if (!btn) return;
+    const id = btn.dataset.student;
+    const student = entryRoster.filter(function (s) { return s.studentId === id; })[0];
+    if (!student) return;
+    openRecord(student, $('classSelect').value, $('dateInput').value, 'entry');
+  });
+
+  $('classSelect').addEventListener('change', loadRoster);
+  $('dateInput').addEventListener('change', loadRoster);
+
+  /* ---------- 기록 입력 화면 ---------- */
+
+  function recordDraftKey(classId, date, studentId) {
+    return DRAFT_PREFIX + classId + '.' + date + '.' + studentId;
+  }
+
+  function saveRecordDraft() {
+    if (!currentStudent) return;
+    try {
+      localStorage.setItem(
+        recordDraftKey(currentClassId, currentDate, currentStudent.studentId),
+        JSON.stringify(recordForm)
+      );
+    } catch (e) { /* 저장 공간이 없으면 조용히 넘어간다 */ }
+  }
+
+  function loadRecordDraft(classId, date, studentId) {
+    try {
+      const raw = localStorage.getItem(recordDraftKey(classId, date, studentId));
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function clearRecordDraft(classId, date, studentId) {
+    try { localStorage.removeItem(recordDraftKey(classId, date, studentId)); } catch (e) { /* noop */ }
+  }
+
+  function renderChoiceGroup(containerId, values, field) {
+    $(containerId).innerHTML = values.map(function (v) {
+      const on = recordForm[field] === v;
+      return '<button type="button" class="gi-choice" data-field="' + field + '" data-value="' + esc(v) +
+        '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(v) + '</button>';
+    }).join('');
+  }
+
+  function fillRecordView() {
+    $('recordWho').textContent = currentStudent.name + (currentStudent.grade ? ' · ' + currentStudent.grade : '');
+    $('recordDate').textContent = currentDate + ' 기록';
+    $('recProgress').value = recordForm.progress;
+    $('recTestName').value = recordForm.testName;
+    $('recTestScore').value = recordForm.testScore;
+    $('recTestMax').value = recordForm.testMax;
+    $('recNextHomework').value = recordForm.nextHomework;
+    $('recComment').value = recordForm.comment;
+    renderChoiceGroup('recAttendance', ATTENDANCE, 'attendance');
+    renderChoiceGroup('recHomeworkStatus', HOMEWORK, 'homeworkStatus');
+    renderChoiceGroup('recHomeworkLevel', LEVELS, 'homeworkLevel');
+    showError($('recordError'), '');
+    $('recordStatus').textContent = '';
+  }
+
+  function showRecordView() {
+    $('entryView').hidden = true;
+    $('studentsView').hidden = true;
+    $('recordView').hidden = false;
+  }
+
+  function goBack() {
+    $('recordView').hidden = true;
+    currentStudent = null;
+    if (recordOrigin === 'students') {
+      $('studentsView').hidden = false;
+      $('tabStudents').setAttribute('aria-pressed', 'true');
+      $('tabEntry').setAttribute('aria-pressed', 'false');
+    } else {
+      $('entryView').hidden = false;
+      $('tabEntry').setAttribute('aria-pressed', 'true');
+      $('tabStudents').setAttribute('aria-pressed', 'false');
+    }
+  }
+
+  // records: 학생 관리 탭처럼 수업 탭에서 로드해 둔 것과 다른 반/날짜 조합을
+  // 열 때 넘겨준다. 생략하면 수업 탭이 이미 들고 있는 값을 쓴다.
+  function openRecord(student, classId, date, origin, records) {
+    currentStudent = student;
+    currentClassId = classId;
+    currentDate = date;
+    recordOrigin = origin;
+
+    const lookupRecords = records || entryExistingRecords;
+    const rec = RF.findRecordFor(lookupRecords, student.studentId);
+    let values = RF.toFormValues(rec);
+
+    const saved = loadRecordDraft(classId, date, student.studentId);
+    if (saved) values = Object.assign({}, values, saved);
+
+    recordForm = values;
+    fillRecordView();
+    showRecordView();
+  }
+
+  function openRecordForStudent(student) {
+    if (!student.classId) return false;
+    const date = todayIso();
+    return api.call('admin.roster', { sessionKey: sessionKey, classId: student.classId, date: date })
+      .then(function (data) {
+        openRecord(student, student.classId, date, 'students', data.existingRecords);
+      });
+  }
+
+  $('recordView').addEventListener('click', function (e) {
     const btn = e.target.closest('.gi-choice');
     if (!btn) return;
 
-    const group = btn.parentElement;
-    const id = group.dataset.student;
-    const field = group.dataset.field;
+    const field = btn.dataset.field;
     const value = btn.dataset.value;
     const wasOn = btn.getAttribute('aria-pressed') === 'true';
+    const group = btn.parentElement;
 
     group.querySelectorAll('.gi-choice').forEach(function (b) {
       b.setAttribute('aria-pressed', 'false');
     });
     if (!wasOn) btn.setAttribute('aria-pressed', 'true');
 
-    draft[id] = draft[id] || {};
-    draft[id][field] = wasOn ? '' : value;
-    saveDraft();
+    recordForm[field] = wasOn ? '' : value;
+    saveRecordDraft();
   });
 
-  $('roster').addEventListener('input', function (e) {
-    const el = e.target;
-    if (!el.dataset || !el.dataset.student) return;
-    draft[el.dataset.student] = draft[el.dataset.student] || {};
-    draft[el.dataset.student][el.dataset.field] = el.value;
-    saveDraft();
+  $('recordView').addEventListener('input', function (e) {
+    const field = e.target.dataset && e.target.dataset.field;
+    if (!field) return;
+    recordForm[field] = e.target.value;
+    saveRecordDraft();
   });
 
-  $('progressAll').addEventListener('input', saveDraft);
-  $('nextAll').addEventListener('input', saveDraft);
-  $('classSelect').addEventListener('change', loadRoster);
-  $('dateInput').addEventListener('change', loadRoster);
+  function saveRecord() {
+    if (!currentStudent) return;
 
-  /* ---------- 저장 ---------- */
+    $('recordSaveBtn').disabled = true;
+    $('recordStatus').textContent = '저장 중…';
+    showError($('recordError'), '');
 
-  function buildRecords() {
-    const date = $('dateInput').value;
-    const progress = $('progressAll').value;
-    const next = $('nextAll').value;
-
-    return roster.map(function (s) {
-      const d = draft[s.studentId] || {};
-      return {
-        studentId: s.studentId,
-        date: date,
-        progress: progress,
-        nextHomework: next,
-        attendance: d.attendance || '',
-        homeworkStatus: d.homeworkStatus || '',
-        homeworkLevel: d.homeworkLevel || '',
-        testName: d.testName || '',
-        testScore: d.testScore || '',
-        testMax: d.testMax || '',
-        comment: d.comment || '',
-      };
-    });
-  }
-
-  function save() {
-    const records = buildRecords();
-    if (!records.length) return;
-
-    $('saveBtn').disabled = true;
-    $('saveStatus').textContent = '저장 중…';
-    showError($('entryError'), '');
+    const record = RF.buildRecord(currentStudent.studentId, currentDate, recordForm);
 
     api.call('admin.saveBatch', {
       sessionKey: sessionKey,
-      classId: $('classSelect').value,
-      date: $('dateInput').value,
+      classId: currentClassId,
+      date: currentDate,
       clientRequestId: 'b' + Date.now() + Math.random().toString(36).slice(2, 8),
-      records: records,
-    }).then(function (data) {
-      clearDraft();
-      $('saveStatus').textContent = data.saved + '명 저장했습니다.';
+      records: [record],
+    }).then(function () {
+      clearRecordDraft(currentClassId, currentDate, currentStudent.studentId);
+      $('recordStatus').textContent = '저장했습니다.';
+      if (currentClassId === $('classSelect').value && currentDate === $('dateInput').value) {
+        upsertExistingRecord(record);
+        renderRoster();
+      }
     }).catch(function (err) {
-      $('saveStatus').textContent = '';
+      $('recordStatus').textContent = '';
       if (!handleAuthLoss(err)) {
-        showError($('entryError'), err.message + ' 입력하신 내용은 이 기기에 보관되어 있습니다.');
+        showError($('recordError'), err.message + ' 입력하신 내용은 이 기기에 보관되어 있습니다.');
       }
     }).finally(function () {
-      $('saveBtn').disabled = false;
+      $('recordSaveBtn').disabled = false;
     });
   }
 
-  $('saveBtn').addEventListener('click', save);
+  $('recordBack').addEventListener('click', goBack);
+  $('recordSaveBtn').addEventListener('click', saveRecord);
+
+  /* ---------- 로그인 폼 ---------- */
+
   $('loginBtn').addEventListener('click', login);
   $('password').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') login();
@@ -311,6 +337,7 @@
     $('tabStudents').setAttribute('aria-pressed', 'false');
     $('entryView').hidden = false;
     $('studentsView').hidden = true;
+    $('recordView').hidden = true;
   });
 
   $('tabStudents').addEventListener('click', function () {
@@ -318,6 +345,7 @@
     $('tabEntry').setAttribute('aria-pressed', 'false');
     $('studentsView').hidden = false;
     $('entryView').hidden = true;
+    $('recordView').hidden = true;
     if (window.renderStudentsView) window.renderStudentsView();
   });
 
@@ -327,6 +355,7 @@
     esc: esc,
     getSessionKey: function () { return sessionKey; },
     handleAuthLoss: handleAuthLoss,
+    openRecordForStudent: openRecordForStudent,
   };
 
   if (sessionKey) showApp();

@@ -37,6 +37,7 @@
         '</div>' +
         '<div class="gi-choices">' +
           '<button class="gi-choice" type="button" data-act="save">저장</button>' +
+          '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
           '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
           '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
           '<button class="gi-choice" type="button" data-act="toggle">' +
@@ -126,6 +127,19 @@
 
     if (act === 'copy') {
       copyLink(student.parentToken, $msg);
+      return;
+    }
+
+    if (act === 'record') {
+      const result = A.openRecordForStudent(student);
+      if (result === false) {
+        $msg.textContent = '반이 지정되지 않았습니다. 반을 먼저 지정해 주세요.';
+        return;
+      }
+      $msg.textContent = '';
+      result.catch(function (err) {
+        if (!A.handleAuthLoss(err)) $msg.textContent = err.message;
+      });
       return;
     }
 
