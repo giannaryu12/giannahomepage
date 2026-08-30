@@ -200,7 +200,7 @@
 
   function fillRecordView() {
     $('recordWho').textContent = currentStudent.name + (currentStudent.grade ? ' · ' + currentStudent.grade : '');
-    $('recordDate').textContent = currentDate + ' 기록';
+    $('recordDateInput').value = currentDate;
     $('recProgress').value = recordForm.progress;
     $('recTestName').value = recordForm.testName;
     $('recTestScore').value = recordForm.testScore;
@@ -265,6 +265,48 @@
       });
   }
 
+  // 기록 화면에서 날짜를 바꾸면 그 날짜의 기록을 다시 불러온다.
+  // 입력 중이던 내용은 (반·날짜·학생) 단위로 임시저장돼 있으므로 사라지지 않고,
+  // 원래 날짜로 되돌리면 그대로 다시 나타난다.
+  let dateReqSeq = 0;
+
+  function changeRecordDate() {
+    if (!currentStudent) return;
+
+    const newDate = $('recordDateInput').value;
+    if (!newDate || newDate === currentDate) return;
+
+    const st = currentStudent;
+    const cid = currentClassId;
+    const seq = ++dateReqSeq;
+
+    // 불러오는 중에 저장하면 어느 날짜에 쓰는 것인지 모호해진다.
+    $('recordSaveBtn').disabled = true;
+    $('recordStatus').textContent = '불러오는 중…';
+    showError($('recordError'), '');
+
+    api.call('admin.roster', { sessionKey: sessionKey, classId: cid, date: newDate })
+      .then(function (data) {
+        // 그 사이 날짜를 또 바꿨거나 다른 학생을 열었으면 이 응답은 버린다.
+        if (seq !== dateReqSeq || currentStudent !== st) return;
+        openRecord(st, cid, newDate, recordOrigin, data.existingRecords);
+      })
+      .catch(function (err) {
+        if (seq !== dateReqSeq || currentStudent !== st) return;
+        $('recordStatus').textContent = '';
+        if (!handleAuthLoss(err)) {
+          showError($('recordError'), err.message);
+          // 못 불러왔으면 화면은 아직 원래 날짜의 기록이다. 칸도 되돌려 놓는다.
+          $('recordDateInput').value = currentDate;
+        }
+      })
+      .finally(function () {
+        if (seq === dateReqSeq) $('recordSaveBtn').disabled = false;
+      });
+  }
+
+  $('recordDateInput').addEventListener('change', changeRecordDate);
+
   $('recordView').addEventListener('click', function (e) {
     const btn = e.target.closest('.gi-choice');
     if (!btn) return;
@@ -300,10 +342,13 @@
     const st = currentStudent;
     const cid = currentClassId;
     const dt = currentDate;
-    const stillOpen = function () { return currentStudent === st; };
+    // 날짜만 바꿔도 화면은 다른 기록이 된다. 학생과 날짜가 모두 그대로일 때만
+    // 이 저장의 결과를 화면에 반영한다.
+    const stillOpen = function () { return currentStudent === st && currentDate === dt; };
 
     $('recordSaveBtn').disabled = true;
     $('recordBack').disabled = true;
+    $('recordDateInput').disabled = true;
     $('recordStatus').textContent = '저장 중…';
     showError($('recordError'), '');
 
@@ -330,6 +375,7 @@
     }).finally(function () {
       $('recordSaveBtn').disabled = false;
       $('recordBack').disabled = false;
+      $('recordDateInput').disabled = false;
     });
   }
 
