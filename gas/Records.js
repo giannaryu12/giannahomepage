@@ -19,7 +19,7 @@ function handleAdminRoster(body) {
   const students = readTable(SHEETS.STUDENTS)
     .filter(function (s) {
       return String(s.classId) === String(body.classId)
-        && String(s.active).toUpperCase() !== 'FALSE';
+        && String(s.active).toUpperCase() === 'TRUE';
     })
     .map(function (s) {
       return { studentId: s.studentId, name: s.name, grade: s.grade };
@@ -36,8 +36,13 @@ function handleAdminRoster(body) {
 function handleAdminSaveBatch(body) {
   requireSession_(body.sessionKey);
 
+  const clientRequestId = body.clientRequestId;
+  if (typeof clientRequestId !== 'string' || clientRequestId.length < 1 || clientRequestId.length > 200) {
+    return fail('MISSING_PARAM', 'clientRequestId가 올바르지 않습니다.');
+  }
+
   const cache = CacheService.getScriptCache();
-  const dedupKey = 'req:' + body.clientRequestId;
+  const dedupKey = 'req:' + clientRequestId;
   const seen = cache.get(dedupKey);
   if (seen) return ok({ saved: Number(seen), deduped: true });
 
@@ -55,27 +60,8 @@ function handleAdminSaveBatch(body) {
     let saved = 0;
 
     body.records.forEach(function (rec) {
-      const match = existing.filter(function (r) {
-        return String(r.studentId) === String(rec.studentId)
-          && String(r.date) === String(rec.date);
-      })[0];
-
-      const payload = {
-        studentId: rec.studentId,
-        classId: body.classId,
-        date: rec.date,
-        progress: rec.progress || '',
-        homeworkStatus: rec.homeworkStatus || '',
-        homeworkLevel: rec.homeworkLevel || '',
-        testName: rec.testName || '',
-        testScore: rec.testScore === '' || rec.testScore === null ? '' : rec.testScore,
-        testMax: rec.testMax === '' || rec.testMax === null ? '' : rec.testMax,
-        attendance: rec.attendance || '',
-        nextHomework: rec.nextHomework || '',
-        comment: rec.comment || '',
-        clientRequestId: body.clientRequestId,
-        updatedAt: now,
-      };
+      const match = findRecordMatch(existing, rec.studentId, rec.date);
+      const payload = buildRecordPayload(rec, body.classId, clientRequestId, now);
 
       if (match) {
         updateRowById(SHEETS.RECORDS, 'recordId', match.recordId, payload);
@@ -83,11 +69,13 @@ function handleAdminSaveBatch(body) {
         payload.recordId = generateRecordId(new Date());
         payload.createdAt = now;
         appendRow(SHEETS.RECORDS, payload);
+        existing.push(payload);
       }
       saved++;
     });
 
-    cache.put(dedupKey, String(saved), DEDUP_TTL_SECONDS);
+    if (saved > 0) cache.put(dedupKey, String(saved), DEDUP_TTL_SECONDS);
+    SpreadsheetApp.flush();
     return ok({ saved: saved });
   } finally {
     lock.releaseLock();
