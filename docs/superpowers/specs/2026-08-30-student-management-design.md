@@ -1,0 +1,331 @@
+# 학생관리 — 설계 문서
+
+- 작성일: 2026-08-30
+- 대상 저장소: 지아나영어 홈페이지 (`index.html` 단일 정적 페이지)
+- 상태: 승인됨 (구현 계획 작성 전)
+
+## 1. 개요
+
+지아나영어 홈페이지에 `학생관리` 탭을 추가하고, 그 아래에 다음 두 화면을 붙인다.
+
+- **학부모 화면** — 자녀의 매 수업 피드백(진도·과제·시험·출결·코멘트)을 누적된 형태로 열람
+- **선생님 화면** — 수업 직후 반 단위로 피드백을 입력
+
+데이터는 구글시트에 누적하고, Google Apps Script(GAS)를 JSON API로 사용한다. 프론트엔드는 정적 파일로 Netlify에 배포한다.
+
+## 2. 결정 사항
+
+| 항목 | 결정 | 비고 |
+|---|---|---|
+| 아키텍처 | Netlify 정적 프론트 + GAS Web App API + 구글시트 DB | clasp로 GAS 코드를 저장소에서 관리 |
+| 학부모 접근 | 학생별 32자 랜덤 토큰 링크 (`/p/<토큰>`) | PIN 없음 |
+| 인증 강화 | **없음** (PIN·레이트리밋 모두 제외) | §8에 트레이드오프 기록 |
+| 선생님 접근 | 비밀번호 + 세션키 | 쓰기 권한이므로 유지 |
+| 입력 방식 | 전용 웹 화면, 반 단위 일괄 입력 | 시트 직접 편집도 항상 가능 |
+| 규모 | 학생 30~150명, 반별 관리 | 강사는 1인 기준 |
+| 범위 | MVP 우선 | §3 참조 |
+
+## 3. 범위
+
+### MVP에 포함
+
+- 학부모 열람 화면 (요약 · 성적 추이 · 수업 기록 타임라인)
+- 선생님 입력 화면 (반 선택 → 날짜 → 반 전체 일괄 입력 → 저장)
+- 학생 관리 (등록 / 링크 발급 / 링크 재발급 / 비활성화)
+- 구글시트 누적 저장
+- Netlify 배포 + 기존 홈페이지 nav에 `학생관리` 추가
+
+### 명시적으로 제외 (2차 이후)
+
+- 카카오 알림톡 · 이메일 자동 발송
+- 파일 첨부 (사진, 답안지 스캔)
+- 강사 여러 명 / 강사별 권한 분리
+- 결제 · 수강료 관리
+- 학부모 쪽 답글 · 문의 기능
+
+## 4. 아키텍처
+
+```
+[학부모 브라우저]  ─┐
+                    ├─→ Netlify (정적 HTML/CSS/JS)
+[선생님 브라우저]  ─┘         │
+                              │ POST (text/plain)
+                              ▼
+                     GAS Web App (doPost)
+                              │
+                              ▼
+                         구글시트 (DB)
+```
+
+**GAS를 택한 이유**: 서버 비용이 없고, 무엇보다 장애 시 선생님이 구글시트를 직접 열어 눈으로 확인하고 고칠 수 있다. 이 규모에서는 GAS의 느린 응답(300~900ms)보다 이 운영상 안전망이 더 가치 있다.
+
+**대안으로 검토 후 기각한 것**
+
+- *Netlify Functions + Sheets API(서비스 계정)* — 빠르고 CORS가 깔끔하지만 GCP 프로젝트·서비스 계정·키 관리로 초기 설정이 무겁다.
+- *GAS 단독(HtmlService)* — 가장 단순하지만 URL이 `script.google.com/...` 형태가 되고, iframe 샌드박스 제약으로 목표한 UI 품질을 내기 어렵다.
+
+## 5. 저장소 구조
+
+```
+/
+├─ public/                      Netlify publish directory
+│  ├─ index.html                기존 홈페이지 (nav에 "학생관리" 추가)
+│  ├─ students/index.html       학생관리 랜딩
+│  ├─ parent/index.html         학부모 열람 화면
+│  ├─ admin/index.html          선생님 입력 화면
+│  └─ assets/
+│     ├─ css/tokens.css         기존 index.html에서 추출한 공유 디자인 토큰
+│     ├─ css/app.css
+│     └─ js/
+│        ├─ config.js           GAS 배포 URL
+│        ├─ api.js              GAS 호출 래퍼
+│        ├─ parent.js
+│        └─ admin.js
+├─ gas/                         clasp 관리 영역
+│  ├─ .clasp.json
+│  ├─ appsscript.json
+│  ├─ Code.js                   doPost 라우터
+│  ├─ Auth.js                   토큰·세션 검증
+│  ├─ Students.js               학생·반 조회, 토큰 발급
+│  ├─ Records.js                기록 CRUD
+│  ├─ Sheets.js                 시트 접근 헬퍼
+│  └─ lib/                      순수 로직 (Node에서 단위 테스트)
+│     ├─ token.js
+│     ├─ validate.js
+│     └─ summary.js
+├─ test/                        vitest
+├─ netlify.toml
+└─ docs/superpowers/specs/
+```
+
+기존 `index.html`은 `git mv`로 `public/`으로 옮긴다. Netlify publish 디렉터리를 깨끗하게 유지하고 `gas/`·`docs/`가 배포에 섞이지 않게 하기 위함이다.
+
+## 6. 데이터 모델 (구글시트 4장)
+
+### `Students`
+
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| studentId | string | `S001` 형태, 불변 |
+| name | string | 학생 이름 |
+| grade | string | 학년 (예: 고1) |
+| classId | string | `Classes.classId` 참조 |
+| parentToken | string | 32자 랜덤. 재발급 시 교체 |
+| active | boolean | false면 링크 무효 |
+| note | string | 선생님 메모 (학부모에게 노출 안 됨) |
+| createdAt | ISO8601 | |
+
+### `Classes`
+
+| 컬럼 | 설명 |
+|---|---|
+| classId | `C01` 형태 |
+| className | 예: Structure 화목 5시 |
+| schedule | 표시용 문자열 |
+| active | boolean |
+
+### `Records` — 매 수업 1행, 여기가 누적된다
+
+| 컬럼 | 값 |
+|---|---|
+| recordId | `R` + 타임스탬프 + 랜덤 |
+| studentId | 참조 |
+| classId | 참조 (기록 시점의 반) |
+| date | `YYYY-MM-DD` |
+| progress | 진도 (교재·범위) |
+| homeworkStatus | `제출` \| `부분제출` \| `미제출` \| `해당없음` |
+| homeworkLevel | `상` \| `중` \| `하` \| `` |
+| testName | 시험명 (예: 단어시험) |
+| testScore | 숫자 |
+| testMax | 만점 |
+| attendance | `출석` \| `지각` \| `결석` \| `보강` |
+| nextHomework | 다음 수업 과제 |
+| comment | 선생님 코멘트 |
+| clientRequestId | 이 행을 기록한 저장 요청의 id (일괄 저장이면 같은 배치의 행들이 같은 값을 갖는다) |
+| createdAt / updatedAt | ISO8601 |
+
+`(studentId, date)`는 사실상 유일해야 한다. 같은 조합으로 저장 요청이 오면 새 행을 만들지 않고 기존 행을 갱신한다(upsert).
+
+시험을 보지 않은 날은 `testName` · `testScore` · `testMax`를 비워 둔다. 요약 통계는 값이 있는 기록만 평균에 넣는다.
+
+### `Config`
+
+`key` / `value` 2열. 학원명, 학부모 화면 안내 문구 등 코드 수정 없이 바꿀 값.
+
+## 7. API 명세
+
+### 호출 규약
+
+- **모든 요청은 `POST`**, body는 JSON 문자열, `Content-Type: text/plain;charset=utf-8`
+- `text/plain`을 쓰는 이유: 브라우저의 preflight(OPTIONS)를 피하기 위함. GAS Web App은 OPTIONS를 처리하지 못한다.
+- 응답은 **항상 JSON**. 모든 핸들러를 try/catch로 감싸 GAS가 HTML 에러 페이지를 반환하지 못하게 한다.
+- 응답 형태: `{ ok: true, data: {...} }` 또는 `{ ok: false, error: "코드", message: "사람이 읽는 문구" }`
+
+### 엔드포인트
+
+**학부모**
+
+| action | 요청 | 응답 |
+|---|---|---|
+| `parent.load` | `{token}` | `{student:{name,grade,className}, summary, records[], nextCursor}` |
+| `parent.more` | `{token, cursor}` | `{records[], nextCursor}` |
+
+**선생님** (`admin.login` 외 전부 `sessionKey` 필요)
+
+| action | 요청 | 응답 |
+|---|---|---|
+| `admin.login` | `{password}` | `{sessionKey, expiresAt}` |
+| `admin.classes` | `{sessionKey}` | `{classes[]}` |
+| `admin.roster` | `{sessionKey, classId, date}` | `{students[], existingRecords[]}` |
+| `admin.saveBatch` | `{sessionKey, classId, date, records[], clientRequestId}` | `{saved: n}` |
+| `admin.students` | `{sessionKey}` | `{students[]}` |
+| `admin.upsertStudent` | `{sessionKey, student}` | `{student}` |
+| `admin.reissueToken` | `{sessionKey, studentId}` | `{parentToken}` |
+
+### 서버측 규칙
+
+- **응답 위생** — 학부모 응답은 항상 `studentId`로 필터링한 뒤 반환하고, `parentToken`·`note` 필드는 제거한다. 다른 학생 정보가 섞여 나가는 경로를 만들지 않는다.
+- **동시 쓰기** — 모든 쓰기는 `LockService.getScriptLock()`으로 감싼다. 타임아웃 10초. 반 전체 일괄 저장에서 특히 필요하다.
+- **중복 방지** — `clientRequestId`는 저장 요청(배치) 단위로 클라이언트가 생성한다. GAS는 이 id를 CacheService에 10분간 기록하고, 이미 처리한 id면 저장을 건너뛰고 이전 결과를 반환한다. 더블클릭·재시도로 같은 기록이 두 줄 생기는 것을 막는다.
+- **정보 노출 최소화** — 유효하지 않은 토큰에 대해서도 유효한 경우와 동일한 문구를 반환한다. 토큰 존재 여부 자체를 알려주지 않는다.
+
+## 8. 보안 모델과 감수한 위험
+
+### 채택한 구조
+
+- **학부모**: 32자 랜덤 토큰 링크만으로 열람. PIN 없음, 시도 횟수 제한 없음.
+- **선생님**: 비밀번호(Script Properties의 `ADMIN_PASSWORD`) → 성공 시 랜덤 `sessionKey` 발급, CacheService에 8시간 TTL. 이후 요청은 sessionKey만 전송해 비밀번호가 매번 네트워크를 오가지 않게 한다.
+- GAS 배포 설정: `실행: 나(선생님 계정) / 접근: 모든 사용자`. 이 조합이라야 학부모가 구글 로그인 없이 호출할 수 있고, 인증 책임은 전적으로 애플리케이션 코드가 진다.
+
+### 명시적으로 감수한 위험
+
+**링크가 곧 열쇠다.** PIN과 레이트리밋을 두지 않기로 했으므로, 학부모 링크가 유출되면(단톡방 오전달, 화면 캡처 공유 등) 해당 학생의 기록은 그대로 열람된다. 보호 대상이 미성년자의 성적 기록이라는 점에서 이는 인지하고 수용한 위험이다.
+
+이를 상쇄하는 장치는 두 가지다.
+
+1. **링크 재발급** — 선생님 화면에서 언제든 새 토큰을 발급해 이전 링크를 즉시 무효화할 수 있다. 학부모 쪽 추가 불편은 없다.
+2. **비활성화** — `Students.active`를 false로 두면 링크가 동작하지 않는다.
+
+토큰은 암호학적으로 충분한 길이(32자)를 사용하므로, 링크가 유출되지 않는 한 무작위 추측으로 뚫릴 가능성은 없다.
+
+### 추가 방어
+
+- 구글시트 공유 권한은 **선생님 계정 단독**으로 제한한다. 시트에는 전교생 기록이 들어있어, 시트 권한이 실질적인 최종 방어선이다.
+- 관리자 비밀번호는 16자 이상으로 설정한다. 시도 횟수 제한이 없으므로 길이가 유일한 방어다.
+
+## 9. 화면 설계
+
+### 공통
+
+기존 홈페이지의 디자인 토큰을 그대로 상속한다 — 포레스트 `#1b3b2b`, 가넷 `#8b0f0f`, 골드 `#b3894f`, 크림 `#f6f2e6`, Fraunces / Rosario / 송명 폰트, 다크모드 대응. 토큰은 `assets/css/tokens.css`로 추출해 세 화면이 공유한다.
+
+상태 색은 절제한다: 출석·제출 = 포레스트, 지각·부분제출 = 골드, 결석·미제출 = 가넷. 형광색은 쓰지 않는다.
+
+**모바일 우선**으로 작성한다. 학부모는 사실상 전원 휴대폰으로 열람한다.
+
+### 기존 홈페이지
+
+nav에 `학생관리` 항목을 추가한다: Philosophy · Programs · Results · **학생관리** · Visit Blog.
+
+### `/students/` 랜딩
+
+학부모용 안내("카카오톡으로 받으신 링크로 들어와 주세요")와 선생님 입구(`/admin`) 두 갈래. 기존 포레스트+골드 톤을 유지한다.
+
+### `/p/<토큰>` — 학부모 화면
+
+```
+학생 이름 · 반 · 최근 업데이트         포레스트 헤더
+──────────────────────────────
+[출석률 96%] [과제 88%] [평균 82점]   이번 달 요약 카드 3개
+──────────────────────────────
+        성적 추이 (인라인 SVG)
+──────────────────────────────
+▸ 10/12  진도: Unit 7 관계대명사
+         출석 · 과제 제출(상) · 단어 18/20
+         "관계대명사 계속 확인 필요…"    탭하면 펼쳐짐
+▸ 10/09  …
+              [ 더 보기 ]
+```
+
+구조의 참고 대상은 **Apple Health**의 「요약 카드 → 추이 → 타임라인」 3단 구성이다. "누적된 기록을 훑어본다"는 목적이 거의 동일하고, 큰 숫자로 먼저 전체 상태를 전달한 뒤 세부로 내려가는 순서가 이 맥락에 맞는다. 여백과 확장형 카드의 절제된 처리는 **Linear**를 참고한다.
+
+성적 추이 차트는 외부 라이브러리 없이 인라인 SVG로 그린다. 데이터 포인트가 2개 미만이면 차트를 숨기고 안내 문구를 보여준다.
+
+요약 카드의 통계는 서버에서 계산해 내려준다(`gas/lib/summary.js`).
+
+### `/admin` — 선생님 화면
+
+1. 로그인 (비밀번호)
+2. 반 선택 → 날짜 선택 (기본값 오늘)
+3. 해당 반 학생이 세로로 나열되고, 각 행에서 출결(4버튼) · 과제(4버튼) · 완성도(상중하) · 시험명/점수 · 코멘트를 입력
+4. 하단 고정 「전체 저장」 → `admin.saveBatch` 1회 호출
+
+**진도는 화면 상단에 한 번 입력해 반 전체에 일괄 적용한다.** 같은 반은 진도가 동일하므로, 이 하나로 입력 시간이 절반 이하로 줄어든다. 개별 학생만 다르면 그 행에서 덮어쓸 수 있다.
+
+입력 중인 내용은 `localStorage`에 자동 임시저장하고, 저장에 성공하면 지운다. 수업 직후 20명분을 입력하다 네트워크 오류로 날리는 것이 이 앱에서 가장 나쁜 시나리오이므로 여기는 확실히 막는다.
+
+별도 탭에서 학생 등록 · 링크 발급/복사 · 링크 재발급 · 비활성화를 처리한다.
+
+### 프론트엔드 에러 처리
+
+- 요청 타임아웃 15초
+- 읽기 요청만 네트워크 오류 시 1회 재시도. 쓰기는 재시도하지 않는다(중복 방지는 `clientRequestId`가 담당하되, 사용자에게 결과를 명확히 알린다)
+- 로딩 상태를 반드시 표시한다. GAS 응답이 최대 1초 가까이 걸리므로 아무 표시가 없으면 고장으로 느낀다
+
+## 10. 배포
+
+### Netlify
+
+```toml
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/p/:token"
+  to = "/parent/index.html?t=:token"
+  status = 200
+```
+
+GitHub 저장소를 연결해 push 시 자동 배포한다.
+
+### GAS
+
+`clasp push` → `clasp deploy`. 배포 URL은 `public/assets/js/config.js`에 둔다. 이 URL은 비밀이 아니다 — 인증은 토큰과 비밀번호가 담당한다.
+
+### 최초 1회 수동 설정
+
+1. 구글시트 생성, 시트 4장(`Students` / `Classes` / `Records` / `Config`) 헤더 입력
+2. 시트 공유 권한을 선생님 계정 단독으로 제한
+3. `clasp login` → `clasp create --parentId <시트ID>` (시트에 바인딩된 스크립트로 생성)
+4. Script Properties에 `ADMIN_PASSWORD` (16자 이상)와 `SHEET_ID` 등록. 시트 접근은 `getActiveSpreadsheet()`가 아니라 `openById(SHEET_ID)`로 명시적으로 연다 — 웹앱 실행 맥락에서 동작이 더 예측 가능하다
+5. GAS 배포: 실행 = 나 / 접근 = 모든 사용자
+6. 배포 URL을 `config.js`에 기입 후 커밋
+7. Netlify에 GitHub 저장소 연결
+
+## 11. 테스트 전략
+
+GAS는 그대로는 테스트하기 어렵다. 따라서 **`SpreadsheetApp`을 건드리지 않는 순수 로직을 `gas/lib/`로 분리**해 Node + vitest로 단위 테스트한다. 실제 버그가 발생하는 지점은 대부분 여기다.
+
+| 대상 | 방법 |
+|---|---|
+| 토큰 생성 (`lib/token.js`) | 단위 테스트 — 길이, 문자셋, 충돌 가능성 |
+| 레코드 검증 (`lib/validate.js`) | 단위 테스트 — 필수값, enum 범위, 날짜 형식, 점수 범위 |
+| 요약 통계 (`lib/summary.js`) | 단위 테스트 — 출석률·제출률·평균, 기록 0건/1건 경계 |
+| API 래퍼 (`assets/js/api.js`) | 단위 테스트 — 타임아웃, 재시도, 에러 형태 정규화 |
+| 시트 접근 계층 | 얇게 유지하고 수동 검증 |
+
+배포 후 수동 확인 체크리스트:
+
+- [ ] 정상 링크로 학부모 화면이 열린다
+- [ ] 잘못된 토큰은 정보를 노출하지 않는 문구를 보여준다
+- [ ] 재발급 후 이전 링크가 무효화된다
+- [ ] 반 전체 저장 후 새로고침해도 값이 유지된다
+- [ ] 같은 (학생, 날짜)로 다시 저장하면 행이 늘지 않고 갱신된다
+- [ ] 저장 중 네트워크를 끊으면 입력값이 보존된다
+- [ ] 모바일(375px)에서 두 화면 모두 가로 스크롤이 없다
+- [ ] 다크모드에서 상태 색이 판별된다
+
+## 12. 열린 항목
+
+- 학부모 화면의 "이번 달" 기준을 달력월로 할지 최근 30일로 할지 — 구현 시 달력월로 시작하고 사용 후 조정
+- 학생이 반을 옮겼을 때 과거 기록의 `classId` 처리 — 기록 시점의 반을 그대로 보존한다(위 스키마대로). 학부모 화면에는 현재 반을 표시한다
