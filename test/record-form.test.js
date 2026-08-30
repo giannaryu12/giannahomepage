@@ -168,13 +168,23 @@ describe('진도 영역', () => {
 });
 
 describe('withBookDefaults', () => {
-  const lastBooks = { vocab: '능률보카', reading: '리딩튜터', grammar: '', listening: '', etc: '' };
+  const lastBooks = {
+    vocabBook: '능률보카', readingBook: '리딩튜터',
+    vocabNextBook: '단어 워크북', vocabTestBook: '단어시험지',
+  };
 
   it('빈 교재 칸을 직전 수업 교재로 채운다', () => {
     const v = withBookDefaults(toFormValues(null), lastBooks);
     expect(v.vocabBook).toBe('능률보카');
     expect(v.readingBook).toBe('리딩튜터');
     expect(v.grammarBook).toBe('');
+  });
+
+  it('숙제 교재와 시험 교재도 채운다', () => {
+    const v = withBookDefaults(toFormValues(null), lastBooks);
+    expect(v.vocabNextBook).toBe('단어 워크북');
+    expect(v.vocabTestBook).toBe('단어시험지');
+    expect(v.listeningTestBook).toBe('');
   });
 
   it('이미 값이 있는 교재 칸은 덮어쓰지 않는다', () => {
@@ -226,9 +236,12 @@ describe('다음 과제·시험 영역', () => {
     expect(rec.nextHomework).toBe('옛 과제');
   });
 
-  it('교재 자동 채움이 다음 과제·시험 칸을 건드리지 않는다', () => {
-    const v = withBookDefaults(toFormValues(null), { vocab: '능률보카', listening: '' });
+  it('교재 자동 채움이 숙제 내용·시험 점수 칸을 건드리지 않는다', () => {
+    const v = withBookDefaults(toFormValues(null), {
+      vocabBook: '능률보카', vocabNextBook: '워크북', vocabTestBook: '시험지',
+    });
     expect(v.vocabNext).toBe('');
     expect(v.vocabTestScore).toBe('');
+    expect(v.vocabTestMax).toBe('');
   });
 });

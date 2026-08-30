@@ -5,6 +5,7 @@ import {
   TEST_AREAS,
   TEST_FIELDS,
   NEXT_FIELDS,
+  BOOK_FIELDS,
   RECORD_AREA_FIELDS,
   areaLines,
   areaSummary,
@@ -97,17 +98,30 @@ describe('TEST_AREAS / NEXT_FIELDS', () => {
     expect(TEST_AREAS.map((a) => a.label)).toEqual(['단어', '듣기']);
   });
 
-  it('시험 필드는 영역마다 점수·만점 두 개다', () => {
+  it('시험 필드는 영역마다 교재·점수·만점 세 개다', () => {
     expect(TEST_FIELDS).toEqual([
-      'vocabTestScore', 'vocabTestMax',
-      'listeningTestScore', 'listeningTestMax',
+      'vocabTestBook', 'vocabTestScore', 'vocabTestMax',
+      'listeningTestBook', 'listeningTestScore', 'listeningTestMax',
     ]);
   });
 
-  it('다음 과제 필드는 진도와 같은 다섯 영역이다', () => {
+  it('숙제 필드는 진도와 같은 다섯 영역에 교재·내용 두 개씩이다', () => {
     expect(NEXT_FIELDS).toEqual([
-      'vocabNext', 'readingNext', 'grammarNext', 'listeningNext', 'etcNext',
+      'vocabNextBook', 'vocabNext',
+      'readingNextBook', 'readingNext',
+      'grammarNextBook', 'grammarNext',
+      'listeningNextBook', 'listeningNext',
+      'etcNextBook', 'etcNext',
     ]);
+  });
+
+  it('BOOK_FIELDS는 교재 칸 열두 개를 모두 담는다', () => {
+    expect(BOOK_FIELDS).toEqual([
+      'vocabBook', 'readingBook', 'grammarBook', 'listeningBook', 'etcBook',
+      'vocabNextBook', 'readingNextBook', 'grammarNextBook', 'listeningNextBook', 'etcNextBook',
+      'vocabTestBook', 'listeningTestBook',
+    ]);
+    BOOK_FIELDS.forEach((f) => expect(RECORD_AREA_FIELDS).toContain(f));
   });
 
   it('RECORD_AREA_FIELDS는 세 묶음을 모두 담고 중복이 없다', () => {
@@ -118,11 +132,19 @@ describe('TEST_AREAS / NEXT_FIELDS', () => {
 
 describe('nextLines', () => {
   it('내용이 있는 영역만 진도와 같은 순서로 돌려준다', () => {
-    const lines = nextLines({ etcNext: '영어 일기', vocabNext: 'Day 14' });
+    const lines = nextLines({
+      etcNext: '영어 일기',
+      vocabNextBook: '능률보카', vocabNext: 'Day 14',
+    });
     expect(lines).toEqual([
-      { key: 'vocab', label: '단어', text: 'Day 14' },
-      { key: 'etc', label: '기타', text: '영어 일기' },
+      { key: 'vocab', label: '단어', book: '능률보카', text: 'Day 14' },
+      { key: 'etc', label: '기타', book: '', text: '영어 일기' },
     ]);
+  });
+
+  it('교재만 있고 내용이 비면 내보내지 않는다', () => {
+    // 교재는 미리 채워지므로 그 영역 숙제를 냈다는 뜻이 아니다.
+    expect(nextLines({ readingNextBook: '리딩튜터', readingNext: '' })).toEqual([]);
   });
 
   it('비어 있거나 공백뿐이면 내보내지 않는다', () => {
@@ -134,18 +156,24 @@ describe('nextLines', () => {
 describe('testLines', () => {
   it('점수와 만점이 모두 있는 시험만 돌려준다', () => {
     const lines = testLines({
-      vocabTestScore: 18, vocabTestMax: 20,
+      vocabTestBook: '워드마스터', vocabTestScore: 18, vocabTestMax: 20,
       listeningTestScore: '', listeningTestMax: '',
     });
     expect(lines).toEqual([
-      { key: 'vocab', label: '단어', score: '18', max: '20', pct: 90 },
+      { key: 'vocab', label: '단어', book: '워드마스터', score: '18', max: '20', pct: 90 },
     ]);
   });
 
   it('0점도 기록으로 본다', () => {
     // 0점이 "안 봤음"으로 뭉개지면 학부모가 볼 기록이 사라진다.
     const lines = testLines({ listeningTestScore: 0, listeningTestMax: 10 });
-    expect(lines).toEqual([{ key: 'listening', label: '듣기', score: '0', max: '10', pct: 0 }]);
+    expect(lines).toEqual([
+      { key: 'listening', label: '듣기', book: '', score: '0', max: '10', pct: 0 },
+    ]);
+  });
+
+  it('교재만 있고 점수가 없으면 내보내지 않는다', () => {
+    expect(testLines({ vocabTestBook: '워드마스터' })).toEqual([]);
   });
 
   it('만점이 0이거나 없으면 내보내지 않는다', () => {

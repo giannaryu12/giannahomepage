@@ -26,15 +26,24 @@
     PROGRESS_FIELDS.push(a.key + 'Book', a.key + 'Progress');
   });
 
-  const NEXT_FIELDS = PROGRESS_AREAS.map(function (a) { return a.key + 'Next'; });
+  const NEXT_FIELDS = [];
+  PROGRESS_AREAS.forEach(function (a) {
+    NEXT_FIELDS.push(a.key + 'NextBook', a.key + 'Next');
+  });
 
   const TEST_FIELDS = [];
   TEST_AREAS.forEach(function (a) {
-    TEST_FIELDS.push(a.key + 'TestScore', a.key + 'TestMax');
+    TEST_FIELDS.push(a.key + 'TestBook', a.key + 'TestScore', a.key + 'TestMax');
   });
 
   /** 시트 컬럼과 저장 페이로드가 챙겨야 할 영역 필드 전부. */
   const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
+
+  /** 직전 수업 값으로 미리 채우는 교재 칸들. */
+  const BOOK_FIELDS =
+    PROGRESS_AREAS.map(function (a) { return a.key + 'Book'; })
+      .concat(PROGRESS_AREAS.map(function (a) { return a.key + 'NextBook'; }))
+      .concat(TEST_AREAS.map(function (a) { return a.key + 'TestBook'; }));
 
   function trimmed(v) {
     return v === null || v === undefined ? '' : String(v).trim();
@@ -66,13 +75,14 @@
     return trimmed((record || {}).progress);
   }
 
-  /** 내용이 적힌 다음 과제만 진도와 같은 순서로. */
+  /** 내용이 적힌 숙제만 진도와 같은 순서로. 교재는 미리 채워지므로 기준이 아니다. */
   function nextLines(record) {
     const r = record || {};
     const out = [];
     PROGRESS_AREAS.forEach(function (a) {
       const text = trimmed(r[a.key + 'Next']);
-      if (text) out.push({ key: a.key, label: a.label, text: text });
+      if (!text) return;
+      out.push({ key: a.key, label: a.label, book: trimmed(r[a.key + 'NextBook']), text: text });
     });
     return out;
   }
@@ -93,6 +103,7 @@
       out.push({
         key: a.key,
         label: a.label,
+        book: trimmed(r[a.key + 'TestBook']),
         score: String(score),
         max: String(max),
         pct: Math.round((score / max) * 100),
@@ -103,7 +114,7 @@
 
   const api = {
     PROGRESS_AREAS, PROGRESS_FIELDS,
-    TEST_AREAS, TEST_FIELDS, NEXT_FIELDS, RECORD_AREA_FIELDS,
+    TEST_AREAS, TEST_FIELDS, NEXT_FIELDS, BOOK_FIELDS, RECORD_AREA_FIELDS,
     areaLines, areaSummary, nextLines, testLines,
   };
 

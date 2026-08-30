@@ -204,7 +204,8 @@ body.gi{
   gap:0.35rem;
   margin-bottom:0.35rem;
 }
-.gi-area.is-single{ grid-template-columns:3.2rem minmax(0,1fr); }
+/* 시험 줄만 교재·점수·만점 세 칸이다. */
+.gi-area.is-test{ grid-template-columns:3.2rem minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); }
 .gi-area-label{
   font-size:0.82rem;
   font-weight:700;
@@ -212,7 +213,9 @@ body.gi{
 }
 @media (max-width:400px){
   .gi-area{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
-  .gi-area.is-single{ grid-template-columns:minmax(0,1fr); }
+  .gi-area.is-test{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  /* 교재는 한 줄을 다 쓰고, 점수·만점이 그 아래 나란히 놓인다. */
+  .gi-area.is-test > .gi-input:first-of-type{ grid-column:1 / -1; }
   .gi-area-label{ grid-column:1 / -1; margin-top:0.3rem; }
 }
 

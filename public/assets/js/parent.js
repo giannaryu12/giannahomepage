@@ -181,7 +181,9 @@
   function groupRow(label, items) {
     if (!items.length) return '';
     const body = items.map(function (it) {
-      return '<div><span class="gi-area-book">' + esc(it.label) + '</span> ' + esc(it.text) + '</div>';
+      const book = it.book ? '<span class="gi-area-book">' + esc(it.book) + '</span> · ' : '';
+      return '<div><span class="gi-area-book">' + esc(it.label) + '</span> ' +
+        book + esc(it.text) + '</div>';
     }).join('');
     return '<div class="gi-rec-row"><dt>' + label + '</dt><dd>' + body + '</dd></div>';
   }
@@ -190,7 +192,7 @@
     const lines = PA.testLines(r);
     if (lines.length) {
       return groupRow('시험', lines.map(function (l) {
-        return { label: l.label, text: l.score + '/' + l.max };
+        return { label: l.label, book: l.book, text: l.score + '/' + l.max };
       }));
     }
 
@@ -204,11 +206,11 @@
   function nextRows(r) {
     const lines = PA.nextLines(r);
     if (lines.length) {
-      return groupRow('다음 과제', lines.map(function (l) {
-        return { label: l.label, text: l.text };
+      return groupRow('숙제', lines.map(function (l) {
+        return { label: l.label, book: l.book, text: l.text };
       }));
     }
-    return row('다음 과제', r.nextHomework);
+    return row('숙제', r.nextHomework);
   }
 
   function recordHtml(r, index) {

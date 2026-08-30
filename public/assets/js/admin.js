@@ -225,17 +225,19 @@
     }).join('');
 
     $('recTests').innerHTML = TEST_AREAS.map(function (a) {
-      return '<div class="gi-area">' +
+      return '<div class="gi-area is-test">' +
         '<span class="gi-area-label">' + esc(a.label) + '</span>' +
+        textInput(a.key + 'TestBook', '교재', a.label + ' 시험 교재') +
         numberInput(a.key + 'TestScore', '점수', a.label + ' 시험 점수') +
         numberInput(a.key + 'TestMax', '만점', a.label + ' 시험 만점') +
         '</div>';
     }).join('');
 
     $('recNext').innerHTML = AREAS.map(function (a) {
-      return '<div class="gi-area is-single">' +
+      return '<div class="gi-area">' +
         '<span class="gi-area-label">' + esc(a.label) + '</span>' +
-        textInput(a.key + 'Next', '다음 과제', a.label + ' 다음 과제') +
+        textInput(a.key + 'NextBook', '교재', a.label + ' 숙제 교재') +
+        textInput(a.key + 'Next', '숙제', a.label + ' 숙제') +
         '</div>';
     }).join('');
   }
@@ -277,7 +279,7 @@
 
     showLegacy('recLegacyProgress', '이전 진도 기록: ', recordForm.progress);
     showLegacy('recLegacyTest', '이전 시험 기록: ', legacyTestText());
-    showLegacy('recLegacyNext', '이전 다음 과제: ', recordForm.nextHomework);
+    showLegacy('recLegacyNext', '이전 숙제 기록: ', recordForm.nextHomework);
 
     $('recComment').value = recordForm.comment;
     renderChoiceGroup('recAttendance', ATTENDANCE, 'attendance');

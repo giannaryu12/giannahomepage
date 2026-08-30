@@ -3,6 +3,7 @@ import {
   findRecordMatch,
   buildRecordPayload,
   RECORD_AREA_FIELDS,
+  BOOK_FIELDS,
   lastBooksOf,
 } from '../gas/lib/records.js';
 
@@ -75,9 +76,11 @@ describe('buildRecordPayload', () => {
       grammarBook: '', grammarProgress: '',
       listeningBook: '', listeningProgress: '',
       etcBook: '', etcProgress: '',
-      vocabNext: '', readingNext: '', grammarNext: '', listeningNext: '', etcNext: '',
-      vocabTestScore: '', vocabTestMax: '',
-      listeningTestScore: '', listeningTestMax: '',
+      vocabNextBook: '', vocabNext: '', readingNextBook: '', readingNext: '',
+      grammarNextBook: '', grammarNext: '', listeningNextBook: '', listeningNext: '',
+      etcNextBook: '', etcNext: '',
+      vocabTestBook: '', vocabTestScore: '', vocabTestMax: '',
+      listeningTestBook: '', listeningTestScore: '', listeningTestMax: '',
       homeworkStatus: '제출',
       homeworkLevel: '상',
       testName: '단어시험',
@@ -152,21 +155,31 @@ describe('buildRecordPayload', () => {
 });
 
 describe('lastBooksOf', () => {
-  it('가장 최근 날짜의 교재를 영역별로 돌려준다', () => {
+  it('가장 최근 날짜의 교재를 교재 칸마다 돌려준다', () => {
     const books = lastBooksOf([
       { date: '2026-08-16', vocabBook: '옛 단어책', readingBook: '옛 독해책' },
       { date: '2026-08-23', vocabBook: '새 단어책' },
     ]);
-    expect(books.vocab).toBe('새 단어책');
+    expect(books.vocabBook).toBe('새 단어책');
   });
 
-  it('최근 기록에 그 영역 교재가 비어 있으면 더 예전 기록에서 찾는다', () => {
+  it('진도·숙제·시험 교재를 각각 따로 기억한다', () => {
+    const books = lastBooksOf([{
+      date: '2026-08-30',
+      vocabBook: '능률보카', vocabNextBook: '워크북', vocabTestBook: '단어시험지',
+    }]);
+    expect(books.vocabBook).toBe('능률보카');
+    expect(books.vocabNextBook).toBe('워크북');
+    expect(books.vocabTestBook).toBe('단어시험지');
+  });
+
+  it('최근 기록에 그 칸이 비어 있으면 더 예전 기록에서 찾는다', () => {
     // 그날 독해를 안 했다고 해서 독해 교재가 바뀐 것은 아니다.
     const books = lastBooksOf([
       { date: '2026-08-16', readingBook: '리딩튜터' },
       { date: '2026-08-23', readingBook: '' },
     ]);
-    expect(books.reading).toBe('리딩튜터');
+    expect(books.readingBook).toBe('리딩튜터');
   });
 
   it('날짜 순서와 무관하게 최신 것이 이긴다', () => {
@@ -175,15 +188,16 @@ describe('lastBooksOf', () => {
       { date: '2026-08-02', vocabBook: '옛것' },
       { date: '2026-08-16', vocabBook: '중간' },
     ]);
-    expect(books.vocab).toBe('최신');
+    expect(books.vocabBook).toBe('최신');
   });
 
-  it('기록이 없으면 다섯 영역이 모두 빈 문자열이다', () => {
-    expect(lastBooksOf([])).toEqual({ vocab: '', reading: '', grammar: '', listening: '', etc: '' });
-    expect(lastBooksOf(null).vocab).toBe('');
+  it('기록이 없으면 교재 칸이 모두 빈 문자열이다', () => {
+    const books = lastBooksOf([]);
+    BOOK_FIELDS.forEach((f) => expect(books[f]).toBe(''));
+    expect(lastBooksOf(null).vocabBook).toBe('');
   });
 
   it('공백만 있는 교재는 값으로 치지 않는다', () => {
-    expect(lastBooksOf([{ date: '2026-08-30', vocabBook: '   ' }]).vocab).toBe('');
+    expect(lastBooksOf([{ date: '2026-08-30', vocabBook: '   ' }]).vocabBook).toBe('');
   });
 });

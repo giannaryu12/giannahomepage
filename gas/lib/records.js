@@ -16,18 +16,27 @@ const PROGRESS_FIELDS = PROGRESS_AREA_KEYS.reduce(function (acc, k) {
   return acc;
 }, []);
 
-const NEXT_FIELDS = PROGRESS_AREA_KEYS.map(function (k) { return k + 'Next'; });
+const NEXT_FIELDS = PROGRESS_AREA_KEYS.reduce(function (acc, k) {
+  acc.push(k + 'NextBook', k + 'Next');
+  return acc;
+}, []);
 
 /** 시험은 단어·듣기 둘만 본다. */
 const TEST_AREA_KEYS = ['vocab', 'listening'];
 
 const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
-  acc.push(k + 'TestScore', k + 'TestMax');
+  acc.push(k + 'TestBook', k + 'TestScore', k + 'TestMax');
   return acc;
 }, []);
 
 /** 시트 컬럼과 저장 페이로드가 챙겨야 할 영역 필드 전부. */
 const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
+
+/** 직전 수업 값으로 미리 채우는 교재 칸들. */
+const BOOK_FIELDS =
+  PROGRESS_AREA_KEYS.map(function (k) { return k + 'Book'; })
+    .concat(PROGRESS_AREA_KEYS.map(function (k) { return k + 'NextBook'; }))
+    .concat(TEST_AREA_KEYS.map(function (k) { return k + 'TestBook'; }));
 
 /** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
 function findRecordMatch(rows, studentId, date) {
@@ -69,7 +78,7 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
 }
 
 /**
- * 그 학생이 마지막으로 쓴 교재를 영역별로 찾는다.
+ * 그 학생이 마지막으로 쓴 교재를 교재 칸마다 찾는다. 키는 필드 이름 그대로다.
  *
  * 최신 기록부터 훑으며 처음 만나는 비어 있지 않은 값을 쓴다. 그날 안 한
  * 영역은 교재가 비어 있을 뿐 교재가 바뀐 것이 아니므로, 최신 한 건만
@@ -81,12 +90,12 @@ function lastBooksOf(records) {
   });
 
   const out = {};
-  PROGRESS_AREA_KEYS.forEach(function (key) {
-    out[key] = '';
+  BOOK_FIELDS.forEach(function (field) {
+    out[field] = '';
     for (let i = 0; i < sorted.length; i++) {
-      const v = sorted[i][key + 'Book'];
+      const v = sorted[i][field];
       const book = v === null || v === undefined ? '' : String(v).trim();
-      if (book) { out[key] = book; return; }
+      if (book) { out[field] = book; return; }
     }
   });
   return out;
@@ -98,6 +107,7 @@ if (typeof module !== 'undefined') {
     PROGRESS_FIELDS,
     NEXT_FIELDS,
     TEST_FIELDS,
+    BOOK_FIELDS,
     RECORD_AREA_FIELDS,
     findRecordMatch,
     buildRecordPayload,

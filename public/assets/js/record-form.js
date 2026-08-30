@@ -9,8 +9,8 @@
   const PA = typeof module !== 'undefined'
     ? require('./progress-areas.js')
     : global.GI_PROGRESS_AREAS;
-  const AREAS = PA.PROGRESS_AREAS;
   const AREA_FIELDS = PA.RECORD_AREA_FIELDS;
+  const BOOK_FIELDS = PA.BOOK_FIELDS;
 
   function str(v) {
     return v === null || v === undefined ? '' : String(v);
@@ -55,9 +55,8 @@
   function withBookDefaults(values, lastBooks) {
     const out = Object.assign({}, values);
     const books = lastBooks || {};
-    AREAS.forEach(function (a) {
-      const field = a.key + 'Book';
-      if (!out[field]) out[field] = str(books[a.key]);
+    BOOK_FIELDS.forEach(function (field) {
+      if (!out[field]) out[field] = str(books[field]);
     });
     return out;
   }

@@ -40,6 +40,7 @@ describe('진도 영역 필드 목록', () => {
       'date', 'progress', 'homeworkStatus', 'homeworkLevel',
       'testName', 'testScore', 'testMax', 'attendance', 'nextHomework', 'comment',
     ].concat(GAS_FIELDS);
+
     PARENT_RECORD_FIELDS.forEach((f) => expect(known).toContain(f));
   });
 });
