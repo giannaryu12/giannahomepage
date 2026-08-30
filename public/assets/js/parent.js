@@ -1,0 +1,187 @@
+/**
+ * 학부모 열람 화면.
+ * URL의 ?t=<토큰>으로 기록을 불러와 요약·추이·타임라인을 그린다.
+ */
+(function () {
+  const api = createApi(window.GIANNA_CONFIG.GAS_URL);
+  const $state = document.getElementById('state');
+  const $content = document.getElementById('content');
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function showError(msg) {
+    $state.hidden = false;
+    $state.textContent = msg;
+    $content.hidden = true;
+  }
+
+  /* ---------- 요약 카드 ---------- */
+
+  function cardHtml(label, value, unit) {
+    const inner = value === null
+      ? '<span class="gi-card-value is-empty">기록 없음</span>'
+      : '<span class="gi-card-value">' + value + '<span class="gi-unit">' + unit + '</span></span>';
+    return '<div class="gi-card"><div class="gi-card-label">' + label + '</div>' + inner + '</div>';
+  }
+
+  function renderCards(summary) {
+    document.getElementById('cards').innerHTML =
+      cardHtml('출석률', summary.attendanceRate, '%') +
+      cardHtml('과제 제출률', summary.homeworkRate, '%') +
+      cardHtml('평균 점수', summary.avgScore, '점');
+  }
+
+  /* ---------- 성적 추이 ---------- */
+
+  function scorePoints(records) {
+    return records
+      .filter(function (r) {
+        return r.testScore !== '' && Number(r.testMax) > 0;
+      })
+      .map(function (r) {
+        return { date: r.date, pct: (Number(r.testScore) / Number(r.testMax)) * 100 };
+      })
+      .sort(function (a, b) { return a.date.localeCompare(b.date); });
+  }
+
+  function renderChart(records) {
+    const pts = scorePoints(records);
+    const $chart = document.getElementById('chart');
+
+    if (pts.length < 2) {
+      $chart.innerHTML = '<p class="gi-note">점수 기록이 2회 이상 쌓이면 추이가 표시됩니다.</p>';
+      return;
+    }
+
+    const W = 320, H = 110, PAD = 10;
+    const stepX = (W - PAD * 2) / (pts.length - 1);
+    const coords = pts.map(function (p, i) {
+      return {
+        x: PAD + stepX * i,
+        y: PAD + (1 - p.pct / 100) * (H - PAD * 2),
+        pct: Math.round(p.pct),
+        date: p.date,
+      };
+    });
+
+    const line = coords.map(function (c, i) {
+      return (i ? 'L' : 'M') + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
+    }).join(' ');
+
+    const dots = coords.map(function (c) {
+      return '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) +
+        '" r="3" fill="var(--garnet)"><title>' + esc(c.date) + ' · ' + c.pct + '점</title></circle>';
+    }).join('');
+
+    $chart.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
+      'aria-label="시험 점수 추이, ' + pts.length + '회 기록">' +
+      '<line x1="' + PAD + '" y1="' + (H - PAD) + '" x2="' + (W - PAD) + '" y2="' + (H - PAD) +
+      '" stroke="var(--border)" stroke-width="1"/>' +
+      '<path d="' + line + '" fill="none" stroke="var(--garnet)" stroke-width="2" ' +
+      'stroke-linejoin="round" stroke-linecap="round"/>' + dots + '</svg>' +
+      '<p class="gi-note" style="margin-top:.4rem">100점 환산 기준 · ' +
+      esc(coords[0].date) + ' ~ ' + esc(coords[coords.length - 1].date) + '</p>';
+  }
+
+  /* ---------- 타임라인 ---------- */
+
+  const ATTENDANCE_TONE = { '출석': 'is-good', '보강': 'is-good', '지각': 'is-warn', '결석': 'is-bad' };
+  const HOMEWORK_TONE = { '제출': 'is-good', '부분제출': 'is-warn', '미제출': 'is-bad', '해당없음': 'is-none' };
+
+  function badge(text, tone) {
+    if (!text) return '';
+    return '<span class="gi-badge ' + (tone || 'is-none') + '">' + esc(text) + '</span>';
+  }
+
+  function row(label, value) {
+    if (!value) return '';
+    return '<div class="gi-rec-row"><dt>' + label + '</dt><dd>' + esc(value) + '</dd></div>';
+  }
+
+  function recordHtml(r, index) {
+    const scoreText = (r.testScore !== '' && r.testMax !== '')
+      ? (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax
+      : '';
+
+    const badges =
+      badge(r.attendance, ATTENDANCE_TONE[r.attendance]) +
+      badge(r.homeworkStatus, HOMEWORK_TONE[r.homeworkStatus]) +
+      (r.homeworkLevel ? badge('완성도 ' + r.homeworkLevel, 'is-none') : '');
+
+    const comment = r.comment
+      ? '<div class="gi-rec-comment">' + esc(r.comment) + '</div>' : '';
+
+    return '' +
+      '<article class="gi-rec">' +
+        '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
+          '<span class="gi-rec-date">' + esc(r.date.slice(5).replace('-', '/')) + '</span>' +
+          '<span class="gi-rec-progress">' + esc(r.progress || '진도 미기록') + '</span>' +
+        '</button>' +
+        '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
+          '<dl style="margin:0">' +
+            '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
+            row('진도', r.progress) +
+            row('시험', scoreText) +
+            row('다음 과제', r.nextHomework) +
+          '</dl>' + comment +
+        '</div>' +
+      '</article>';
+  }
+
+  function renderRecords(records) {
+    const $records = document.getElementById('records');
+
+    if (!records.length) {
+      $records.innerHTML = '<p class="gi-note">아직 등록된 수업 기록이 없습니다.</p>';
+      return;
+    }
+
+    $records.innerHTML = records.map(recordHtml).join('');
+
+    $records.querySelectorAll('.gi-rec-top').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const body = document.getElementById(btn.getAttribute('aria-controls'));
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        body.hidden = open;
+      });
+    });
+  }
+
+  /* ---------- 진입 ---------- */
+
+  function tokenFromUrl() {
+    return new URLSearchParams(window.location.search).get('t') || '';
+  }
+
+  function start() {
+    const token = tokenFromUrl();
+    if (!token) {
+      showError('링크가 올바르지 않습니다. 선생님께 받으신 주소로 다시 접속해 주세요.');
+      return;
+    }
+
+    api.call('parent.load', { token: token }).then(function (data) {
+      document.getElementById('studentName').textContent = data.student.name + ' 학습 리포트';
+      document.getElementById('studentMeta').textContent =
+        [data.student.grade, data.student.className].filter(Boolean).join(' · ');
+      document.title = data.student.name + ' 학습 리포트 · 지아나영어';
+
+      renderCards(data.summary);
+      renderChart(data.records);
+      renderRecords(data.records);
+
+      $state.hidden = true;
+      $content.hidden = false;
+    }).catch(function (err) {
+      showError(err.message || '불러오지 못했습니다.');
+    });
+  }
+
+  start();
+})();
