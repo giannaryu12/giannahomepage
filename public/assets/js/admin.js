@@ -135,8 +135,8 @@
 
     api.call('admin.roster', { sessionKey: sessionKey, classId: classId, date: date })
       .then(function (data) {
-        entryRoster = data.students;
-        entryExistingRecords = data.existingRecords;
+        entryRoster = data.students || [];
+        entryExistingRecords = data.existingRecords || [];
         renderRoster();
       })
       .catch(function (err) {
@@ -242,7 +242,9 @@
     currentDate = date;
     recordOrigin = origin;
 
-    const lookupRecords = records || entryExistingRecords;
+    // records를 넘겼으면 그것만 본다. 빈 배열도 유효한 답(기록 없음)이므로
+    // 수업 탭이 들고 있는 다른 반/날짜 기록으로 넘어가면 안 된다.
+    const lookupRecords = records === undefined ? entryExistingRecords : (records || []);
     const rec = RF.findRecordFor(lookupRecords, student.studentId);
     let values = RF.toFormValues(rec);
 
@@ -291,32 +293,43 @@
   function saveRecord() {
     if (!currentStudent) return;
 
+    // 응답은 1초쯤 뒤에 온다. 그 사이에 선생님이 돌아가서 다른 학생을 열 수 있다.
+    // 콜백 안에서 currentXxx를 읽으면 그때는 이미 다른 학생을 가리키므로,
+    // 남의 초안을 지우고 남의 화면에 "저장했습니다"를 띄우게 된다.
+    // 보낼 대상을 여기서 붙잡아 둔다.
+    const st = currentStudent;
+    const cid = currentClassId;
+    const dt = currentDate;
+    const stillOpen = function () { return currentStudent === st; };
+
     $('recordSaveBtn').disabled = true;
+    $('recordBack').disabled = true;
     $('recordStatus').textContent = '저장 중…';
     showError($('recordError'), '');
 
-    const record = RF.buildRecord(currentStudent.studentId, currentDate, recordForm);
+    const record = RF.buildRecord(st.studentId, dt, recordForm);
 
     api.call('admin.saveBatch', {
       sessionKey: sessionKey,
-      classId: currentClassId,
-      date: currentDate,
+      classId: cid,
+      date: dt,
       clientRequestId: 'b' + Date.now() + Math.random().toString(36).slice(2, 8),
       records: [record],
     }).then(function () {
-      clearRecordDraft(currentClassId, currentDate, currentStudent.studentId);
-      $('recordStatus').textContent = '저장했습니다.';
-      if (currentClassId === $('classSelect').value && currentDate === $('dateInput').value) {
+      clearRecordDraft(cid, dt, st.studentId);
+      if (stillOpen()) $('recordStatus').textContent = '저장했습니다.';
+      if (cid === $('classSelect').value && dt === $('dateInput').value) {
         upsertExistingRecord(record);
         renderRoster();
       }
     }).catch(function (err) {
-      $('recordStatus').textContent = '';
-      if (!handleAuthLoss(err)) {
+      if (stillOpen()) $('recordStatus').textContent = '';
+      if (!handleAuthLoss(err) && stillOpen()) {
         showError($('recordError'), err.message + ' 입력하신 내용은 이 기기에 보관되어 있습니다.');
       }
     }).finally(function () {
       $('recordSaveBtn').disabled = false;
+      $('recordBack').disabled = false;
     });
   }
 
