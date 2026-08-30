@@ -24,13 +24,40 @@ describe('nextStudentId', () => {
 });
 
 describe('generateRecordId', () => {
+  const uuidA = () => '3f1c9d2e-0b4a-4c6d-9e8f-1a2b3c4d5e6f';
+  const uuidB = () => '7a8b9c0d-1e2f-4a3b-8c9d-0e1f2a3b4c5d';
+
   it('R로 시작하고 타임스탬프를 담는다', () => {
-    const id = generateRecordId(new Date('2026-08-30T01:02:03.000Z'), () => 0);
+    const id = generateRecordId(new Date('2026-08-30T01:02:03.000Z'), uuidA);
     expect(id.startsWith('R20260830010203')).toBe(true);
   });
 
-  it('같은 시각이어도 난수 접미사로 구분된다', () => {
+  it('#2 회귀: 같은 초에 만들어도 UUID 접미사로 구분된다', () => {
     const now = new Date('2026-08-30T01:02:03.000Z');
-    expect(generateRecordId(now, () => 0)).not.toBe(generateRecordId(now, () => 0.5));
+    expect(generateRecordId(now, uuidA)).not.toBe(generateRecordId(now, uuidB));
+  });
+
+  it('#2 회귀: 같은 초에 20건을 만들어도 모두 다르다', () => {
+    const now = new Date('2026-08-30T01:02:03.000Z');
+    let n = 0;
+    const seq = () => String(n++).padStart(16, '0') + '-0000-0000-0000-000000000000';
+    const ids = new Set();
+    for (let i = 0; i < 20; i++) ids.add(generateRecordId(now, seq));
+    expect(ids.size).toBe(20);
+  });
+
+  it('접미사는 UUID 전체 엔트로피에서 온다 (하이픈 제거, 16자)', () => {
+    const id = generateRecordId(new Date('2026-08-30T01:02:03.000Z'), uuidA);
+    expect(id).toBe('R20260830010203' + '3f1c9d2e0b4a4c6d');
+  });
+
+  it('시트에서 안전한 문자만 쓴다', () => {
+    const id = generateRecordId(new Date('2026-08-30T01:02:03.000Z'), uuidA);
+    expect(/^R[0-9a-z]+$/.test(id)).toBe(true);
+  });
+
+  it('uuidFn을 주지 않으면 Math.random으로 대체하지 않고 실패한다', () => {
+    expect(() => generateRecordId(new Date('2026-08-30T01:02:03.000Z')))
+      .toThrow(/Utilities\.getUuid/);
   });
 });
