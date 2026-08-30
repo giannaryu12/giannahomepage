@@ -156,7 +156,13 @@
   /* ---------- 진입 ---------- */
 
   function tokenFromUrl() {
-    return new URLSearchParams(window.location.search).get('t') || '';
+    const q = new URLSearchParams(window.location.search).get('t');
+    if (q) return q;
+
+    // 짧은 링크 /p/<토큰>. netlify.toml의 재작성(status 200)은 브라우저 주소를
+    // /p/<토큰> 그대로 두므로 location.search가 비어 있다. 경로에서 직접 읽는다.
+    const m = /^\/p\/([^/?#]+)\/?$/.exec(window.location.pathname);
+    return m ? decodeURIComponent(m[1]) : '';
   }
 
   function start() {
