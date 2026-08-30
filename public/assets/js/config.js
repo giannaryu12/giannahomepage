@@ -3,5 +3,5 @@
  * clasp deploy 후 나온 URL로 교체한다.
  */
 window.GIANNA_CONFIG = {
-  GAS_URL: '',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbz_kvjFa2_n3EbcqY_x3SGxqVATiSx_GSENHVwqCA6zdWrBt6L-0t59cjmvMZCNjCpn/exec',
 };
