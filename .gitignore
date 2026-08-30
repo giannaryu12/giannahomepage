@@ -1,0 +1,4 @@
+node_modules/
+.netlify/
+.clasprc.json
+*.log

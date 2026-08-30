@@ -1,0 +1,16 @@
+{
+  "name": "gianna-student-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "지아나영어 학생관리 - 학부모 열람 / 선생님 입력",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gas:push": "clasp push",
+    "gas:deploy": "clasp deploy"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8",
+    "@google/clasp": "^2.4.2"
+  }
+}
