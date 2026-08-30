@@ -34,12 +34,21 @@ function normalizeCell_(v) {
   return v;
 }
 
-/** 1행을 헤더로 삼아 객체 배열로 읽는다. */
-function readTable(sheetName) {
-  const values = getSheet_(sheetName).getDataRange().getValues();
-  if (values.length < 2) return [];
+/**
+ * 시트를 한 번만 읽어 sheet·header·rows를 함께 돌려준다.
+ * 같은 요청에서 헤더와 본문이 모두 필요할 때 getDataRange를 두 번 치지 않기 위함.
+ */
+function readTableView_(sheetName) {
+  const sheet = getSheet_(sheetName);
+  const values = sheet.getDataRange().getValues();
+  const header = values.length
+    ? values[0].map(function (h) { return String(h).trim(); })
+    : [];
+  return { sheet: sheet, header: header, rows: rowsFromValues_(values, header) };
+}
 
-  const header = values[0].map(function (h) { return String(h).trim(); });
+function rowsFromValues_(values, header) {
+  if (values.length < 2) return [];
   const rows = [];
 
   for (let i = 1; i < values.length; i++) {
@@ -53,6 +62,24 @@ function readTable(sheetName) {
     rows.push(obj);
   }
   return rows;
+}
+
+/** 1행을 헤더로 삼아 객체 배열로 읽는다. */
+function readTable(sheetName) {
+  return readTableView_(sheetName).rows;
+}
+
+/** 한 행 전체를 setValues 한 번으로 쓴다. 셀 단위 setValue를 반복하지 않기 위함. */
+function writeRowValues_(sheet, header, rowIndex, row) {
+  const values = rowValuesFor(header, row);
+  sheet.getRange(rowIndex, 1, 1, values.length).setValues([values]);
+}
+
+/** 여러 행을 시트 끝에 setValues 한 번으로 덧붙인다. */
+function appendRowsValues_(sheet, header, rows) {
+  if (!rows.length) return;
+  const values = rows.map(function (r) { return rowValuesFor(header, r); });
+  sheet.getRange(sheet.getLastRow() + 1, 1, values.length, header.length).setValues(values);
 }
 
 function getHeader_(sheetName) {
@@ -82,14 +109,16 @@ function findRow(sheetName, column, value) {
 function updateRowById(sheetName, idColumn, idValue, patch) {
   if (idValue === '' || idValue === null || idValue === undefined) return false;
 
-  const sheet = getSheet_(sheetName);
-  const header = getHeader_(sheetName);
-  const target = findRow(sheetName, idColumn, idValue);
+  // 시트는 한 번만 읽는다 (예전에는 getSheet_ + getHeader_ + findRow로 세 번 읽었다).
+  const view = readTableView_(sheetName);
+  const target = view.rows.filter(function (r) {
+    return String(r[idColumn]) === String(idValue);
+  })[0];
   if (!target) return false;
 
-  header.forEach(function (key, j) {
+  view.header.forEach(function (key, j) {
     if (key && Object.prototype.hasOwnProperty.call(patch, key)) {
-      sheet.getRange(target._rowIndex, j + 1).setValue(patch[key]);
+      view.sheet.getRange(target._rowIndex, j + 1).setValue(patch[key]);
     }
   });
   return true;
