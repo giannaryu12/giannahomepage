@@ -19,6 +19,9 @@ function doPost(e) {
 
     return jsonOutput_(dispatch_(parsed));
   } catch (err) {
+    if (err && err.name === 'AuthError') {
+      return jsonOutput_(fail('UNAUTHORIZED', err.message));
+    }
     console.error(err && err.stack ? err.stack : err);
     return jsonOutput_(fail('SERVER_ERROR', '처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.'));
   }
@@ -32,10 +35,13 @@ function dispatch_(parsed) {
   const body = parsed.body;
 
   switch (parsed.action) {
-    case 'ping':
-      return handlePing(body);
-    default:
-      return fail('UNKNOWN_ACTION', '알 수 없는 요청입니다.');
+    case 'ping':                return handlePing(body);
+    case 'admin.login':         return handleAdminLogin(body);
+    case 'admin.classes':       return handleAdminClasses(body);
+    case 'admin.students':      return handleAdminStudents(body);
+    case 'admin.upsertStudent': return handleAdminUpsertStudent(body);
+    case 'admin.reissueToken':  return handleAdminReissueToken(body);
+    default:                    return fail('UNKNOWN_ACTION', '알 수 없는 요청입니다.');
   }
 }
 
