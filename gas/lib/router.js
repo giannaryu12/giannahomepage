@@ -5,7 +5,6 @@
 const ACTIONS = {
   'ping':                { auth: 'none',    required: [] },
   'parent.load':         { auth: 'token',   required: ['token'] },
-  'parent.more':         { auth: 'token',   required: ['token', 'cursor'] },
   'admin.login':         { auth: 'none',    required: ['password'] },
   'admin.classes':       { auth: 'session', required: [] },
   'admin.roster':        { auth: 'session', required: ['classId', 'date'] },

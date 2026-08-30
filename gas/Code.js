@@ -41,6 +41,9 @@ function dispatch_(parsed) {
     case 'admin.students':      return handleAdminStudents(body);
     case 'admin.upsertStudent': return handleAdminUpsertStudent(body);
     case 'admin.reissueToken':  return handleAdminReissueToken(body);
+    case 'admin.roster':        return handleAdminRoster(body);
+    case 'admin.saveBatch':     return handleAdminSaveBatch(body);
+    case 'parent.load':         return handleParentLoad(body);
     default:                    return fail('UNKNOWN_ACTION', '알 수 없는 요청입니다.');
   }
 }

@@ -59,6 +59,11 @@ describe('parseRequest', () => {
     expect(r.auth).toBe('none');
   });
 
+  it('MVP에 없는 parent.more는 거부한다', () => {
+    const r = parseRequest(JSON.stringify({ action: 'parent.more', token: 'a', cursor: '1' }));
+    expect(r.error).toBe('UNKNOWN_ACTION');
+  });
+
   it('모든 action이 auth와 required를 갖는다', () => {
     Object.keys(ACTIONS).forEach((k) => {
       expect(['none', 'token', 'session']).toContain(ACTIONS[k].auth);
