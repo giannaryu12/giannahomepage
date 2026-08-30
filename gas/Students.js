@@ -32,7 +32,7 @@ function handleAdminStudents(body) {
       classId: s.classId,
       className: classNameOf_(s.classId),
       parentToken: s.parentToken,
-      active: String(s.active).toUpperCase() !== 'FALSE',
+      active: String(s.active).toUpperCase() === 'TRUE',
       note: s.note,
     };
   });
@@ -49,14 +49,17 @@ function handleAdminUpsertStudent(body) {
   lock.waitLock(10000);
   try {
     if (input.studentId) {
-      const updated = updateRowById(SHEETS.STUDENTS, 'studentId', input.studentId, {
+      const patch = {
         name: input.name,
         grade: input.grade || '',
         classId: input.classId || '',
-        active: input.active === false ? 'FALSE' : 'TRUE',
         note: input.note || '',
-      });
+      };
+      if (typeof input.active === 'boolean') patch.active = input.active ? 'TRUE' : 'FALSE';
+
+      const updated = updateRowById(SHEETS.STUDENTS, 'studentId', input.studentId, patch);
       if (!updated) return fail('NOT_FOUND', '학생을 찾을 수 없습니다.');
+      SpreadsheetApp.flush();
       return ok({ studentId: input.studentId });
     }
 
@@ -68,11 +71,12 @@ function handleAdminUpsertStudent(body) {
       name: input.name,
       grade: input.grade || '',
       classId: input.classId || '',
-      parentToken: generateToken(),
+      parentToken: secureToken_(32),
       active: 'TRUE',
       note: input.note || '',
       createdAt: new Date().toISOString(),
     });
+    SpreadsheetApp.flush();
     return ok({ studentId: studentId });
   } finally {
     lock.releaseLock();
@@ -82,8 +86,15 @@ function handleAdminUpsertStudent(body) {
 function handleAdminReissueToken(body) {
   requireSession_(body.sessionKey);
 
-  const token = generateToken();
-  const updated = updateRowById(SHEETS.STUDENTS, 'studentId', body.studentId, { parentToken: token });
-  if (!updated) return fail('NOT_FOUND', '학생을 찾을 수 없습니다.');
-  return ok({ parentToken: token });
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const token = secureToken_(32);
+    const updated = updateRowById(SHEETS.STUDENTS, 'studentId', body.studentId, { parentToken: token });
+    if (!updated) return fail('NOT_FOUND', '학생을 찾을 수 없습니다.');
+    SpreadsheetApp.flush();
+    return ok({ parentToken: token });
+  } finally {
+    lock.releaseLock();
+  }
 }
