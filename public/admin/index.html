@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>수업 기록 입력 · 지아나영어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Song+Myung&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body class="gi">
+
+<header class="gi-head">
+  <div class="gi-wrap">
+    <p class="gi-head-brand">Gianna English</p>
+    <h1>수업 기록 입력</h1>
+    <p class="gi-head-sub" id="headSub">선생님 전용</p>
+  </div>
+</header>
+
+<main class="gi-wrap">
+
+  <section id="loginView">
+    <div id="loginError" class="gi-error" hidden></div>
+    <div class="gi-field">
+      <label class="gi-label" for="password">비밀번호</label>
+      <input class="gi-input" type="password" id="password" autocomplete="current-password">
+    </div>
+    <button class="gi-btn gi-btn-primary" id="loginBtn" type="button">로그인</button>
+  </section>
+
+  <section id="appView" hidden>
+    <nav style="display:flex;gap:.5rem;margin-bottom:1.2rem">
+      <button class="gi-choice" id="tabEntry" type="button" aria-pressed="true">수업 입력</button>
+      <button class="gi-choice" id="tabStudents" type="button" aria-pressed="false">학생 관리</button>
+    </nav>
+
+    <div id="entryView">
+      <div class="gi-field">
+        <label class="gi-label" for="classSelect">반</label>
+        <select class="gi-select" id="classSelect"></select>
+      </div>
+      <div class="gi-field">
+        <label class="gi-label" for="dateInput">날짜</label>
+        <input class="gi-input" type="date" id="dateInput">
+      </div>
+      <div class="gi-field">
+        <label class="gi-label" for="progressAll">진도 (반 전체 일괄 적용)</label>
+        <input class="gi-input" type="text" id="progressAll" placeholder="예: Unit 7 관계대명사">
+      </div>
+      <div class="gi-field">
+        <label class="gi-label" for="nextAll">다음 과제 (반 전체 일괄 적용)</label>
+        <input class="gi-input" type="text" id="nextAll" placeholder="예: Unit 8 단어 1~40">
+      </div>
+
+      <div id="entryError" class="gi-error" hidden></div>
+      <div id="roster"></div>
+
+      <div class="gi-savebar" id="saveBar" hidden>
+        <span class="gi-note" id="saveStatus"></span>
+        <button class="gi-btn gi-btn-primary" id="saveBtn" type="button">전체 저장</button>
+      </div>
+    </div>
+
+    <div id="studentsView" hidden></div>
+  </section>
+
+</main>
+
+<script src="/assets/js/config.js"></script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/admin.js"></script>
+</body>
+</html>
