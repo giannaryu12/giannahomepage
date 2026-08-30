@@ -1,0 +1,269 @@
+/* 학생관리 공용 스타일. tokens.css를 먼저 로드해야 한다. */
+
+*{ box-sizing:border-box; }
+
+body.gi{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-kr-body);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+.gi-wrap{
+  max-width:44rem;
+  margin-inline:auto;
+  padding:0 1.1rem 4rem;
+}
+
+/* ---------- 헤더 ---------- */
+.gi-head{
+  background:var(--hero-bg);
+  color:var(--hero-text);
+  padding:1.6rem 0 1.9rem;
+  margin-bottom:1.4rem;
+}
+.gi-head .gi-wrap{ padding-bottom:0; }
+.gi-head-brand{
+  font-family:var(--font-body);
+  font-size:0.68rem;
+  font-weight:700;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:0.7rem;
+}
+.gi-head h1{
+  font-family:var(--font-kr-display);
+  font-weight:400;
+  font-size:1.75rem;
+  line-height:1.2;
+  margin:0;
+}
+.gi-head-sub{
+  margin-top:0.45rem;
+  font-size:0.85rem;
+  color:var(--hero-text-soft);
+}
+
+/* ---------- 요약 카드 ---------- */
+.gi-cards{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:0.6rem;
+  margin-bottom:1.6rem;
+}
+.gi-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:0.95rem 0.7rem;
+  text-align:center;
+}
+.gi-card-label{
+  font-size:0.68rem;
+  letter-spacing:0.1em;
+  color:var(--text-soft);
+  margin-bottom:0.3rem;
+}
+.gi-card-value{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:1.85rem;
+  line-height:1;
+  color:var(--heading);
+}
+.gi-card-value .gi-unit{ font-size:0.9rem; margin-left:0.08em; }
+.gi-card-value.is-empty{ color:var(--text-soft); font-size:1.1rem; }
+
+/* ---------- 섹션 제목 ---------- */
+.gi-h2{
+  font-family:var(--font-body);
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--garnet);
+  padding-bottom:0.5rem;
+  margin:2rem 0 0.9rem;
+  border-bottom:1px solid var(--border);
+}
+
+/* ---------- 차트 ---------- */
+.gi-chart{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:1rem 0.8rem 0.6rem;
+}
+.gi-chart svg{ display:block; width:100%; height:auto; }
+
+/* ---------- 타임라인 ---------- */
+.gi-rec{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  margin-bottom:0.55rem;
+  overflow:hidden;
+}
+.gi-rec-top{
+  width:100%;
+  background:none;
+  border:0;
+  text-align:left;
+  padding:0.85rem 0.9rem;
+  cursor:pointer;
+  font:inherit;
+  color:inherit;
+  display:flex;
+  align-items:baseline;
+  gap:0.7rem;
+}
+.gi-rec-top:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+.gi-rec-date{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:0.95rem;
+  color:var(--heading);
+  flex:none;
+}
+.gi-rec-progress{
+  font-size:0.88rem;
+  color:var(--text-soft);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.gi-rec-body{
+  padding:0 0.9rem 0.95rem;
+  border-top:1px solid var(--border);
+  padding-top:0.8rem;
+}
+.gi-rec[hidden-body] .gi-rec-body{ display:none; }
+.gi-rec-row{ display:flex; gap:0.5rem; margin-bottom:0.5rem; font-size:0.88rem; }
+.gi-rec-row dt{ flex:none; width:4.5rem; color:var(--text-soft); margin:0; }
+.gi-rec-row dd{ margin:0; }
+.gi-rec-comment{
+  margin-top:0.7rem;
+  padding-inline-start:0.8rem;
+  border-inline-start:3px solid var(--garnet);
+  font-size:0.9rem;
+  white-space:pre-wrap;
+}
+
+/* ---------- 뱃지 ---------- */
+.gi-badge{
+  display:inline-block;
+  font-size:0.72rem;
+  font-weight:700;
+  padding:0.15rem 0.5rem;
+  border-radius:2px;
+  border:1px solid currentColor;
+  margin-right:0.3rem;
+}
+.gi-badge.is-good{ color:var(--state-good); }
+.gi-badge.is-warn{ color:var(--state-warn); }
+.gi-badge.is-bad{ color:var(--state-bad); }
+.gi-badge.is-none{ color:var(--state-none); }
+
+/* ---------- 폼 ---------- */
+.gi-field{ margin-bottom:1rem; }
+.gi-label{
+  display:block;
+  font-size:0.75rem;
+  font-weight:700;
+  letter-spacing:0.06em;
+  color:var(--text-soft);
+  margin-bottom:0.35rem;
+}
+.gi-input, .gi-select, .gi-textarea{
+  width:100%;
+  font:inherit;
+  font-size:0.95rem;
+  color:var(--text);
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:2px;
+  padding:0.6rem 0.7rem;
+}
+.gi-textarea{ min-height:3.6rem; resize:vertical; }
+.gi-input:focus, .gi-select:focus, .gi-textarea:focus{
+  outline:2px solid var(--gold);
+  outline-offset:1px;
+}
+
+/* 선택형 버튼 그룹 */
+.gi-choices{ display:flex; flex-wrap:wrap; gap:0.3rem; }
+.gi-choice{
+  font:inherit;
+  font-size:0.82rem;
+  padding:0.4rem 0.6rem;
+  border:1px solid var(--border);
+  border-radius:2px;
+  background:var(--bg-elevated);
+  color:var(--text-soft);
+  cursor:pointer;
+}
+.gi-choice[aria-pressed="true"]{
+  background:var(--forest);
+  border-color:var(--forest);
+  color:#f6f2e6;
+}
+.gi-choice:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+
+/* ---------- 버튼 ---------- */
+.gi-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4rem;
+  font:inherit;
+  font-weight:700;
+  font-size:0.92rem;
+  padding:0.75rem 1.4rem;
+  border-radius:2px;
+  border:1px solid transparent;
+  cursor:pointer;
+  text-decoration:none;
+}
+.gi-btn-primary{ background:var(--garnet); color:#f6f2e6; }
+.gi-btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+.gi-btn-outline{ background:transparent; border-color:var(--border); color:var(--text); }
+.gi-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+/* ---------- 상태 표시 ---------- */
+.gi-state{
+  text-align:center;
+  padding:3rem 1rem;
+  color:var(--text-soft);
+}
+.gi-error{
+  background:var(--surface);
+  border:1px solid var(--state-bad);
+  border-inline-start-width:3px;
+  border-radius:2px;
+  padding:0.8rem 0.9rem;
+  color:var(--text);
+  font-size:0.9rem;
+  margin-bottom:1rem;
+}
+.gi-note{ font-size:0.82rem; color:var(--text-soft); }
+
+/* ---------- 저장 바 ---------- */
+.gi-savebar{
+  position:sticky;
+  bottom:0;
+  background:var(--bg);
+  border-top:1px solid var(--border);
+  padding:0.75rem 0;
+  display:flex;
+  align-items:center;
+  gap:0.8rem;
+}
+.gi-savebar .gi-btn{ flex:1; }
+
+@media (min-width: 600px){
+  .gi-head h1{ font-size:2.1rem; }
+}
