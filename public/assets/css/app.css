@@ -175,6 +175,15 @@ body.gi .gi-h2{ color:var(--text); }
    페이지 전체가 가로로 움직이면 읽기가 훨씬 나빠진다. */
 .gi-rec-group{ overflow-x:auto; }
 .gi-rec-groupline{ white-space:nowrap; }
+.gi-rec-groupline + .gi-rec-groupline{ margin-top:0.3rem; }
+
+/* 시험 교재명. 점수 아랫줄에 한 칸 들여 놓아 위 줄에 딸린 것으로 읽힌다. */
+.gi-rec-subline{
+  display:block;
+  padding-inline-start:0.7rem;
+  color:var(--text-soft);
+  font-size:0.82rem;
+}
 .gi-rec-comment{
   margin-top:0.7rem;
   padding-inline-start:0.8rem;

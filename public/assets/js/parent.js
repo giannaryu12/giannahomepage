@@ -196,10 +196,17 @@
   function groupRow(label, items) {
     if (!items.length) return '';
     const body = items.map(function (it) {
-      const book = it.book ? '<span class="gi-area-book">' + esc(it.book) + '</span> · ' : '';
       const text = it.strong ? '<strong>' + esc(it.text) + '</strong>' : esc(it.text);
+
+      // bookBelow면 교재명을 아랫줄로 내린다. 값이 앞에 오므로 교재명이
+      // 길어도 점수가 화면 밖으로 밀리지 않는다.
+      const inline = (it.book && !it.bookBelow)
+        ? '<span class="gi-area-book">' + esc(it.book) + '</span> · ' : '';
+      const below = (it.book && it.bookBelow)
+        ? '<span class="gi-rec-subline">' + esc(it.book) + '</span>' : '';
+
       return '<div class="gi-rec-groupline">' +
-        '<span class="gi-area-book">' + esc(it.label) + '</span> ' + book + text +
+        '<span class="gi-area-book">' + esc(it.label) + '</span> ' + inline + text + below +
         '</div>';
     }).join('');
     return '<div class="gi-rec-row"><dt>' + label + '</dt>' +
@@ -210,8 +217,15 @@
     const lines = PA.testLines(r);
     if (lines.length) {
       return groupRow('시험', lines.map(function (l) {
-        // 점수는 굵게 — 학부모가 이 줄에서 가장 먼저 찾는 값이다.
-        return { label: l.label, book: l.book, text: l.score + '/' + l.max, strong: true };
+        // 점수는 굵게, 그리고 맨 앞에 — 학부모가 가장 먼저 찾는 값이다.
+        // 교재명은 아랫줄로 내린다.
+        return {
+          label: l.label,
+          book: l.book,
+          bookBelow: true,
+          text: l.score + '/' + l.max,
+          strong: true,
+        };
       }));
     }
 
