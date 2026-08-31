@@ -194,15 +194,15 @@
     const lines = PA.areaLines(r);
     if (!lines.length) return row('진도', progressText(r));
 
-    return lines.map(function (l) {
-      const book = l.book ? '<span class="gi-area-book">' + esc(l.book) + '</span> · ' : '';
-      return '<div class="gi-rec-row"><dt>' + esc(l.label) + '</dt><dd>' +
-        book + esc(l.progress) + '</dd></div>';
-    }).join('');
+    // 시험·숙제와 같은 꼴. 왼쪽 이름은 '진도' 하나뿐이고 영역은 그 옆에 들어간다.
+    return groupRow('진도', lines.map(function (l) {
+      return { label: l.label, book: l.book, bookBelow: true, text: l.progress };
+    }));
   }
 
   /**
-   * 한 줄 안에 영역별 항목을 여러 개 담는다. 진도 줄과 이름이 겹쳐 보이지 않게.
+   * 왼쪽 이름 하나(진도·시험·숙제) 옆에 영역별 항목을 여러 개 담는다.
+   * 영역 이름을 왼쪽 칸에 쓰면 항목 이름과 뒤섞여 무엇의 목록인지 흐려진다.
    *
    * 항목 하나가 한 줄을 차지한다. 교재명이 중간에서 끊기면 어느 책인지
    * 읽기 어려워 줄바꿈을 막았고(.gi-rec-groupline), 그래서 넘칠 수 있는
