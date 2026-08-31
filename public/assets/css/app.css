@@ -165,8 +165,16 @@ body.gi .gi-h2{ color:var(--text); }
 }
 .gi-rec[hidden-body] .gi-rec-body{ display:none; }
 .gi-rec-row{ display:flex; gap:0.5rem; margin-bottom:0.5rem; font-size:0.88rem; }
-.gi-rec-row dt{ flex:none; width:4.5rem; color:var(--text-soft); margin:0; }
-.gi-rec-row dd{ margin:0; }
+/* 항목 이름은 두 글자뿐이다. 좁게 잡을수록 옆의 한 줄에 남는 자리가 넓어진다. */
+.gi-rec-row dt{ flex:none; width:3.2rem; color:var(--text-soft); margin:0; }
+/* min-width:0이 없으면 flex 항목이 내용만큼 벌어져 페이지가 통째로 가로로 밀린다. */
+.gi-rec-row dd{ margin:0; min-width:0; }
+
+/* 시험·숙제는 항목 하나가 한 줄에 다 들어간다. 교재명이 중간에서 끊기면
+   어느 책인지 알아보기 어렵다. 넘칠 때는 이 묶음만 옆으로 밀린다 —
+   페이지 전체가 가로로 움직이면 읽기가 훨씬 나빠진다. */
+.gi-rec-group{ overflow-x:auto; }
+.gi-rec-groupline{ white-space:nowrap; }
 .gi-rec-comment{
   margin-top:0.7rem;
   padding-inline-start:0.8rem;

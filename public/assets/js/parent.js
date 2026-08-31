@@ -186,22 +186,32 @@
     }).join('');
   }
 
-  /** 한 줄 안에 영역별 항목을 여러 개 담는다. 진도 줄과 이름이 겹쳐 보이지 않게. */
+  /**
+   * 한 줄 안에 영역별 항목을 여러 개 담는다. 진도 줄과 이름이 겹쳐 보이지 않게.
+   *
+   * 항목 하나가 한 줄을 차지한다. 교재명이 중간에서 끊기면 어느 책인지
+   * 읽기 어려워 줄바꿈을 막았고(.gi-rec-groupline), 그래서 넘칠 수 있는
+   * 만큼 묶음 자체가 옆으로 밀린다(.gi-rec-group).
+   */
   function groupRow(label, items) {
     if (!items.length) return '';
     const body = items.map(function (it) {
       const book = it.book ? '<span class="gi-area-book">' + esc(it.book) + '</span> · ' : '';
-      return '<div><span class="gi-area-book">' + esc(it.label) + '</span> ' +
-        book + esc(it.text) + '</div>';
+      const text = it.strong ? '<strong>' + esc(it.text) + '</strong>' : esc(it.text);
+      return '<div class="gi-rec-groupline">' +
+        '<span class="gi-area-book">' + esc(it.label) + '</span> ' + book + text +
+        '</div>';
     }).join('');
-    return '<div class="gi-rec-row"><dt>' + label + '</dt><dd>' + body + '</dd></div>';
+    return '<div class="gi-rec-row"><dt>' + label + '</dt>' +
+      '<dd class="gi-rec-group">' + body + '</dd></div>';
   }
 
   function testRows(r) {
     const lines = PA.testLines(r);
     if (lines.length) {
       return groupRow('시험', lines.map(function (l) {
-        return { label: l.label, book: l.book, text: l.score + '/' + l.max };
+        // 점수는 굵게 — 학부모가 이 줄에서 가장 먼저 찾는 값이다.
+        return { label: l.label, book: l.book, text: l.score + '/' + l.max, strong: true };
       }));
     }
 
