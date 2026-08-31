@@ -48,11 +48,25 @@ body.gi{
   color:var(--hero-text-soft);
 }
 
-/* ---------- 학부모 화면 ---------- */
-/* 초록 머리 아래는 전부 흰 바탕. 크림색 배경 위의 흰 카드는 층이 보이지만
-   흰 바탕에서는 테두리가 그 몫을 한다. 제목은 가넷 대신 본문과 같은 먹색. */
-body.gi-parent{ background:#ffffff; }
-body.gi-parent .gi-h2{ color:var(--text); }
+/* ---------- 앱 화면 공통 (학부모 · 선생님) ---------- */
+/* 초록 머리 아래는 전부 흰 바탕. 홈페이지(/)는 app.css를 쓰지 않으므로
+   Fraunces·Song Myung 조합 그대로고 여기 영향을 받지 않는다. */
+body.gi{
+  /* 맑은 고딕 하나로 통일. 윈도우 글꼴이라 휴대폰에는 없다 —
+     아이폰은 Apple SD Gothic Neo, 안드로이드는 Noto Sans KR로 떨어진다. */
+  --font-display: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-body: var(--font-display);
+  --font-kr-display: var(--font-display);
+  --font-kr-body: var(--font-display);
+
+  /* 크림색 바탕 위에서는 흰 카드가 층으로 보였지만, 흰 바탕에서는 테두리가
+     그 몫을 혼자 한다. 16%로는 입력칸 경계가 흐려서 조금 진하게 잡았다. */
+  --bg: #ffffff;
+  --border: rgba(27,59,43,0.26);
+}
+
+/* 제목은 가넷 대신 본문과 같은 먹색 */
+body.gi .gi-h2{ color:var(--text); }
 
 /* ---------- 요약 카드 ---------- */
 /* 카드가 여섯~일곱 장이라 고정 3열 대신 접히게 둔다. 한 줄에 셋씩
