@@ -10,6 +10,7 @@
 // 어긋나지 않는지는 test/field-parity.test.js가 확인한다.
 const PARENT_RECORD_FIELDS = [
   'date',
+  'sessionNo',
   'progress',
   'vocabBook',
   'vocabProgress',

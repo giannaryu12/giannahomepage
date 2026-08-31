@@ -22,8 +22,10 @@
    * key는 그대로 시트 컬럼 이름이 되므로 한 번 정한 뒤 바꾸지 않는다.
    */
   const TEST_AREAS = [
-    { key: 'vocab', label: '단어1' },
-    { key: 'vocab2', label: '단어2' },
+    // 단어 시험은 한 수업에 두 번 본다. 화면 이름은 둘 다 '단어'이고,
+    // key만 다르다 — 저장되는 칸이 섞이지 않게.
+    { key: 'vocab', label: '단어' },
+    { key: 'vocab2', label: '단어' },
     { key: 'grammar', label: '문법' },
     { key: 'listening', label: '듣기' },
   ];

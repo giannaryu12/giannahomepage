@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  findRecordFor, toFormValues, buildRecord, rosterStatus, withBookDefaults,
+  findRecordFor, toFormValues, buildRecord, rosterStatus,
+  withBookDefaults, withSessionDefault,
 } from '../public/assets/js/record-form.js';
 import { RECORD_AREA_FIELDS } from '../public/assets/js/progress-areas.js';
 
@@ -42,6 +43,7 @@ describe('findRecordFor', () => {
 describe('toFormValues', () => {
   it('record가 null이면 전부 빈 문자열', () => {
     expect(toFormValues(null)).toEqual({
+      sessionNo: '',
       progress: '', attendance: '', homeworkStatus: '', homeworkLevel: '',
       testName: '', testScore: '', testMax: '', nextHomework: '', comment: '',
       ...EMPTY_AREAS,
@@ -50,10 +52,12 @@ describe('toFormValues', () => {
 
   it('기존 기록 값을 그대로 채운다', () => {
     const record = {
+      sessionNo: 12,
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: 85, testMax: 100, nextHomework: 'Unit 8', comment: '잘함',
     };
     expect(toFormValues(record)).toEqual({
+      sessionNo: '12',
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', nextHomework: 'Unit 8', comment: '잘함',
       ...EMPTY_AREAS,
@@ -80,12 +84,14 @@ describe('toFormValues', () => {
 describe('buildRecord', () => {
   it('키가 서버 규격과 정확히 동일한 레코드를 만든다', () => {
     const form = {
+      sessionNo: '12',
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', nextHomework: 'Unit 8', comment: '잘함',
     };
     const rec = buildRecord('s1', '2026-08-30', form);
     expect(rec).toEqual({
-      studentId: 's1', date: '2026-08-30', progress: 'Unit 7', nextHomework: 'Unit 8',
+      studentId: 's1', date: '2026-08-30', sessionNo: '12',
+      progress: 'Unit 7', nextHomework: 'Unit 8',
       attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', comment: '잘함',
       ...EMPTY_AREAS,
@@ -243,5 +249,27 @@ describe('다음 과제·시험 영역', () => {
     expect(v.vocabNext).toBe('');
     expect(v.vocabTestScore).toBe('');
     expect(v.vocabTestMax).toBe('');
+  });
+});
+
+describe('withSessionDefault', () => {
+  it('빈 회차를 직전 회차 +1로 채운다', () => {
+    expect(withSessionDefault({ sessionNo: '' }, 11).sessionNo).toBe('12');
+  });
+
+  it('직전 기록이 없으면 1회차로 시작한다', () => {
+    expect(withSessionDefault({ sessionNo: '' }, 0).sessionNo).toBe('1');
+    expect(withSessionDefault({ sessionNo: '' }, undefined).sessionNo).toBe('1');
+    expect(withSessionDefault({ sessionNo: '' }, '이상한 값').sessionNo).toBe('1');
+  });
+
+  it('이미 적힌 회차는 건드리지 않는다', () => {
+    expect(withSessionDefault({ sessionNo: '7' }, 11).sessionNo).toBe('7');
+  });
+
+  it('원본을 바꾸지 않는다', () => {
+    const values = { sessionNo: '' };
+    withSessionDefault(values, 3);
+    expect(values.sessionNo).toBe('');
   });
 });

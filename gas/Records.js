@@ -38,6 +38,7 @@ function handleAdminRoster(body) {
         name: s.name,
         grade: s.grade,
         lastBooks: lastBooksOf(mine),
+        lastSessionNo: lastSessionNoOf(mine),
       };
     });
 
@@ -75,7 +76,8 @@ function handleAdminSaveBatch(body) {
 
     // 진도 영역 컬럼이 아직 없으면 여기서 만든다. 없는 채로 쓰면 값이
     // 조용히 버려지면서 저장에 성공한 것처럼 보인다.
-    const header = ensureColumns_(view.sheet, view.header, RECORD_AREA_FIELDS);
+    const header = ensureColumns_(view.sheet, view.header,
+      RECORD_AREA_FIELDS.concat(RECORD_EXTRA_FIELDS));
 
     const plan = planRecordBatch({
       existingRows: view.rows,

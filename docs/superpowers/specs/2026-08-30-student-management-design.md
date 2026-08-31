@@ -139,8 +139,9 @@
 | listeningBook / listeningProgress | 듣기 교재 · 진도 |
 | etcBook / etcProgress | 기타 교재 · 진도 |
 | vocabNextBook / vocabNext … etcNextBook / etcNext | 영역별 숙제 교재 · 내용 (진도와 같은 다섯 영역) |
-| vocabTestBook / vocabTestScore / vocabTestMax | 단어1 시험 교재 · 점수 · 만점 |
-| vocab2TestBook / vocab2TestScore / vocab2TestMax | 단어2 시험 교재 · 점수 · 만점 |
+| sessionNo | 회차. 비워 둘 수 있고, 적었다면 1 이상의 수 |
+| vocabTestBook / vocabTestScore / vocabTestMax | 단어 시험(첫째) 교재 · 점수 · 만점 |
+| vocab2TestBook / vocab2TestScore / vocab2TestMax | 단어 시험(둘째) 교재 · 점수 · 만점 |
 | grammarTestBook / grammarTestScore / grammarTestMax | 문법 시험 교재 · 점수 · 만점 |
 | listeningTestBook / listeningTestScore / listeningTestMax | 듣기 시험 교재 · 점수 · 만점 |
 | homeworkStatus | `제출` \| `부분제출` \| `미제출` \| `해당없음` |
@@ -157,6 +158,8 @@
 `(studentId, date)`는 사실상 유일해야 한다. 같은 조합으로 저장 요청이 오면 새 행을 만들지 않고 기존 행을 갱신한다(upsert).
 
 시험을 보지 않은 영역은 점수·만점을 비워 둔다. 요약 통계는 값이 있는 기록만 평균에 넣는다.
+
+시험 영역의 화면 이름은 `단어` · `단어` · `문법` · `듣기`다. 단어 시험 둘은 이름이 같고 `vocab` / `vocab2` key로만 갈린다 — 저장되는 칸은 섞이지 않지만, 요약 카드와 차트 범례에는 `단어`가 두 번 나온다.
 
 시험 영역은 진도 영역의 부분집합이 아니다 — 단어는 한 수업에서 두 번 보고(`vocab`·`vocab2`), 독해·기타는 시험을 보지 않는다. 그래서 `TEST_AREAS`는 진도 목록을 걸러 만들지 않고 따로 적는다. 서버에서는 `lib/records.js`의 `TEST_AREA_KEYS`가 그 목록이고, `summary.js`·`validate.js`는 `testAreaKeys_()`로 읽는다. 상수를 그대로 넘기지 않는 이유는 GAS 전역 스코프 때문이다: Node 가드의 `var X = require(...)`가 다른 파일의 최상위 `const X`와 부딪치면 Web App이 로드 시점에 죽는다. 함수 선언은 `var`와 부딪치지 않는다. `test/gas-globals.test.js`가 이 충돌을 막는다.
 
@@ -288,6 +291,10 @@ nav에 `학생관리` 항목을 추가한다: Philosophy · Programs · Results 
 결석한 날은 진도 자리에 `결석`이라고 낸다. 접힌 한 줄에도 `진도 미기록` 대신 `결석`이 나온다.
 
 거르기는 **요약 통계를 계산한 뒤에** 한다. 먼저 거르면 세어야 할 날이 통계에서 빠져 출석률·제출률이 실제보다 좋게 나온다.
+
+접힌 한 줄에는 날짜 옆에 **회차**를 낸다(`12회차`). 진도는 펼치면 그대로 나오므로 여기에 또 쓰면 겹친다. 회차를 안 적은 결석일은 `결석`이라고만 적어 접힌 채로도 읽히게 한다.
+
+회차는 선생님 화면에서 수업 날짜 바로 아래 칸에 적는다. 기록이 아직 없는 날짜를 열면 그 학생의 직전 회차 +1이 미리 채워진다(교재 채우기와 같은 규칙 — 이미 저장된 기록에는 채우지 않는다). 직전 기록이 없으면 1로 시작한다.
 
 타임라인의 날짜에는 요일을 붙인다(`08/30 (일)`, `assets/js/format.js`의 `dateLabel`). 목록은 저장된 기록만으로 만들어지므로 수업이 없던 날은 애초에 줄이 생기지 않는다. 요일은 `new Date('2026-08-30')`이 아니라 연·월·일을 따로 넣어 구한다 — 문자열로 넣으면 UTC 자정으로 읽혀 보는 사람의 시간대에 따라 하루 밀린다.
 

@@ -28,6 +28,7 @@
   function toFormValues(record) {
     const r = record || {};
     const out = {
+      sessionNo: str(r.sessionNo),
       // 영역 구분이 생기기 전에 쌓인 진도. 화면에 입력칸은 없지만 그대로
       // 실어 보내야 저장할 때 서버가 빈 값으로 덮어쓰지 않는다.
       progress: str(r.progress),
@@ -61,11 +62,27 @@
     return out;
   }
 
+  /**
+   * 회차가 비어 있으면 직전 회차 +1을 넣는다. 이미 적힌 값은 건드리지 않는다.
+   *
+   * 교재 채우기와 같은 규칙이다 — 이미 저장된 기록을 열 때는 부르지 않는다.
+   * 직전 기록이 없으면 1회차로 시작한다.
+   */
+  function withSessionDefault(values, lastSessionNo) {
+    const out = Object.assign({}, values);
+    if (out.sessionNo) return out;
+
+    const last = Number(lastSessionNo);
+    out.sessionNo = String(isFinite(last) && last > 0 ? last + 1 : 1);
+    return out;
+  }
+
   function buildRecord(studentId, date, form) {
     const f = form || {};
     const out = {
       studentId: str(studentId),
       date: str(date),
+      sessionNo: str(f.sessionNo),
       progress: str(f.progress),
       nextHomework: str(f.nextHomework),
       attendance: str(f.attendance),
@@ -94,7 +111,10 @@
     });
   }
 
-  const api = { findRecordFor, toFormValues, buildRecord, rosterStatus, withBookDefaults };
+  const api = {
+    findRecordFor, toFormValues, buildRecord, rosterStatus,
+    withBookDefaults, withSessionDefault,
+  };
 
   global.GI_RECORD_FORM = api;
 

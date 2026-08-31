@@ -269,6 +269,16 @@
     return row('숙제', r.nextHomework);
   }
 
+  /**
+   * 날짜 옆 한 줄. 진도는 펼치면 그대로 나오므로 여기서는 회차를 낸다.
+   * 회차를 안 적은 결석일은 결석이라고만 적어 접힌 채로도 읽히게 한다.
+   */
+  function topLine(r) {
+    const n = Number(r.sessionNo);
+    if (isFinite(n) && n > 0) return n + '회차';
+    return r.attendance === '결석' ? '결석' : '';
+  }
+
   function recordHtml(r, index) {
     const badges =
       badge(r.attendance, ATTENDANCE_TONE[r.attendance]) +
@@ -282,8 +292,7 @@
       '<article class="gi-rec">' +
         '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
           '<span class="gi-rec-date">' + esc(FMT.dateLabel(r.date)) + '</span>' +
-          '<span class="gi-rec-progress">' +
-            esc(PA.areaSummary(r) || progressText(r) || '진도 미기록') + '</span>' +
+          '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>' +
         '</button>' +
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
           '<dl style="margin:0">' +

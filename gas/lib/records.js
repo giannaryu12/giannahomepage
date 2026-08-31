@@ -35,6 +35,9 @@ const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
 /** 시트 컬럼과 저장 페이로드가 챙겨야 할 영역 필드 전부. */
 const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
 
+/** 영역 필드는 아니지만 시트에 없으면 만들어야 하는 칸. */
+const RECORD_EXTRA_FIELDS = ['sessionNo'];
+
 /** 직전 수업 값으로 미리 채우는 교재 칸들. */
 const BOOK_FIELDS =
   PROGRESS_AREA_KEYS.map(function (k) { return k + 'Book'; })
@@ -78,6 +81,9 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     progress: rec.progress || '',
     homeworkStatus: rec.homeworkStatus || '',
     homeworkLevel: rec.homeworkLevel || '',
+    // 회차. 0이나 빈 값을 `||`로 뭉개면 안 되므로 따로 본다.
+    sessionNo: rec.sessionNo === '' || rec.sessionNo === null || rec.sessionNo === undefined
+      ? '' : rec.sessionNo,
     testName: rec.testName || '',
     testScore: rec.testScore === '' || rec.testScore === null ? '' : rec.testScore,
     testMax: rec.testMax === '' || rec.testMax === null ? '' : rec.testMax,
@@ -121,9 +127,29 @@ function lastBooksOf(records) {
   return out;
 }
 
+/**
+ * 그 학생이 마지막으로 적은 회차. 없으면 0.
+ *
+ * 최신 기록부터 훑어 처음 만나는 숫자를 쓴다. 회차를 빼먹은 날이 있어도
+ * 그 앞의 값을 찾아 이어 간다.
+ */
+function lastSessionNoOf(records) {
+  const sorted = (records || []).slice().sort(function (a, b) {
+    return String(b.date || '').localeCompare(String(a.date || ''));
+  });
+
+  for (let i = 0; i < sorted.length; i++) {
+    const n = Number(sorted[i].sessionNo);
+    if (isFinite(n) && n > 0) return n;
+  }
+  return 0;
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
     PROGRESS_AREA_KEYS,
+    RECORD_EXTRA_FIELDS,
+    lastSessionNoOf,
     TEST_AREA_KEYS,
     PROGRESS_FIELDS,
     NEXT_FIELDS,

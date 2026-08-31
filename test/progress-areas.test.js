@@ -95,7 +95,8 @@ describe('areaSummary', () => {
 describe('TEST_AREAS / NEXT_FIELDS', () => {
   it('시험은 단어 두 번·문법·듣기 네 영역이다', () => {
     expect(TEST_AREAS.map((a) => a.key)).toEqual(['vocab', 'vocab2', 'grammar', 'listening']);
-    expect(TEST_AREAS.map((a) => a.label)).toEqual(['단어1', '단어2', '문법', '듣기']);
+    // 단어 시험은 두 번이고 화면 이름은 둘 다 '단어'다. key만 다르다.
+    expect(TEST_AREAS.map((a) => a.label)).toEqual(['단어', '단어', '문법', '듣기']);
   });
 
   it('시험 영역 key가 서로 겹치지 않는다', () => {
@@ -167,7 +168,7 @@ describe('testLines', () => {
       listeningTestScore: '', listeningTestMax: '',
     });
     expect(lines).toEqual([
-      { key: 'vocab', label: '단어1', book: '워드마스터', score: '18', max: '20', pct: 90 },
+      { key: 'vocab', label: '단어', book: '워드마스터', score: '18', max: '20', pct: 90 },
     ]);
   });
 
@@ -188,14 +189,15 @@ describe('testLines', () => {
     expect(testLines({ vocabTestScore: 5 })).toEqual([]);
   });
 
-  it('여러 시험이 있으면 단어1·단어2·문법·듣기 순서다', () => {
+  it('여러 시험이 있으면 단어·단어·문법·듣기 순서다', () => {
     const lines = testLines({
       listeningTestScore: 8, listeningTestMax: 10,
       grammarTestScore: 7, grammarTestMax: 10,
       vocab2TestScore: 9, vocab2TestMax: 10,
       vocabTestScore: 15, vocabTestMax: 20,
     });
-    expect(lines.map((l) => l.label)).toEqual(['단어1', '단어2', '문법', '듣기']);
+    expect(lines.map((l) => l.key)).toEqual(['vocab', 'vocab2', 'grammar', 'listening']);
+    expect(lines.map((l) => l.label)).toEqual(['단어', '단어', '문법', '듣기']);
   });
 
   it('두 번째 단어 시험은 첫 번째와 따로 기록된다', () => {
@@ -204,8 +206,8 @@ describe('testLines', () => {
       vocab2TestBook: '어원편', vocab2TestScore: 12, vocab2TestMax: 20,
     });
     expect(lines).toEqual([
-      { key: 'vocab', label: '단어1', book: '', score: '20', max: '20', pct: 100 },
-      { key: 'vocab2', label: '단어2', book: '어원편', score: '12', max: '20', pct: 60 },
+      { key: 'vocab', label: '단어', book: '', score: '20', max: '20', pct: 100 },
+      { key: 'vocab2', label: '단어', book: '어원편', score: '12', max: '20', pct: 60 },
     ]);
   });
 

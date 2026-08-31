@@ -30,6 +30,12 @@ function validateRecord(rec) {
     errors.push('homeworkLevel 값 오류');
   }
 
+  // 회차는 비워 둘 수 있다. 적었다면 1 이상의 수여야 한다.
+  if (!isBlank(rec.sessionNo)) {
+    const n = Number(rec.sessionNo);
+    if (!isFinite(n) || n < 1) errors.push('sessionNo 오류');
+  }
+
   // 점수 짝은 둘 다 비어 있거나, 둘 다 유효해야 한다.
   // testScore/testMax는 시험이 영역별로 나뉘기 전에 쓰던 칸이다.
   checkScorePair_(rec, 'testScore', 'testMax', errors);

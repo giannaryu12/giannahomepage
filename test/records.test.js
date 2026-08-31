@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   findRecordMatch,
   buildRecordPayload,
+  lastSessionNoOf,
   RECORD_AREA_FIELDS,
   BOOK_FIELDS,
   lastBooksOf,
@@ -48,6 +49,7 @@ describe('buildRecordPayload', () => {
     const rec = {
       studentId: 'S001',
       date: '2026-08-30',
+      sessionNo: '',
       progress: 'Unit 7',
       vocabBook: '능률보카', vocabProgress: 'Day 12',
       readingBook: '리딩튜터', readingProgress: 'Unit 5',
@@ -70,6 +72,7 @@ describe('buildRecordPayload', () => {
       studentId: 'S001',
       classId: 'C01',
       date: '2026-08-30',
+      sessionNo: '',
       progress: 'Unit 7',
       vocabBook: '능률보카', vocabProgress: 'Day 12',
       readingBook: '리딩튜터', readingProgress: 'Unit 5',
@@ -201,5 +204,43 @@ describe('lastBooksOf', () => {
 
   it('공백만 있는 교재는 값으로 치지 않는다', () => {
     expect(lastBooksOf([{ date: '2026-08-30', vocabBook: '   ' }]).vocabBook).toBe('');
+  });
+});
+
+describe('lastSessionNoOf', () => {
+  it('가장 최근 기록의 회차를 돌려준다', () => {
+    expect(lastSessionNoOf([
+      { date: '2026-08-16', sessionNo: 9 },
+      { date: '2026-08-23', sessionNo: 11 },
+    ])).toBe(11);
+  });
+
+  it('회차를 빼먹은 날은 건너뛰고 그 앞을 찾는다', () => {
+    expect(lastSessionNoOf([
+      { date: '2026-08-16', sessionNo: 9 },
+      { date: '2026-08-23', sessionNo: '' },
+    ])).toBe(9);
+  });
+
+  it('회차가 하나도 없으면 0이다', () => {
+    expect(lastSessionNoOf([{ date: '2026-08-23' }])).toBe(0);
+    expect(lastSessionNoOf([])).toBe(0);
+    expect(lastSessionNoOf(null)).toBe(0);
+  });
+});
+
+describe('buildRecordPayload — 회차', () => {
+  it('회차를 그대로 싣는다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', sessionNo: 12 }, 'C01', 'r', 'now'
+    );
+    expect(payload.sessionNo).toBe(12);
+  });
+
+  it('회차가 비면 빈 문자열이다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30' }, 'C01', 'r', 'now'
+    );
+    expect(payload.sessionNo).toBe('');
   });
 });

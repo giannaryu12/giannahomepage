@@ -281,6 +281,7 @@
     showLegacy('recLegacyTest', '이전 시험 기록: ', legacyTestText());
     showLegacy('recLegacyNext', '이전 숙제 기록: ', recordForm.nextHomework);
 
+    $('recSessionNo').value = recordForm.sessionNo;
     $('recComment').value = recordForm.comment;
     renderChoiceGroup('recAttendance', ATTENDANCE, 'attendance');
     renderChoiceGroup('recHomeworkStatus', HOMEWORK, 'homeworkStatus');
@@ -323,9 +324,12 @@
     const rec = RF.findRecordFor(lookupRecords, student.studentId);
     let values = RF.toFormValues(rec);
 
-    // 교재 자동 채움은 그날 기록이 아직 없을 때만. 이미 저장된 기록에
-    // 채워 넣으면 그날 하지 않은 영역에 교재가 슬쩍 붙는다.
-    if (!rec) values = RF.withBookDefaults(values, student.lastBooks);
+    // 교재·회차 자동 채움은 그날 기록이 아직 없을 때만. 이미 저장된 기록에
+    // 채워 넣으면 그날 하지 않은 영역에 교재가 슬쩍 붙고, 회차도 덧씌워진다.
+    if (!rec) {
+      values = RF.withBookDefaults(values, student.lastBooks);
+      values = RF.withSessionDefault(values, student.lastSessionNo);
+    }
 
     const saved = loadRecordDraft(classId, date, student.studentId);
     if (saved) values = Object.assign({}, values, saved);
@@ -344,9 +348,12 @@
         const inRoster = (data.students || []).filter(function (s) {
           return s.studentId === student.studentId;
         })[0];
-        const withBooks = Object.assign({}, student, { lastBooks: inRoster && inRoster.lastBooks });
+        const withLast = Object.assign({}, student, {
+          lastBooks: inRoster && inRoster.lastBooks,
+          lastSessionNo: inRoster && inRoster.lastSessionNo,
+        });
 
-        openRecord(withBooks, student.classId, date, 'students', data.existingRecords);
+        openRecord(withLast, student.classId, date, 'students', data.existingRecords);
       });
   }
 

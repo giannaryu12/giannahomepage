@@ -146,3 +146,19 @@ describe('영역별 시험 점수', () => {
     }))).toEqual([]);
   });
 });
+
+describe('회차', () => {
+  const valid = (extra) => Object.assign({ studentId: 'S001', date: '2026-08-30' }, extra);
+
+  it('비워 두어도 된다', () => {
+    expect(validateRecord(valid({ sessionNo: '' }))).toEqual([]);
+    expect(validateRecord(valid({}))).toEqual([]);
+  });
+
+  it('1 이상의 수여야 한다', () => {
+    expect(validateRecord(valid({ sessionNo: '12' }))).toEqual([]);
+    expect(validateRecord(valid({ sessionNo: '0' }))).toContain('sessionNo 오류');
+    expect(validateRecord(valid({ sessionNo: '-3' }))).toContain('sessionNo 오류');
+    expect(validateRecord(valid({ sessionNo: '열두번째' }))).toContain('sessionNo 오류');
+  });
+});
