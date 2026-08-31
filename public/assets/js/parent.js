@@ -246,7 +246,9 @@
     const lines = PA.nextLines(r);
     if (lines.length) {
       return groupRow('숙제', lines.map(function (l) {
-        return { label: l.label, book: l.book, text: l.text };
+        // 시험과 같은 꼴. 범위가 앞줄, 교재명은 아랫줄이다 — 교재명이 길면
+        // 뒤에 붙은 범위가 화면 밖으로 밀려 정작 할 일이 안 보인다.
+        return { label: l.label, book: l.book, bookBelow: true, text: l.text };
       }));
     }
     return row('숙제', r.nextHomework);
