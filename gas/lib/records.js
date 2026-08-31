@@ -53,6 +53,11 @@ function testAreaKeys_() {
   return TEST_AREA_KEYS;
 }
 
+/** 진도 영역 키. 위와 같은 이유로 함수다. */
+function progressAreaKeys_() {
+  return PROGRESS_AREA_KEYS;
+}
+
 /** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
 function findRecordMatch(rows, studentId, date) {
   const match = (rows || []).filter(function (r) {
@@ -126,6 +131,7 @@ if (typeof module !== 'undefined') {
     BOOK_FIELDS,
     RECORD_AREA_FIELDS,
     testAreaKeys_,
+    progressAreaKeys_,
     findRecordMatch,
     buildRecordPayload,
     lastBooksOf,

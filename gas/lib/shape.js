@@ -71,6 +71,39 @@ function toParentStudent(student, className) {
   };
 }
 
+function filled_(v) {
+  if (v === '' || v === null || v === undefined) return false;
+  return String(v).trim() !== '';
+}
+
+/**
+ * 학부모 화면에 낼 만한 기록인가 — 진도나 시험이 하나라도 적힌 날.
+ *
+ * 출결만 찍고 저장한 날이나 날짜만 열었다가 그대로 저장된 날이 목록에
+ * 남으면 학부모가 열어 봐야 읽을 것이 없다.
+ *
+ * 시험은 점수와 만점이 함께 있어야 기록으로 본다. 0점은 기록이다 —
+ * "안 봤음"으로 뭉개면 그 줄이 통째로 사라진다.
+ */
+function hasParentContent_(record) {
+  const rec = record || {};
+
+  if (filled_(rec.progress)) return true;
+  const anyProgress = progressAreaKeys_().some(function (k) {
+    return filled_(rec[k + 'Progress']);
+  });
+  if (anyProgress) return true;
+
+  const scored = function (scoreField, maxField) {
+    return filled_(rec[scoreField]) && Number(rec[maxField]) > 0;
+  };
+  if (scored('testScore', 'testMax')) return true;
+
+  return testAreaKeys_().some(function (k) {
+    return scored(k + 'TestScore', k + 'TestMax');
+  });
+}
+
 function toParentPayload(input) {
   const opts = input || {};
   const records = (Array.isArray(opts.records) ? opts.records.slice() : [])
@@ -81,19 +114,24 @@ function toParentPayload(input) {
 
   return {
     student: toParentStudent(opts.student, opts.className),
+    // 요약은 거르기 전 전체로 낸다. 결석한 날은 진도도 시험도 없어 목록에서
+    // 빠지는데, 빠진 채로 출석률을 내면 결석이 지워져 100%가 되어 버린다.
     summary: computeSummary(records, opts.monthKey),
-    records: records,
+    records: records.filter(hasParentContent_),
   };
 }
 
 if (typeof module !== 'undefined') {
   /* eslint-disable no-var */
   var computeSummary = require('./summary.js').computeSummary;
+  var testAreaKeys_ = require('./records.js').testAreaKeys_;
+  var progressAreaKeys_ = require('./records.js').progressAreaKeys_;
   module.exports = {
     PARENT_RECORD_FIELDS,
     toParentRecord,
     toParentStudent,
     toParentPayload,
+    hasParentContent_,
   };
 }
 
