@@ -5,6 +5,8 @@
   --surface: #ffffff;
   --surface-dim: #efe8d6;
   --text: #1c2620;
+  /* 본문과 흐린 글자 사이. 항목 이름(상태·진도·시험·숙제)에 쓴다 */
+  --text-mid: #3c453e;
   --text-soft: #4f5b51;
   --forest: #1b3b2b;
   --forest-deep: #10241a;
@@ -46,6 +48,7 @@
     --surface: #1a3524;
     --surface-dim: #16291c;
     --text: #f0ece0;
+    --text-mid: #d5dbd3;
     --text-soft: #b9c4b9;
     --heading: #b7e0c3;
     --border: rgba(240,236,224,0.14);
@@ -65,6 +68,7 @@
   --surface: #1a3524;
   --surface-dim: #16291c;
   --text: #f0ece0;
+  --text-mid: #d5dbd3;
   --text-soft: #b9c4b9;
   --heading: #b7e0c3;
   --border: rgba(240,236,224,0.14);
