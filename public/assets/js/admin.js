@@ -324,15 +324,19 @@
     const rec = RF.findRecordFor(lookupRecords, student.studentId);
     let values = RF.toFormValues(rec);
 
-    // 교재·회차 자동 채움은 그날 기록이 아직 없을 때만. 이미 저장된 기록에
-    // 채워 넣으면 그날 하지 않은 영역에 교재가 슬쩍 붙고, 회차도 덧씌워진다.
+    const saved = loadRecordDraft(classId, date, student.studentId);
+    if (saved) values = Object.assign({}, values, saved);
+
+    // 자동 채움은 초안을 얹은 뒤에 한다. 먼저 채우면, 교재가 빈 채로 저장된
+    // 초안이 그 위를 덮어써서 칸이 계속 비어 있게 된다. 두 함수 모두 비어
+    // 있는 칸만 채우므로 순서를 뒤로 미뤄도 적어 둔 값은 그대로다.
+    //
+    // 그날 기록이 아직 없을 때만 채운다. 지난 기록을 고치러 열었을 때
+    // 채우면 그때 쓰지 않던 최신 교재가 옛 기록에 들어앉는다.
     if (!rec) {
       values = RF.withBookDefaults(values, student.lastBooks);
       values = RF.withSessionDefault(values, student.lastSessionNo);
     }
-
-    const saved = loadRecordDraft(classId, date, student.studentId);
-    if (saved) values = Object.assign({}, values, saved);
 
     recordForm = values;
     fillRecordView();
@@ -381,7 +385,17 @@
       .then(function (data) {
         // 그 사이 날짜를 또 바꿨거나 다른 학생을 열었으면 이 응답은 버린다.
         if (seq !== dateReqSeq || currentStudent !== st) return;
-        openRecord(st, cid, newDate, recordOrigin, data.existingRecords);
+
+        // 직전 교재·회차는 방금 받은 응답 것으로 갈아 끼운다. 손에 든 st는
+        // 명단을 불러오던 때의 값이라, 그 사이 저장한 교재를 모른다.
+        const fresh = (data.students || []).filter(function (s) {
+          return s.studentId === st.studentId;
+        })[0];
+        const withLast = fresh
+          ? Object.assign({}, st, { lastBooks: fresh.lastBooks, lastSessionNo: fresh.lastSessionNo })
+          : st;
+
+        openRecord(withLast, cid, newDate, recordOrigin, data.existingRecords);
       })
       .catch(function (err) {
         if (seq !== dateReqSeq || currentStudent !== st) return;
