@@ -81,7 +81,7 @@ describe('toParentPayload', () => {
   });
 });
 
-describe('hasParentContent_ — 진도나 시험이 있는 날만', () => {
+describe('hasParentContent_ — 수업이 있었던 날만', () => {
   it('진도가 하나라도 적혀 있으면 낸다', () => {
     expect(hasParentContent_({ vocabProgress: 'Day 12' })).toBe(true);
     expect(hasParentContent_({ etcProgress: '자유 독해' })).toBe(true);
@@ -107,11 +107,23 @@ describe('hasParentContent_ — 진도나 시험이 있는 날만', () => {
     expect(hasParentContent_({ vocabTestScore: 18, vocabTestMax: 0 })).toBe(false);
   });
 
-  it('출결·숙제·코멘트만 있는 날은 내지 않는다', () => {
-    expect(hasParentContent_({
-      attendance: '결석', homeworkStatus: '미제출', homeworkLevel: '하',
-      vocabNextBook: '보카 워크북', vocabNext: 'Day 14', comment: '전화 드렸습니다',
-    })).toBe(false);
+  it('숙제만 적힌 날도 낸다', () => {
+    expect(hasParentContent_({ vocabNext: 'Day 14 외우기' })).toBe(true);
+    expect(hasParentContent_({ nextHomework: '옛 숙제' })).toBe(true);
+  });
+
+  it('코멘트만 적힌 날도 낸다', () => {
+    expect(hasParentContent_({ comment: '오늘은 문법만 봤습니다' })).toBe(true);
+  });
+
+  it('결석은 그 자체가 기록이다', () => {
+    // 진도도 숙제도 코멘트도 없지만, 결석했다는 사실은 학부모가 봐야 한다.
+    expect(hasParentContent_({ attendance: '결석' })).toBe(true);
+  });
+
+  it('출결만 찍은 날은 내지 않는다', () => {
+    expect(hasParentContent_({ attendance: '출석' })).toBe(false);
+    expect(hasParentContent_({ attendance: '지각', homeworkStatus: '제출', homeworkLevel: '상' })).toBe(false);
   });
 
   it('교재만 채워진 날은 내지 않는다', () => {
@@ -119,6 +131,10 @@ describe('hasParentContent_ — 진도나 시험이 있는 날만', () => {
     expect(hasParentContent_({
       vocabBook: '능률보카', vocabTestBook: '단어시험지', vocabNextBook: '워크북',
     })).toBe(false);
+  });
+
+  it('빈 문자열 코멘트는 코멘트가 아니다', () => {
+    expect(hasParentContent_({ comment: '   ' })).toBe(false);
   });
 
   it('빈 기록과 없는 값에 흔들리지 않는다', () => {
@@ -131,7 +147,7 @@ describe('hasParentContent_ — 진도나 시험이 있는 날만', () => {
 describe('toParentPayload — 거르기와 요약', () => {
   const base = { student: { name: '테스트' }, className: '고1 A반' };
 
-  it('진도도 시험도 없는 날은 목록에서 뺀다', () => {
+  it('아무것도 적히지 않은 날은 목록에서 뺀다', () => {
     const out = toParentPayload(Object.assign({}, base, {
       records: [
         { date: '2026-08-30', vocabProgress: 'Day 12', attendance: '출석' },
@@ -139,18 +155,21 @@ describe('toParentPayload — 거르기와 요약', () => {
         { date: '2026-08-26', attendance: '출석' },
       ],
     }));
-    expect(out.records.map((r) => r.date)).toEqual(['2026-08-30']);
+    // 결석한 날은 남고, 출석만 찍힌 26일만 빠진다.
+    expect(out.records.map((r) => r.date)).toEqual(['2026-08-30', '2026-08-28']);
   });
 
   it('걸러진 날도 출석률에는 그대로 들어간다', () => {
-    // 결석한 날은 진도도 시험도 없다. 거르고 나서 세면 결석이 지워져 100%가 된다.
+    // 거르기를 먼저 하면 세어야 할 날이 통계에서 빠진다.
     const out = toParentPayload(Object.assign({}, base, {
       records: [
         { date: '2026-08-30', vocabProgress: 'Day 12', attendance: '출석' },
-        { date: '2026-08-28', attendance: '결석' },
+        { date: '2026-08-28', attendance: '출석' },
+        { date: '2026-08-26', attendance: '결석' },
+        { date: '2026-08-24', attendance: '결석' },
       ],
     }));
-    expect(out.records).toHaveLength(1);
+    expect(out.records.map((r) => r.date)).toEqual(['2026-08-30', '2026-08-26', '2026-08-24']);
     expect(out.summary.attendanceRate).toBe(50);
   });
 });

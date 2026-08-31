@@ -171,13 +171,19 @@
     return '<div class="gi-rec-row"><dt>' + label + '</dt><dd>' + esc(value) + '</dd></div>';
   }
 
+  /** 결석한 날은 진도가 없다. 그 자리에 '결석'이라고 낸다. */
+  function progressText(r) {
+    if (r.progress) return r.progress;
+    return r.attendance === '결석' ? '결석' : '';
+  }
+
   /**
    * 영역별 진도 줄. 진도가 적힌 영역만 나온다.
    * 영역이 하나도 없는 옛 기록은 예전처럼 progress 한 줄로 보여준다.
    */
   function progressRows(r) {
     const lines = PA.areaLines(r);
-    if (!lines.length) return row('진도', r.progress);
+    if (!lines.length) return row('진도', progressText(r));
 
     return lines.map(function (l) {
       const book = l.book ? '<span class="gi-area-book">' + esc(l.book) + '</span> · ' : '';
@@ -267,7 +273,8 @@
       '<article class="gi-rec">' +
         '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
           '<span class="gi-rec-date">' + esc(FMT.dateLabel(r.date)) + '</span>' +
-          '<span class="gi-rec-progress">' + esc(PA.areaSummary(r) || '진도 미기록') + '</span>' +
+          '<span class="gi-rec-progress">' +
+            esc(PA.areaSummary(r) || progressText(r) || '진도 미기록') + '</span>' +
         '</button>' +
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
           '<dl style="margin:0">' +

@@ -77,10 +77,17 @@ function filled_(v) {
 }
 
 /**
- * 학부모 화면에 낼 만한 기록인가 — 진도나 시험이 하나라도 적힌 날.
+ * 학부모 화면에 낼 만한 기록인가 — 그날 수업이 있었다는 자취가 하나라도
+ * 남은 날. 진도 · 시험 · 숙제 · 코멘트 중 하나라도 있으면 낸다.
  *
- * 출결만 찍고 저장한 날이나 날짜만 열었다가 그대로 저장된 날이 목록에
- * 남으면 학부모가 열어 봐야 읽을 것이 없다.
+ * 넷 다 없는 날은 수업이 없던 날이다. 날짜만 열었다가 그대로 저장된 날이
+ * 목록에 남으면 학부모가 열어 봐야 읽을 것이 없다.
+ *
+ * 결석은 그 자체가 그날의 기록이라 따로 통과시킨다. 화면에서도 진도 자리에
+ * '결석'이라고 낸다.
+ *
+ * 교재는 근거가 아니다 — 직전 수업 값이 자동으로 채워지므로 그날 그 영역을
+ * 했다는 뜻이 되지 못한다.
  *
  * 시험은 점수와 만점이 함께 있어야 기록으로 본다. 0점은 기록이다 —
  * "안 봤음"으로 뭉개면 그 줄이 통째로 사라진다.
@@ -88,11 +95,16 @@ function filled_(v) {
 function hasParentContent_(record) {
   const rec = record || {};
 
+  if (rec.attendance === '결석') return true;
+  if (filled_(rec.comment)) return true;
+
   if (filled_(rec.progress)) return true;
-  const anyProgress = progressAreaKeys_().some(function (k) {
-    return filled_(rec[k + 'Progress']);
+  if (filled_(rec.nextHomework)) return true;
+
+  const anyArea = progressAreaKeys_().some(function (k) {
+    return filled_(rec[k + 'Progress']) || filled_(rec[k + 'Next']);
   });
-  if (anyProgress) return true;
+  if (anyArea) return true;
 
   const scored = function (scoreField, maxField) {
     return filled_(rec[scoreField]) && Number(rec[maxField]) > 0;
