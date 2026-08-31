@@ -15,7 +15,8 @@ describe('computeSummary', () => {
   it('기록이 없으면 전부 null이다', () => {
     expect(computeSummary([], '2026-08')).toEqual({
       attendanceRate: null, homeworkRate: null, avgScore: null,
-      vocabAvg: null, listeningAvg: null, recordCount: 0,
+      vocabAvg: null, vocab2Avg: null, grammarAvg: null, listeningAvg: null,
+      recordCount: 0,
     });
   });
 
@@ -101,13 +102,28 @@ describe('computeSummary', () => {
 });
 
 describe('영역별 평균 점수', () => {
-  it('단어와 듣기를 따로 평균낸다', () => {
+  it('네 시험을 따로 평균낸다', () => {
     const s = computeSummary([
-      { vocabTestScore: 18, vocabTestMax: 20, listeningTestScore: 5, listeningTestMax: 10 },
+      {
+        vocabTestScore: 18, vocabTestMax: 20,
+        vocab2TestScore: 6, vocab2TestMax: 10,
+        grammarTestScore: 14, grammarTestMax: 20,
+        listeningTestScore: 5, listeningTestMax: 10,
+      },
       { vocabTestScore: 16, vocabTestMax: 20 },
     ], '');
     expect(s.vocabAvg).toBe(85);   // 90, 80
+    expect(s.vocab2Avg).toBe(60);
+    expect(s.grammarAvg).toBe(70);
     expect(s.listeningAvg).toBe(50);
+  });
+
+  it('두 단어 시험 점수가 서로 섞이지 않는다', () => {
+    const s = computeSummary([
+      { vocabTestScore: 20, vocabTestMax: 20, vocab2TestScore: 0, vocab2TestMax: 20 },
+    ], '');
+    expect(s.vocabAvg).toBe(100);
+    expect(s.vocab2Avg).toBe(0);
   });
 
   it('기록이 없는 영역은 0이 아니라 null이다', () => {

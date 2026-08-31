@@ -16,10 +16,17 @@
     { key: 'etc', label: '기타' },
   ];
 
-  // 시험은 단어·듣기 둘만 본다. 진도 영역의 부분집합이라 label을 그대로 쓴다.
-  const TEST_AREAS = PROGRESS_AREAS.filter(function (a) {
-    return a.key === 'vocab' || a.key === 'listening';
-  });
+  /**
+   * 시험 영역. 진도 영역을 걸러서는 만들 수 없다 — 단어는 두 번 보고(단어1·단어2),
+   * 독해·기타는 시험을 보지 않는다. 그래서 따로 적는다.
+   * key는 그대로 시트 컬럼 이름이 되므로 한 번 정한 뒤 바꾸지 않는다.
+   */
+  const TEST_AREAS = [
+    { key: 'vocab', label: '단어1' },
+    { key: 'vocab2', label: '단어2' },
+    { key: 'grammar', label: '문법' },
+    { key: 'listening', label: '듣기' },
+  ];
 
   const PROGRESS_FIELDS = [];
   PROGRESS_AREAS.forEach(function (a) {

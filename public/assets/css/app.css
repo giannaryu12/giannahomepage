@@ -49,10 +49,11 @@ body.gi{
 }
 
 /* ---------- 요약 카드 ---------- */
-/* 카드 수가 넷~다섯으로 늘 수 있어 고정 3열 대신 접히게 둔다. */
+/* 카드가 여섯~일곱 장이라 고정 3열 대신 접히게 둔다. 한 줄에 셋씩
+   놓이도록 최소 폭을 잡았다 — 좁으면 다섯 장 뒤에 한 장만 남아 어색하다. */
 .gi-cards{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(6.5rem, 1fr));
+  grid-template-columns:repeat(auto-fit, minmax(10rem, 1fr));
   gap:0.6rem;
   margin-bottom:1.6rem;
 }
@@ -195,17 +196,17 @@ body.gi{
   outline-offset:1px;
 }
 
-/* 진도 영역 한 줄: 영역명 · 교재 · 진도.
+/* 진도 영역 한 줄: 영역명 · 교재 · 진도. 영역명 칸은 '단어1' 세 글자가 들어갈 만큼.
    좁은 화면에서는 영역명이 위로 올라가고 두 칸이 나란히 남는다. */
 .gi-area{
   display:grid;
-  grid-template-columns:3.2rem minmax(0,1fr) minmax(0,1fr);
+  grid-template-columns:3.6rem minmax(0,1fr) minmax(0,1fr);
   align-items:center;
   gap:0.35rem;
   margin-bottom:0.35rem;
 }
 /* 시험 줄만 교재·점수·만점 세 칸이다. */
-.gi-area.is-test{ grid-template-columns:3.2rem minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); }
+.gi-area.is-test{ grid-template-columns:3.6rem minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); }
 .gi-area-label{
   font-size:0.82rem;
   font-weight:700;

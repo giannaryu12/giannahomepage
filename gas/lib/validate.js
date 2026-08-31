@@ -31,10 +31,11 @@ function validateRecord(rec) {
   }
 
   // 점수 짝은 둘 다 비어 있거나, 둘 다 유효해야 한다.
-  // testScore/testMax는 시험이 단어·듣기로 나뉘기 전에 쓰던 칸이다.
+  // testScore/testMax는 시험이 영역별로 나뉘기 전에 쓰던 칸이다.
   checkScorePair_(rec, 'testScore', 'testMax', errors);
-  checkScorePair_(rec, 'vocabTestScore', 'vocabTestMax', errors);
-  checkScorePair_(rec, 'listeningTestScore', 'listeningTestMax', errors);
+  testAreaKeys_().forEach(function (k) {
+    checkScorePair_(rec, k + 'TestScore', k + 'TestMax', errors);
+  });
 
   return errors;
 }
@@ -65,6 +66,11 @@ function validateBatch(records) {
 }
 
 if (typeof module !== 'undefined') {
+  /* eslint-disable no-var */
+  // shape.js 아래쪽 주석과 같은 이유로 const/let이 아니라 var다.
+  // GAS는 전역을 공유해 records.js의 testAreaKeys_를 그냥 쓰고,
+  // Node에서는 이 가드 안의 require가 그 이름을 채운다.
+  var testAreaKeys_ = require('./records.js').testAreaKeys_;
   module.exports = {
     HOMEWORK_STATUS,
     HOMEWORK_LEVEL,

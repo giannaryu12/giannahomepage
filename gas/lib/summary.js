@@ -25,8 +25,10 @@ function computeSummary(records, monthKey) {
   let attTotal = 0, attPresent = 0;
   let hwTotal = 0, hwDone = 0;
   let scoreSum = 0, scoreCount = 0;
-  const areaSums = { vocab: 0, listening: 0 };
-  const areaCounts = { vocab: 0, listening: 0 };
+  const areaSums = {};
+  const areaCounts = {};
+  const testKeys = testAreaKeys_();
+  testKeys.forEach(function (k) { areaSums[k] = 0; areaCounts[k] = 0; });
 
   scoped.forEach(function (r) {
     if (r.attendance) {
@@ -47,7 +49,7 @@ function computeSummary(records, monthKey) {
       scoreCount++;
     }
 
-    ['vocab', 'listening'].forEach(function (key) {
+    testKeys.forEach(function (key) {
       const pct = percentOf(r[key + 'TestScore'], r[key + 'TestMax']);
       if (pct === null) return;
       areaSums[key] += pct;
@@ -55,15 +57,20 @@ function computeSummary(records, monthKey) {
     });
   });
 
-  return {
+  const out = {
     attendanceRate: rate(attPresent, attTotal),
     homeworkRate: rate(hwDone, hwTotal),
-    // 시험이 단어·듣기로 나뉘기 전에 쌓인 점수. 값이 있을 때만 화면에 낸다.
+    // 시험이 영역별로 나뉘기 전에 쌓인 점수. 값이 있을 때만 화면에 낸다.
     avgScore: scoreCount ? Math.round(scoreSum / scoreCount) : null,
-    vocabAvg: areaCounts.vocab ? Math.round(areaSums.vocab / areaCounts.vocab) : null,
-    listeningAvg: areaCounts.listening ? Math.round(areaSums.listening / areaCounts.listening) : null,
     recordCount: scoped.length,
   };
+
+  // 영역마다 <key>Avg. 기록이 없으면 0이 아니라 null이다.
+  testKeys.forEach(function (k) {
+    out[k + 'Avg'] = areaCounts[k] ? Math.round(areaSums[k] / areaCounts[k]) : null;
+  });
+
+  return out;
 }
 
 /** score/max를 100점 환산. 기록이 아니면 null. 0점은 기록이다. */
@@ -76,5 +83,10 @@ function percentOf(rawScore, rawMax) {
 }
 
 if (typeof module !== 'undefined') {
+  /* eslint-disable no-var */
+  // shape.js 아래쪽 주석과 같은 이유로 const/let이 아니라 var다.
+  // GAS는 전역을 공유해 records.js의 testAreaKeys_를 그냥 쓰고,
+  // Node에서는 이 가드 안의 require가 그 이름을 채운다.
+  var testAreaKeys_ = require('./records.js').testAreaKeys_;
   module.exports = { computeSummary, percentOf, PRESENT_VALUES, SUBMITTED_VALUES };
 }

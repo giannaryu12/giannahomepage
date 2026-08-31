@@ -127,4 +127,22 @@ describe('영역별 시험 점수', () => {
     expect(errors).toContain('vocabTestMax 오류');
     expect(errors).toContain('listeningTestScore 오류');
   });
+
+  it('둘째 단어 시험과 문법 시험도 검사한다', () => {
+    const errors = validateRecord(valid({
+      vocab2TestScore: '21', vocab2TestMax: '20',
+      grammarTestScore: '5', grammarTestMax: '',
+    }));
+    expect(errors).toContain('vocab2TestScore가 vocab2TestMax보다 큽니다');
+    expect(errors).toContain('grammarTestMax 오류');
+  });
+
+  it('네 시험이 모두 정상이면 오류가 없다', () => {
+    expect(validateRecord(valid({
+      vocabTestScore: '18', vocabTestMax: '20',
+      vocab2TestScore: '0', vocab2TestMax: '20',
+      grammarTestScore: '15', grammarTestMax: '20',
+      listeningTestScore: '9', listeningTestMax: '10',
+    }))).toEqual([]);
+  });
 });

@@ -32,11 +32,16 @@
   function renderCards(summary) {
     let html =
       cardHtml('출석률', summary.attendanceRate, '%') +
-      cardHtml('과제 제출률', summary.homeworkRate, '%') +
-      cardHtml('단어 평균', summary.vocabAvg, '점') +
-      cardHtml('듣기 평균', summary.listeningAvg, '점');
+      cardHtml('과제 제출률', summary.homeworkRate, '%');
 
-    // 시험이 단어·듣기로 나뉘기 전에 쌓인 점수. 있을 때만 덧붙인다.
+    PA.TEST_AREAS.forEach(function (a) {
+      // 시험 영역이 늘어난 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
+      // undefined를 그대로 넘기면 '기록 없음' 대신 undefined가 찍힌다.
+      const avg = summary[a.key + 'Avg'];
+      html += cardHtml(a.label + ' 평균', avg === undefined ? null : avg, '점');
+    });
+
+    // 시험이 영역별로 나뉘기 전에 쌓인 점수. 있을 때만 덧붙인다.
     // 늘 띄우면 옛 기록이 없는 학생에게 뜻 없는 칸이 하나 남는다.
     if (summary.avgScore !== null && summary.avgScore !== undefined) {
       html += cardHtml('이전 시험 평균', summary.avgScore, '점');
@@ -47,10 +52,13 @@
 
   /* ---------- 성적 추이 ---------- */
 
-  const SERIES = [
-    { key: 'vocab', label: '단어', color: 'var(--garnet)' },
-    { key: 'listening', label: '듣기', color: 'var(--gold)' },
-  ];
+  // 선 색은 tokens.css의 --chart-1..4. 어두운 화면에서도 배경과 붙지 않게
+  // 테마별로 값이 다르므로 --garnet 같은 원색을 직접 쓰지 않는다.
+  const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
+
+  const SERIES = PA.TEST_AREAS.map(function (a, i) {
+    return { key: a.key, label: a.label, color: SERIES_COLORS[i % SERIES_COLORS.length] };
+  });
 
   function scorePoints(records, scoreField, maxField) {
     return records
@@ -75,7 +83,7 @@
     if (out.length) return out;
 
     const legacy = scorePoints(records, 'testScore', 'testMax');
-    return legacy.length ? [{ label: '시험', color: 'var(--garnet)', pts: legacy }] : [];
+    return legacy.length ? [{ label: '시험', color: SERIES_COLORS[0], pts: legacy }] : [];
   }
 
   function renderChart(records) {
@@ -196,7 +204,7 @@
       }));
     }
 
-    // 시험이 단어·듣기로 나뉘기 전에 쌓인 기록.
+    // 시험이 영역별로 나뉘기 전에 쌓인 기록.
     const scoreText = (r.testScore !== '' && r.testMax !== '')
       ? (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax
       : '';

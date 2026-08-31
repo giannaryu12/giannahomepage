@@ -21,8 +21,11 @@ const NEXT_FIELDS = PROGRESS_AREA_KEYS.reduce(function (acc, k) {
   return acc;
 }, []);
 
-/** 시험은 단어·듣기 둘만 본다. */
-const TEST_AREA_KEYS = ['vocab', 'listening'];
+/**
+ * 시험 영역. 진도 영역의 부분집합이 아니다 — 단어는 두 번 보고(vocab·vocab2),
+ * 독해·기타는 시험을 보지 않는다. 화면 쪽 정의는 progress-areas.js의 TEST_AREAS다.
+ */
+const TEST_AREA_KEYS = ['vocab', 'vocab2', 'grammar', 'listening'];
 
 const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
   acc.push(k + 'TestBook', k + 'TestScore', k + 'TestMax');
@@ -37,6 +40,18 @@ const BOOK_FIELDS =
   PROGRESS_AREA_KEYS.map(function (k) { return k + 'Book'; })
     .concat(PROGRESS_AREA_KEYS.map(function (k) { return k + 'NextBook'; }))
     .concat(TEST_AREA_KEYS.map(function (k) { return k + 'TestBook'; }));
+
+/**
+ * 시험 영역 키. summary.js·validate.js가 이걸로 읽는다.
+ *
+ * 상수를 그대로 넘기지 않고 함수로 감싼 이유: 저쪽 파일들이 Node에서
+ * `var`로 받으면, GAS에서는 그 var 선언이
+ * 여기 최상위 `const TEST_AREA_KEYS`와 같은 전역 스코프에서 부딪쳐
+ * 로드 시점 SyntaxError가 난다. 함수 선언은 var와 부딪치지 않는다.
+ */
+function testAreaKeys_() {
+  return TEST_AREA_KEYS;
+}
 
 /** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
 function findRecordMatch(rows, studentId, date) {
@@ -104,11 +119,13 @@ function lastBooksOf(records) {
 if (typeof module !== 'undefined') {
   module.exports = {
     PROGRESS_AREA_KEYS,
+    TEST_AREA_KEYS,
     PROGRESS_FIELDS,
     NEXT_FIELDS,
     TEST_FIELDS,
     BOOK_FIELDS,
     RECORD_AREA_FIELDS,
+    testAreaKeys_,
     findRecordMatch,
     buildRecordPayload,
     lastBooksOf,

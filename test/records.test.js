@@ -80,6 +80,8 @@ describe('buildRecordPayload', () => {
       grammarNextBook: '', grammarNext: '', listeningNextBook: '', listeningNext: '',
       etcNextBook: '', etcNext: '',
       vocabTestBook: '', vocabTestScore: '', vocabTestMax: '',
+      vocab2TestBook: '', vocab2TestScore: '', vocab2TestMax: '',
+      grammarTestBook: '', grammarTestScore: '', grammarTestMax: '',
       listeningTestBook: '', listeningTestScore: '', listeningTestMax: '',
       homeworkStatus: '제출',
       homeworkLevel: '상',

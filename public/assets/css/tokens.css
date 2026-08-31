@@ -15,6 +15,12 @@
   --border: rgba(27,59,43,0.16);
   --shadow: 0 20px 50px -25px rgba(16,36,26,0.35);
 
+  /* 성적 추이 선 색 — 시험 영역 수만큼. 어두운 화면에서 아래 값으로 바뀐다 */
+  --chart-1: #8b0f0f;
+  --chart-2: #b3894f;
+  --chart-3: #1b3b2b;
+  --chart-4: #4f5b51;
+
   --hero-bg: #12271c;
   --hero-bg-2: #1b3b2b;
   --hero-text: #f6f2e6;
@@ -47,6 +53,10 @@
     --state-good: #7fc898;
     --state-warn: #d8ab68;
     --state-bad: #e08585;
+    --chart-1: #e08585;
+    --chart-2: #d8ab68;
+    --chart-3: #7fc898;
+    --chart-4: #b9c4b9;
   }
 }
 :root[data-theme="dark"]{
@@ -62,4 +72,8 @@
   --state-good: #7fc898;
   --state-warn: #d8ab68;
   --state-bad: #e08585;
+  --chart-1: #e08585;
+  --chart-2: #d8ab68;
+  --chart-3: #7fc898;
+  --chart-4: #b9c4b9;
 }
