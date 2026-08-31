@@ -5,6 +5,7 @@
 (function () {
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
   const PA = window.GI_PROGRESS_AREAS;
+  const FMT = window.GI_FORMAT;
   const $state = document.getElementById('state');
   const $content = document.getElementById('content');
 
@@ -239,7 +240,7 @@
     return '' +
       '<article class="gi-rec">' +
         '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
-          '<span class="gi-rec-date">' + esc(r.date.slice(5).replace('-', '/')) + '</span>' +
+          '<span class="gi-rec-date">' + esc(FMT.dateLabel(r.date)) + '</span>' +
           '<span class="gi-rec-progress">' + esc(PA.areaSummary(r) || '진도 미기록') + '</span>' +
         '</button>' +
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
