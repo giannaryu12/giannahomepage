@@ -69,14 +69,24 @@ body.gi{
 body.gi .gi-h2{ color:var(--text); }
 
 /* ---------- 요약 카드 ---------- */
-/* 카드가 여섯~일곱 장이라 고정 3열 대신 접히게 둔다. 한 줄에 셋씩
-   놓이도록 최소 폭을 잡았다 — 좁으면 다섯 장 뒤에 한 장만 남아 어색하다. */
+/* 요약 카드는 두 줄이다 — 출결·과제 한 줄, 시험 평균 한 줄.
+   한 묶음으로 흘려 두면 화면 폭에 따라 두 갈래가 섞여 뜬다. */
 .gi-cards{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(10rem, 1fr));
   gap:0.6rem;
-  margin-bottom:1.6rem;
+  margin-bottom:0.6rem;
 }
+.gi-cards:last-child{ margin-bottom:1.6rem; }
+
+.gi-cards-rates{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+
+/* 시험은 몇 개가 되든 한 줄이다. auto-flow:column이면 개수를 세지 않아도 된다. */
+.gi-cards-tests{ grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); }
+/* 좁은 화면에 넷이 들어가야 해서 여백과 글자를 줄인다. */
+.gi-cards-tests .gi-card{ padding:0.8rem 0.3rem; }
+.gi-cards-tests .gi-card-label{ font-size:0.66rem; letter-spacing:0.02em; }
+.gi-cards-tests .gi-card-value{ font-size:1.5rem; }
+.gi-cards-tests .gi-card-value.is-empty{ font-size:0.78rem; }
 .gi-card{
   background:var(--surface);
   border:1px solid var(--border);

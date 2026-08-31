@@ -30,25 +30,34 @@
     return '<div class="gi-card"><div class="gi-card-label">' + label + '</div>' + inner + '</div>';
   }
 
+  /**
+   * 요약 카드는 두 줄이다 — 출결·과제 한 줄, 시험 평균 한 줄.
+   *
+   * 한 묶음으로 흘려 두면 화면 폭에 따라 두 갈래가 섞여 뜬다.
+   * 성격이 다른 수치라 줄이 갈려 있어야 한 눈에 읽힌다.
+   */
   function renderCards(summary) {
-    let html =
+    const rates =
       cardHtml('출석률', summary.attendanceRate, '%') +
       cardHtml('과제 제출률', summary.homeworkRate, '%');
 
+    let tests = '';
     PA.TEST_AREAS.forEach(function (a) {
       // 시험 영역이 늘어난 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
       // undefined를 그대로 넘기면 '기록 없음' 대신 undefined가 찍힌다.
       const avg = summary[a.key + 'Avg'];
-      html += cardHtml(a.label + ' 평균', avg === undefined ? null : avg, '점');
+      tests += cardHtml(a.label, avg === undefined ? null : avg, '점');
     });
 
     // 시험이 영역별로 나뉘기 전에 쌓인 점수. 있을 때만 덧붙인다.
     // 늘 띄우면 옛 기록이 없는 학생에게 뜻 없는 칸이 하나 남는다.
     if (summary.avgScore !== null && summary.avgScore !== undefined) {
-      html += cardHtml('이전 시험 평균', summary.avgScore, '점');
+      tests += cardHtml('이전 시험', summary.avgScore, '점');
     }
 
-    document.getElementById('cards').innerHTML = html;
+    document.getElementById('cards').innerHTML =
+      '<div class="gi-cards gi-cards-rates">' + rates + '</div>' +
+      '<div class="gi-cards gi-cards-tests">' + tests + '</div>';
   }
 
   /* ---------- 성적 추이 ---------- */
