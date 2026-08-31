@@ -205,7 +205,13 @@
     }
 
     // 시험이 영역별로 나뉘기 전에 쌓인 기록.
-    const scoreText = (r.testScore !== '' && r.testMax !== '')
+    //
+    // 빈 값 검사에 undefined·null도 넣어야 한다. 서버 응답은 shape.js가
+    // 빠진 칸을 ''로 채워 주지만, 그 손질을 거치지 않은 레코드가 들어오면
+    // `undefined !== ''`가 참이라 학부모 화면에 '시험 undefined/undefined'가
+    // 그대로 찍힌다.
+    const blank = function (v) { return v === '' || v === null || v === undefined; };
+    const scoreText = (!blank(r.testScore) && !blank(r.testMax))
       ? (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax
       : '';
     return row('시험', scoreText);
