@@ -154,3 +154,25 @@ describe('영역별 평균 점수', () => {
     expect(s.vocabAvg).toBe(100);
   });
 });
+
+describe('달 범위를 주지 않으면 전체를 센다', () => {
+  it('여러 달에 걸친 기록을 모두 센다', () => {
+    // 달로 자르면 1일마다 카드가 전부 '기록 없음'이 된다.
+    const s = computeSummary([
+      { date: '2026-07-30', attendance: '출석', homeworkStatus: '제출' },
+      { date: '2026-08-30', attendance: '결석', homeworkStatus: '미제출' },
+    ], '');
+    expect(s.attendanceRate).toBe(50);
+    expect(s.homeworkRate).toBe(50);
+    expect(s.recordCount).toBe(2);
+  });
+
+  it('달을 주면 그 달만 센다', () => {
+    const s = computeSummary([
+      { date: '2026-07-30', attendance: '결석' },
+      { date: '2026-08-30', attendance: '출석' },
+    ], '2026-08');
+    expect(s.attendanceRate).toBe(100);
+    expect(s.recordCount).toBe(1);
+  });
+});
