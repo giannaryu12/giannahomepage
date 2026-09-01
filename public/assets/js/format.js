@@ -18,7 +18,17 @@
   function dateLabel(iso) {
     const s = iso === null || iso === undefined ? '' : String(iso);
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-    if (!m) return s;
+
+    // 시트의 날짜 칸이 텍스트가 아니라 날짜 서식이면 서버가 Date를 담아
+    // 보내고, JSON을 거치며 '2026-08-30T15:00:00.000Z' 같은 UTC 시각이 된다.
+    // 그대로 찍으면 학부모 화면에 이 문자열이 그냥 보인다. 앞 열 글자만
+    // 떼어도 안 된다 — 한국 자정은 전날 15시 UTC라 하루가 밀린다.
+    // 그래서 진짜 Date로 읽어 보는 사람이 있는 지역의 날짜를 쓴다.
+    if (!m) {
+      const parsed = new Date(s);
+      if (s && !isNaN(parsed.getTime())) return labelOf_(parsed);
+      return s;
+    }
 
     const month = Number(m[2]);
     const day = Number(m[3]);
@@ -30,7 +40,16 @@
       return m[2] + '/' + m[3];
     }
 
-    return m[2] + '/' + m[3] + ' (' + WEEKDAYS[d.getDay()] + ')';
+    return labelOf_(d);
+  }
+
+  /** Date 하나를 '08/30 (일)'로. 월·일은 두 자리로 맞춘다. */
+  function labelOf_(d) {
+    const mm = String(d.getMonth() + 1);
+    const dd = String(d.getDate());
+    return (mm.length < 2 ? '0' + mm : mm) + '/' +
+      (dd.length < 2 ? '0' + dd : dd) +
+      ' (' + WEEKDAYS[d.getDay()] + ')';
   }
 
   const api = { WEEKDAYS, dateLabel };
