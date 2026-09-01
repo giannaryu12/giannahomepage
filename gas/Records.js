@@ -109,15 +109,14 @@ function handleParentLoad(body) {
     return fail('NOT_FOUND', '링크가 올바르지 않거나 만료되었습니다. 선생님께 문의해 주세요.');
   }
 
-  // 달을 지정해 부르지 않는 한 전체 기록으로 요약한다.
+  // 요약의 본체는 늘 전체 기록이다. monthKey는 그 옆에 함께 내려보내는
+  // '이달' 숫자에만 쓴다. 예전에는 요약 전체를 이번 달로 잘랐는데, 그러면
+  // 달이 바뀌는 1일마다 카드가 전부 '기록 없음'이 됐다.
   //
-  // 예전에는 이번 달로 잡았는데, 그러면 달이 바뀌는 1일마다 학부모 화면의
-  // 카드가 전부 '기록 없음'이 된다. 아래 수업 기록에는 지난달 수업이 그대로
-  // 보이는데 위 숫자만 비어 있어 오류로 읽힌다.
-  //
-  // toISOString은 UTC라 한국 시각 1일 오전에는 아직 지난달이 나오는 문제도
-  // 함께 없어진다.
-  const monthKey = body.monthKey || '';
+  // toISOString은 UTC라 한국 시각 1일 오전에 아직 지난달로 잡힌다.
+  // 스크립트 표준시간대(Asia/Seoul)로 뽑는다.
+  const monthKey = body.monthKey ||
+    Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM');
 
   return ok(toParentPayload({
     student: student,

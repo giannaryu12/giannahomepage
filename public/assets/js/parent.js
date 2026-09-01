@@ -71,8 +71,10 @@
 
   function renderCards(summary) {
     const rates =
-      gaugeCard('출석률', summary.attendanceRate, 'var(--chart-3)') +
-      gaugeCard('숙제 제출률', summary.homeworkRate, 'var(--chart-2)');
+      gaugeCard('누적 출석률', summary.attendanceRate, 'var(--chart-3)') +
+      gaugeCard('이달 출석률', summary.monthAttendanceRate, 'var(--chart-3)') +
+      gaugeCard('누적 숙제 제출률', summary.homeworkRate, 'var(--chart-2)') +
+      gaugeCard('이달 숙제 제출률', summary.monthHomeworkRate, 'var(--chart-2)');
 
     let tests = '';
     PA.TEST_SUMMARY_AREAS.forEach(function (a) {

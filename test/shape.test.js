@@ -173,3 +173,41 @@ describe('toParentPayload — 거르기와 요약', () => {
     expect(out.summary.attendanceRate).toBe(50);
   });
 });
+
+describe('toParentPayload — 누적과 이달', () => {
+  const base = { student: { name: '테스트' }, className: '고1 A반' };
+  const records = [
+    { date: '2026-09-01', vocabProgress: 'a', attendance: '출석', homeworkStatus: '제출' },
+    { date: '2026-08-30', vocabProgress: 'b', attendance: '결석' },
+    { date: '2026-08-28', vocabProgress: 'c', attendance: '결석', homeworkStatus: '미제출' },
+  ];
+
+  it('본체는 늘 전체 기록이다', () => {
+    const out = toParentPayload(Object.assign({}, base, { records, monthKey: '2026-09' }));
+    expect(out.summary.attendanceRate).toBe(33);  // 3건 중 출석 1
+    expect(out.summary.homeworkRate).toBe(50);    // 2건 중 제출 1
+    expect(out.summary.recordCount).toBe(3);
+  });
+
+  it('이달 숫자를 따로 낸다', () => {
+    const out = toParentPayload(Object.assign({}, base, { records, monthKey: '2026-09' }));
+    expect(out.summary.monthKey).toBe('2026-09');
+    expect(out.summary.monthAttendanceRate).toBe(100);
+    expect(out.summary.monthHomeworkRate).toBe(100);
+  });
+
+  it('이달 기록이 없으면 이달만 null이고 누적은 그대로다', () => {
+    // 달이 바뀐 1일. 예전에는 이 경우 카드가 전부 비었다.
+    const out = toParentPayload(Object.assign({}, base, { records, monthKey: '2026-10' }));
+    expect(out.summary.monthAttendanceRate).toBeNull();
+    expect(out.summary.monthHomeworkRate).toBeNull();
+    expect(out.summary.attendanceRate).toBe(33);
+  });
+
+  it('달을 주지 않으면 이달 숫자는 null이다', () => {
+    const out = toParentPayload(Object.assign({}, base, { records }));
+    expect(out.summary.monthKey).toBe('');
+    expect(out.summary.monthAttendanceRate).toBeNull();
+    expect(out.summary.attendanceRate).toBe(33);
+  });
+});

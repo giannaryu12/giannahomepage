@@ -125,11 +125,21 @@ function toParentPayload(input) {
     })
     .map(toParentRecord);
 
+  // 요약은 거르기 전 전체로 낸다. 결석한 날은 진도도 시험도 없어 목록에서
+  // 빠지는데, 빠진 채로 출석률을 내면 결석이 지워져 100%가 되어 버린다.
+  const summary = computeSummary(records, '');
+
+  // 출결·숙제는 누적과 이달을 나란히 낸다. 이달 기록이 없으면 null이고,
+  // 그때는 옆의 누적 숫자가 있으니 빈 칸으로 보여도 오해가 없다.
+  const monthKey = opts.monthKey || '';
+  const month = monthKey ? computeSummary(records, monthKey) : null;
+  summary.monthKey = monthKey;
+  summary.monthAttendanceRate = month ? month.attendanceRate : null;
+  summary.monthHomeworkRate = month ? month.homeworkRate : null;
+
   return {
     student: toParentStudent(opts.student, opts.className),
-    // 요약은 거르기 전 전체로 낸다. 결석한 날은 진도도 시험도 없어 목록에서
-    // 빠지는데, 빠진 채로 출석률을 내면 결석이 지워져 100%가 되어 버린다.
-    summary: computeSummary(records, opts.monthKey),
+    summary: summary,
     records: records.filter(hasParentContent_),
   };
 }
