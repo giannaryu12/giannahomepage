@@ -23,6 +23,9 @@
 
   /* ---------- 요약 카드 ---------- */
 
+  // 고리 반지름. viewBox 64 안에서 stroke 7이 잘리지 않는 최대치.
+  const GAUGE_R = 26;
+
   function cardHtml(label, value, unit) {
     const inner = value === null
       ? '<span class="gi-card-value is-empty">기록 없음</span>'
@@ -36,10 +39,40 @@
    * 한 묶음으로 흘려 두면 화면 폭에 따라 두 갈래가 섞여 뜬다.
    * 성격이 다른 수치라 줄이 갈려 있어야 한 눈에 읽힌다.
    */
+  /**
+   * 비율 카드. 숫자 대신 고리로 채워 한 눈에 보이게 한다.
+   *
+   * 기록이 없으면 고리를 그리지 않는다 — 빈 고리는 0%와 구별되지 않는다.
+   */
+  function gaugeCard(label, pct, color) {
+    if (pct === null || pct === undefined) return cardHtml(label, null, '%');
+
+    const value = Math.max(0, Math.min(100, Number(pct)));
+    const circumference = 2 * Math.PI * GAUGE_R;
+    const filled = (circumference * value) / 100;
+
+    return '' +
+      '<div class="gi-card">' +
+        '<div class="gi-card-label">' + label + '</div>' +
+        '<svg class="gi-gauge" viewBox="0 0 64 64" role="img" ' +
+          'aria-label="' + esc(label) + ' ' + value + '퍼센트">' +
+          '<circle cx="32" cy="32" r="' + GAUGE_R + '" fill="none" ' +
+            'stroke="var(--border)" stroke-width="7"/>' +
+          '<circle cx="32" cy="32" r="' + GAUGE_R + '" fill="none" stroke="' + color + '" ' +
+            'stroke-width="7" stroke-linecap="round" ' +
+            'stroke-dasharray="' + filled.toFixed(1) + ' ' + circumference.toFixed(1) + '" ' +
+            'transform="rotate(-90 32 32)"/>' +
+          '<text x="32" y="32" class="gi-gauge-num" text-anchor="middle" ' +
+            'dominant-baseline="central">' + value +
+            '<tspan class="gi-gauge-unit">%</tspan></text>' +
+        '</svg>' +
+      '</div>';
+  }
+
   function renderCards(summary) {
     const rates =
-      cardHtml('출석률', summary.attendanceRate, '%') +
-      cardHtml('과제 제출률', summary.homeworkRate, '%');
+      gaugeCard('출석률', summary.attendanceRate, 'var(--chart-3)') +
+      gaugeCard('숙제 제출률', summary.homeworkRate, 'var(--chart-2)');
 
     let tests = '';
     PA.TEST_AREAS.forEach(function (a) {
@@ -61,6 +94,7 @@
   }
 
   /* ---------- 성적 추이 ---------- */
+
 
   // 선 색은 tokens.css의 --chart-1..4. 어두운 화면에서도 배경과 붙지 않게
   // 테마별로 값이 다르므로 --garnet 같은 원색을 직접 쓰지 않는다.

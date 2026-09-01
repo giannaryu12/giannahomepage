@@ -2,3 +2,4 @@ node_modules/
 .netlify/
 .clasprc.json
 *.log
+public/_probe-*.html

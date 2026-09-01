@@ -80,6 +80,21 @@ body.gi .gi-h2{ color:var(--text); }
 
 .gi-cards-rates{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
 
+/* 출석률·숙제 제출률은 숫자 대신 채워지는 고리로 본다. */
+.gi-gauge{
+  display:block;
+  width:4.6rem;
+  height:4.6rem;
+  margin:0.2rem auto 0;
+}
+.gi-gauge-num{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:17px;
+  fill:var(--heading);
+}
+.gi-gauge-unit{ font-size:10px; }
+
 /* 시험은 몇 개가 되든 한 줄이다. auto-flow:column이면 개수를 세지 않아도 된다. */
 .gi-cards-tests{ grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); }
 /* 좁은 화면에 넷이 들어가야 해서 여백과 글자를 줄인다. */
