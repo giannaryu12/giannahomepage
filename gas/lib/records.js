@@ -56,6 +56,21 @@ function testAreaKeys_() {
   return TEST_AREA_KEYS;
 }
 
+/**
+ * 요약에서 한 묶음으로 세는 시험. 단어는 한 수업에 두 번 보지만 평균은
+ * 하나로 낸다. 화면 쪽 정의는 progress-areas.js의 TEST_SUMMARY_AREAS다.
+ */
+const TEST_SUMMARY_GROUPS = [
+  { key: 'vocab', memberKeys: ['vocab', 'vocab2'] },
+  { key: 'grammar', memberKeys: ['grammar'] },
+  { key: 'listening', memberKeys: ['listening'] },
+];
+
+/** 위 묶음. const를 그대로 넘기지 않는 이유는 testAreaKeys_와 같다. */
+function testSummaryGroups_() {
+  return TEST_SUMMARY_GROUPS;
+}
+
 /** 진도 영역 키. 위와 같은 이유로 함수다. */
 function progressAreaKeys_() {
   return PROGRESS_AREA_KEYS;
@@ -156,7 +171,9 @@ if (typeof module !== 'undefined') {
     TEST_FIELDS,
     BOOK_FIELDS,
     RECORD_AREA_FIELDS,
+    TEST_SUMMARY_GROUPS,
     testAreaKeys_,
+    testSummaryGroups_,
     progressAreaKeys_,
     findRecordMatch,
     buildRecordPayload,

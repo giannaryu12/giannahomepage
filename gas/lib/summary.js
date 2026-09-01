@@ -25,10 +25,11 @@ function computeSummary(records, monthKey) {
   let attTotal = 0, attPresent = 0;
   let hwTotal = 0, hwDone = 0;
   let scoreSum = 0, scoreCount = 0;
+  // 묶음별 합계. 단어는 두 시험(vocab·vocab2)이 한 칸에 함께 들어간다.
   const areaSums = {};
   const areaCounts = {};
-  const testKeys = testAreaKeys_();
-  testKeys.forEach(function (k) { areaSums[k] = 0; areaCounts[k] = 0; });
+  const groups = testSummaryGroups_();
+  groups.forEach(function (g) { areaSums[g.key] = 0; areaCounts[g.key] = 0; });
 
   scoped.forEach(function (r) {
     if (r.attendance) {
@@ -49,11 +50,13 @@ function computeSummary(records, monthKey) {
       scoreCount++;
     }
 
-    testKeys.forEach(function (key) {
-      const pct = percentOf(r[key + 'TestScore'], r[key + 'TestMax']);
-      if (pct === null) return;
-      areaSums[key] += pct;
-      areaCounts[key]++;
+    groups.forEach(function (g) {
+      g.memberKeys.forEach(function (key) {
+        const pct = percentOf(r[key + 'TestScore'], r[key + 'TestMax']);
+        if (pct === null) return;
+        areaSums[g.key] += pct;
+        areaCounts[g.key]++;
+      });
     });
   });
 
@@ -65,9 +68,10 @@ function computeSummary(records, monthKey) {
     recordCount: scoped.length,
   };
 
-  // 영역마다 <key>Avg. 기록이 없으면 0이 아니라 null이다.
-  testKeys.forEach(function (k) {
-    out[k + 'Avg'] = areaCounts[k] ? Math.round(areaSums[k] / areaCounts[k]) : null;
+  // 묶음마다 <key>Avg. 기록이 없으면 0이 아니라 null이다.
+  groups.forEach(function (g) {
+    out[g.key + 'Avg'] = areaCounts[g.key]
+      ? Math.round(areaSums[g.key] / areaCounts[g.key]) : null;
   });
 
   return out;
@@ -85,8 +89,8 @@ function percentOf(rawScore, rawMax) {
 if (typeof module !== 'undefined') {
   /* eslint-disable no-var */
   // shape.js 아래쪽 주석과 같은 이유로 const/let이 아니라 var다.
-  // GAS는 전역을 공유해 records.js의 testAreaKeys_를 그냥 쓰고,
+  // GAS는 전역을 공유해 records.js의 testSummaryGroups_를 그냥 쓰고,
   // Node에서는 이 가드 안의 require가 그 이름을 채운다.
-  var testAreaKeys_ = require('./records.js').testAreaKeys_;
+  var testSummaryGroups_ = require('./records.js').testSummaryGroups_;
   module.exports = { computeSummary, percentOf, PRESENT_VALUES, SUBMITTED_VALUES };
 }

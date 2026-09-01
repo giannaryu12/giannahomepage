@@ -75,8 +75,8 @@
       gaugeCard('숙제 제출률', summary.homeworkRate, 'var(--chart-2)');
 
     let tests = '';
-    PA.TEST_AREAS.forEach(function (a) {
-      // 시험 영역이 늘어난 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
+    PA.TEST_SUMMARY_AREAS.forEach(function (a) {
+      // 묶음이 바뀐 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
       // undefined를 그대로 넘기면 '기록 없음' 대신 undefined가 찍힌다.
       const avg = summary[a.key + 'Avg'];
       tests += cardHtml(a.label, avg === undefined ? null : avg, '점');
@@ -100,20 +100,50 @@
   // 테마별로 값이 다르므로 --garnet 같은 원색을 직접 쓰지 않는다.
   const SERIES_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)'];
 
-  const SERIES = PA.TEST_AREAS.map(function (a, i) {
-    return { key: a.key, label: a.label, color: SERIES_COLORS[i % SERIES_COLORS.length] };
+  const SERIES = PA.TEST_SUMMARY_AREAS.map(function (a, i) {
+    return {
+      key: a.key,
+      label: a.label,
+      memberKeys: a.memberKeys,
+      color: SERIES_COLORS[i % SERIES_COLORS.length],
+    };
   });
 
+  function pctOf(rawScore, rawMax) {
+    if (rawScore === '' || rawScore === null || rawScore === undefined) return null;
+    const score = Number(rawScore);
+    const max = Number(rawMax);
+    if (!isFinite(score) || !(max > 0)) return null;
+    return (score / max) * 100;
+  }
+
   function scorePoints(records, scoreField, maxField) {
-    return records
-      .filter(function (r) {
-        return r[scoreField] !== '' && r[scoreField] !== null && r[scoreField] !== undefined
-          && Number(r[maxField]) > 0;
-      })
-      .map(function (r) {
-        return { date: r.date, pct: (Number(r[scoreField]) / Number(r[maxField])) * 100 };
-      })
-      .sort(function (a, b) { return a.date.localeCompare(b.date); });
+    const out = [];
+    records.forEach(function (r) {
+      const pct = pctOf(r[scoreField], r[maxField]);
+      if (pct !== null) out.push({ date: r.date, pct: pct });
+    });
+    return out.sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
+  }
+
+  /**
+   * 묶음 하나의 점. 한 수업에 단어 시험이 둘이면 그날 점 하나로 평균낸다.
+   * 같은 날 같은 이름의 점이 둘이면 선이 접혀 읽히지 않는다.
+   */
+  function groupPoints(records, memberKeys) {
+    const out = [];
+    records.forEach(function (r) {
+      let sum = 0;
+      let n = 0;
+      memberKeys.forEach(function (key) {
+        const pct = pctOf(r[key + 'TestScore'], r[key + 'TestMax']);
+        if (pct === null) return;
+        sum += pct;
+        n++;
+      });
+      if (n) out.push({ date: r.date, pct: sum / n });
+    });
+    return out.sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
   }
 
   /** 그릴 선들. 새 시험 기록이 하나도 없으면 옛 점수 한 선으로 되돌아간다. */
@@ -121,7 +151,7 @@
     const out = [];
 
     SERIES.forEach(function (s) {
-      const pts = scorePoints(records, s.key + 'TestScore', s.key + 'TestMax');
+      const pts = groupPoints(records, s.memberKeys);
       if (pts.length) out.push({ label: s.label, color: s.color, pts: pts });
     });
     if (out.length) return out;

@@ -30,6 +30,21 @@
     { key: 'listening', label: '듣기' },
   ];
 
+  /**
+   * 요약·추이에서 한 묶음으로 세는 시험. 단어는 한 수업에 두 번 보지만
+   * 통계는 하나로 낸다 — 카드에 '단어'가 두 장 뜨면 어느 쪽인지 알 수 없다.
+   *
+   * 기록 안의 시험 줄은 합치지 않는다. 그쪽은 그날 무엇을 봤는지 그대로
+   * 보여주는 자리다.
+   *
+   * 서버에도 같은 정의가 gas/lib/records.js의 TEST_SUMMARY_GROUPS로 있다.
+   */
+  const TEST_SUMMARY_AREAS = [
+    { key: 'vocab', label: '단어', memberKeys: ['vocab', 'vocab2'] },
+    { key: 'grammar', label: '문법', memberKeys: ['grammar'] },
+    { key: 'listening', label: '듣기', memberKeys: ['listening'] },
+  ];
+
   const PROGRESS_FIELDS = [];
   PROGRESS_AREAS.forEach(function (a) {
     PROGRESS_FIELDS.push(a.key + 'Book', a.key + 'Progress');
@@ -123,7 +138,8 @@
 
   const api = {
     PROGRESS_AREAS, PROGRESS_FIELDS,
-    TEST_AREAS, TEST_FIELDS, NEXT_FIELDS, BOOK_FIELDS, RECORD_AREA_FIELDS,
+    TEST_AREAS, TEST_SUMMARY_AREAS,
+    TEST_FIELDS, NEXT_FIELDS, BOOK_FIELDS, RECORD_AREA_FIELDS,
     areaLines, areaSummary, nextLines, testLines,
   };
 

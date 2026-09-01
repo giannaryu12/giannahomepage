@@ -14,12 +14,15 @@ import {
   NEXT_FIELDS as UI_NEXT,
   TEST_FIELDS as UI_TEST,
   RECORD_AREA_FIELDS as UI_FIELDS,
+  TEST_AREAS,
+  TEST_SUMMARY_AREAS as UI_SUMMARY,
 } from '../public/assets/js/progress-areas.js';
 import {
   PROGRESS_FIELDS as GAS_PROGRESS,
   NEXT_FIELDS as GAS_NEXT,
   TEST_FIELDS as GAS_TEST,
   RECORD_AREA_FIELDS as GAS_FIELDS,
+  TEST_SUMMARY_GROUPS as GAS_SUMMARY,
 } from '../gas/lib/records.js';
 import { PARENT_RECORD_FIELDS } from '../gas/lib/shape.js';
 
@@ -42,5 +45,21 @@ describe('진도 영역 필드 목록', () => {
     ].concat(GAS_FIELDS);
 
     PARENT_RECORD_FIELDS.forEach((f) => expect(known).toContain(f));
+  });
+});
+
+describe('시험 통계 묶음', () => {
+  it('화면과 서버가 같은 묶음을 같은 순서로 갖는다', () => {
+    // 어긋나면 학부모 카드에 있지도 않은 <key>Avg를 찾아 '기록 없음'이 뜬다.
+    expect(UI_SUMMARY.map((g) => g.key)).toEqual(GAS_SUMMARY.map((g) => g.key));
+    UI_SUMMARY.forEach((g, i) => {
+      expect(g.memberKeys).toEqual(GAS_SUMMARY[i].memberKeys);
+    });
+  });
+
+  it('묶음이 시험 영역을 하나도 빠짐없이, 겹치지 않게 담는다', () => {
+    const members = UI_SUMMARY.reduce((acc, g) => acc.concat(g.memberKeys), []);
+    expect(new Set(members).size).toBe(members.length);
+    expect(members.slice().sort()).toEqual(TEST_AREAS.map((a) => a.key).slice().sort());
   });
 });
