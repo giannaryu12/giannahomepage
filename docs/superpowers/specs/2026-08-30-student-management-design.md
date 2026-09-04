@@ -153,6 +153,8 @@
 | clientRequestId | 이 행을 기록한 저장 요청의 id (일괄 저장이면 같은 배치의 행들이 같은 값을 갖는다) |
 | createdAt / updatedAt | ISO8601 |
 
+시트에 쓰기 전에 **컬럼 서식을 먼저 정한다**(`applyColumnFormats_`). Sheets는 `setValues`로 들어온 문자열을 알아서 해석하므로, 진도에 `9-12`라고 적으면 9월 12일로 바뀌어 저장되고 읽을 때 `2026-09-12`가 되어 돌아온다. 0으로 시작하는 토큰도 앞자리를 잃는다. 점수·회차(`isNumericColumn_`)만 `General`로 두고 나머지는 `@`(텍스트)로 고정한다. 값을 넣은 뒤에 서식을 고쳐서는 늦다 — 변환은 `setValues` 시점에 이미 끝나 있다.
+
 진도 영역 컬럼은 저장 직전에 `ensureColumns_`가 헤더에 없으면 만든다. 헤더에 없는 필드는 쓰기 단계에서 조용히 버려지므로, 컬럼을 손으로 만들게 하면 선생님 입력이 사라진 채 "저장했습니다"가 뜬다. 같은 필드 목록이 화면(`progress-areas.js`)과 서버(`lib/records.js`)와 학부모 allowlist(`lib/shape.js`) 세 곳에 있어 `test/field-parity.test.js`가 어긋남을 막는다.
 
 `(studentId, date)`는 사실상 유일해야 한다. 같은 조합으로 저장 요청이 오면 새 행을 만들지 않고 기존 행을 갱신한다(upsert).

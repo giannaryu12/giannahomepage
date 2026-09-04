@@ -76,6 +76,21 @@ function progressAreaKeys_() {
   return PROGRESS_AREA_KEYS;
 }
 
+/**
+ * 시트에 숫자로 둘 컬럼인가. 나머지는 전부 텍스트 서식으로 쓴다.
+ *
+ * Sheets는 setValues로 들어온 문자열을 알아서 해석한다. 진도에 '9-12'라고
+ * 적으면 9월 12일로 바뀌어 저장되고, 읽을 때 '2026-09-12'가 되어 돌아온다.
+ * 학번처럼 0으로 시작하는 값도 앞자리를 잃는다. 그래서 숫자로 쓸 칸만 남기고
+ * 나머지는 서식을 '@'로 고정한다.
+ */
+function isNumericColumn_(key) {
+  const name = String(key || '');
+  if (name === 'sessionNo') return true;
+  if (name === 'testScore' || name === 'testMax') return true;
+  return /TestScore$/.test(name) || /TestMax$/.test(name);
+}
+
 /** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
 function findRecordMatch(rows, studentId, date) {
   const match = (rows || []).filter(function (r) {
@@ -172,6 +187,7 @@ if (typeof module !== 'undefined') {
     BOOK_FIELDS,
     RECORD_AREA_FIELDS,
     TEST_SUMMARY_GROUPS,
+    isNumericColumn_,
     testAreaKeys_,
     testSummaryGroups_,
     progressAreaKeys_,

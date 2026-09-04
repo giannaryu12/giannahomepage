@@ -68,17 +68,38 @@ function readTable(sheetName) {
   return readTableView_(sheetName).rows;
 }
 
+/**
+ * 쓸 범위의 서식을 먼저 정한다. 값을 넣은 뒤에 고쳐서는 늦다 — 변환은
+ * setValues 시점에 이미 끝나 있다.
+ *
+ * 숫자로 둘 칸(점수·회차)만 General로 두고 나머지는 '@'(텍스트)로 고정한다.
+ * 그래야 진도에 적은 '9-12'가 9월 12일로 바뀌지 않는다.
+ */
+function applyColumnFormats_(range, header) {
+  const formats = header.map(function (key) {
+    return isNumericColumn_(key) ? 'General' : '@';
+  });
+
+  const rows = [];
+  for (let i = 0; i < range.getNumRows(); i++) rows.push(formats);
+  range.setNumberFormats(rows);
+}
+
 /** 한 행 전체를 setValues 한 번으로 쓴다. 셀 단위 setValue를 반복하지 않기 위함. */
 function writeRowValues_(sheet, header, rowIndex, row) {
   const values = rowValuesFor(header, row);
-  sheet.getRange(rowIndex, 1, 1, values.length).setValues([values]);
+  const range = sheet.getRange(rowIndex, 1, 1, values.length);
+  applyColumnFormats_(range, header);
+  range.setValues([values]);
 }
 
 /** 여러 행을 시트 끝에 setValues 한 번으로 덧붙인다. */
 function appendRowsValues_(sheet, header, rows) {
   if (!rows.length) return;
   const values = rows.map(function (r) { return rowValuesFor(header, r); });
-  sheet.getRange(sheet.getLastRow() + 1, 1, values.length, header.length).setValues(values);
+  const range = sheet.getRange(sheet.getLastRow() + 1, 1, values.length, header.length);
+  applyColumnFormats_(range, header);
+  range.setValues(values);
 }
 
 /**
@@ -104,11 +125,17 @@ function getHeader_(sheetName) {
 }
 
 function appendRow(sheetName, obj) {
+  const sheet = getSheet_(sheetName);
   const header = getHeader_(sheetName);
   const row = header.map(function (key) {
     return obj[key] === null || obj[key] === undefined ? '' : obj[key];
   });
-  getSheet_(sheetName).appendRow(row);
+
+  // sheet.appendRow는 서식을 정할 틈이 없어 쓰지 않는다. 학부모 토큰이
+  // 숫자로만 이뤄지면 앞자리 0을 잃는다.
+  const range = sheet.getRange(sheet.getLastRow() + 1, 1, 1, header.length);
+  applyColumnFormats_(range, header);
+  range.setValues([row]);
 }
 
 function findRow(sheetName, column, value) {
@@ -132,7 +159,9 @@ function updateRowById(sheetName, idColumn, idValue, patch) {
 
   view.header.forEach(function (key, j) {
     if (key && Object.prototype.hasOwnProperty.call(patch, key)) {
-      view.sheet.getRange(target._rowIndex, j + 1).setValue(patch[key]);
+      const cell = view.sheet.getRange(target._rowIndex, j + 1);
+      cell.setNumberFormat(isNumericColumn_(key) ? 'General' : '@');
+      cell.setValue(patch[key]);
     }
   });
   return true;

@@ -3,6 +3,7 @@ import {
   findRecordMatch,
   buildRecordPayload,
   lastSessionNoOf,
+  isNumericColumn_,
   RECORD_AREA_FIELDS,
   BOOK_FIELDS,
   lastBooksOf,
@@ -242,5 +243,30 @@ describe('buildRecordPayload — 회차', () => {
       { studentId: 'S001', date: '2026-08-30' }, 'C01', 'r', 'now'
     );
     expect(payload.sessionNo).toBe('');
+  });
+});
+
+describe('isNumericColumn_', () => {
+  it('점수와 회차만 숫자로 둔다', () => {
+    expect(isNumericColumn_('sessionNo')).toBe(true);
+    expect(isNumericColumn_('testScore')).toBe(true);
+    expect(isNumericColumn_('testMax')).toBe(true);
+    expect(isNumericColumn_('vocabTestScore')).toBe(true);
+    expect(isNumericColumn_('vocab2TestMax')).toBe(true);
+    expect(isNumericColumn_('listeningTestScore')).toBe(true);
+  });
+
+  it('선생님이 글로 적는 칸은 전부 텍스트다', () => {
+    // 여기가 숫자로 새면 진도의 '9-12'가 9월 12일로 저장된다.
+    ['vocabProgress', 'vocabNext', 'vocabBook', 'vocabTestBook', 'vocabNextBook',
+      'progress', 'nextHomework', 'comment', 'testName', 'date', 'attendance',
+      'homeworkStatus', 'homeworkLevel', 'studentId', 'parentToken', 'name', 'grade',
+    ].forEach((k) => expect(isNumericColumn_(k)).toBe(false));
+  });
+
+  it('이름이 없어도 터지지 않는다', () => {
+    expect(isNumericColumn_('')).toBe(false);
+    expect(isNumericColumn_(null)).toBe(false);
+    expect(isNumericColumn_(undefined)).toBe(false);
   });
 });
