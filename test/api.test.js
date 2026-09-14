@@ -66,3 +66,58 @@ describe('createApi', () => {
     await expect(api.call('ping', {})).rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
   });
 });
+
+describe('끊긴 요청과 재시도', () => {
+  function abortError() {
+    // 브라우저가 내놓는 모양 그대로. DOMException에는 code(20)가 있다.
+    const err = new Error('signal is aborted without reason');
+    err.name = 'AbortError';
+    err.code = 20;
+    return err;
+  }
+
+  it('시간 초과를 TIMEOUT으로 정규화한다', async () => {
+    const api = createApi('u', () => Promise.reject(abortError()), { retries: 0 });
+    const err = await api.call('parent.load', {}).catch((e) => e);
+    expect(err.code).toBe('TIMEOUT');
+    expect(err.message).not.toContain('signal is aborted');
+  });
+
+  it('DOMException의 code를 우리 code로 착각하지 않는다', async () => {
+    // 이 갈래가 없으면 화면에 'signal is aborted without reason'이 그대로 뜬다.
+    const api = createApi('u', () => Promise.reject(abortError()), { retries: 0 });
+    await expect(api.call('admin.upsertStudent', {}))
+      .rejects.toMatchObject({ code: 'TIMEOUT' });
+  });
+
+  it('읽기는 시간 초과에도 한 번 더 시도한다', async () => {
+    let calls = 0;
+    const fetchMock = vi.fn(() => {
+      calls++;
+      return calls === 1 ? Promise.reject(abortError()) : jsonResponse({ ok: true, data: { x: 1 } });
+    });
+    const api = createApi('u', fetchMock, { retries: 1 });
+    expect(await api.call('parent.load', {})).toEqual({ x: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('읽기는 구글이 HTML을 내놓아도 한 번 더 시도한다', async () => {
+    let calls = 0;
+    const fetchMock = vi.fn(() => {
+      calls++;
+      return calls === 1
+        ? Promise.resolve({ ok: true, text: () => Promise.resolve('<html>404</html>') })
+        : jsonResponse({ ok: true, data: { x: 1 } });
+    });
+    const api = createApi('u', fetchMock, { retries: 1 });
+    expect(await api.call('parent.load', {})).toEqual({ x: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('쓰기는 시간 초과에도 다시 걸지 않는다', async () => {
+    const fetchMock = vi.fn(() => Promise.reject(abortError()));
+    const api = createApi('u', fetchMock, { retries: 1 });
+    await expect(api.call('admin.saveBatch', {})).rejects.toMatchObject({ code: 'TIMEOUT' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
