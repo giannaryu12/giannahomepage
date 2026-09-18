@@ -15,6 +15,28 @@
   // 내놓는 일이 드물지 않은데, 그것도 여기 BAD_RESPONSE로 들어온다.
   const RETRYABLE = ['NETWORK', 'TIMEOUT', 'BAD_RESPONSE'];
 
+  /**
+   * 같은 요청을 다시 걸어도 결과가 달라지지 않는가.
+   *
+   * 시간 초과는 요청이 실패했다는 뜻이 아니다 — 브라우저가 기다리기를
+   * 그만뒀을 뿐, 서버는 계속 돌아 저장을 마친다. 그래서 덧나지 않는
+   * 요청이라면 다시 거는 편이 낫다. 두 번째는 서버가 이미 깨어 있어
+   * 대개 1~2초에 돌아온다.
+   */
+  function isIdempotent_(action, params) {
+    // (studentId, date)로 덮어쓴다. 같은 내용이면 몇 번을 보내도 한 건이다.
+    if (action === 'admin.saveBatch') return true;
+
+    // studentId가 있으면 수정이라 괜찮다. 없으면 새 학생을 만드는
+    // 요청이므로 다시 걸면 같은 이름이 둘 생긴다.
+    if (action === 'admin.upsertStudent') {
+      return !!(params && params.student && params.student.studentId);
+    }
+
+    // 토큰 재발급은 부를 때마다 새 토큰을 만든다. 나머지는 읽기다.
+    return WRITE_ACTIONS.indexOf(action) === -1;
+  }
+
   function apiError(code, message) {
     const err = new Error(message);
     err.code = code;
@@ -74,8 +96,7 @@
       if (!gasUrl) {
         return Promise.reject(apiError('NOT_CONFIGURED', '서버 주소가 설정되지 않았습니다.'));
       }
-      const isWrite = WRITE_ACTIONS.indexOf(action) !== -1;
-      const retries = isWrite ? 0 : maxRetries;
+      const retries = isIdempotent_(action, params) ? maxRetries : 0;
 
       return once(action, params).catch(function (err) {
         if (retries > 0 && RETRYABLE.indexOf(err.code) !== -1) return once(action, params);

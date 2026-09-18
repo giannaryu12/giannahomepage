@@ -70,6 +70,13 @@
 
     $('loginBtn').disabled = true;
     showError($('loginError'), '');
+    $('loginStatus').textContent = '로그인 중…';
+
+    // 그날 첫 요청은 GAS가 실행 환경을 다시 띄우느라 수십 초가 걸린다.
+    // 아무 말도 없이 멈춰 있으면 고장으로 읽히고 버튼을 거듭 누르게 된다.
+    const slowTimer = setTimeout(function () {
+      $('loginStatus').textContent = '서버를 깨우는 중입니다. 처음 열 때는 시간이 걸립니다…';
+    }, 4000);
 
     api.call('admin.login', { password: pw }).then(function (data) {
       sessionKey = data.sessionKey;
@@ -79,6 +86,8 @@
     }).catch(function (err) {
       showError($('loginError'), err.message);
     }).finally(function () {
+      clearTimeout(slowTimer);
+      $('loginStatus').textContent = '';
       $('loginBtn').disabled = false;
     });
   }
@@ -458,6 +467,13 @@
     $('recordStatus').textContent = '저장 중…';
     showError($('recordError'), '');
 
+    // GAS는 한동안 요청이 없으면 실행 환경을 내렸다가 다시 띄운다. 그 첫
+    // 요청이 수십 초 걸릴 수 있다. 멈춘 줄 알고 버튼을 거듭 누르지 않도록
+    // 몇 초 뒤에 무슨 일이 벌어지는지 알려 준다.
+    const slowTimer = setTimeout(function () {
+      if (stillOpen()) $('recordStatus').textContent = '서버를 깨우는 중입니다. 잠시만 기다려 주세요…';
+    }, 4000);
+
     const record = RF.buildRecord(st.studentId, dt, recordForm);
 
     api.call('admin.saveBatch', {
@@ -476,9 +492,16 @@
     }).catch(function (err) {
       if (stillOpen()) $('recordStatus').textContent = '';
       if (!handleAuthLoss(err) && stillOpen()) {
-        showError($('recordError'), err.message + ' 입력하신 내용은 이 기기에 보관되어 있습니다.');
+        // 시간 초과는 저장이 안 됐다는 뜻이 아니다. 브라우저가 기다리기를
+        // 그만뒀을 뿐이고 서버는 계속 돌아 저장을 마쳤을 수 있다.
+        const tail = err.code === 'TIMEOUT'
+          ? ' 저장은 이미 되었을 수도 있으니 잠시 후 목록에서 확인해 주세요.'
+          : '';
+        showError($('recordError'),
+          err.message + tail + ' 입력하신 내용은 이 기기에 보관되어 있습니다.');
       }
     }).finally(function () {
+      clearTimeout(slowTimer);
       $('recordSaveBtn').disabled = false;
       $('recordBack').disabled = false;
       $('recordDateInput').disabled = false;
@@ -523,5 +546,19 @@
     openRecordForStudent: openRecordForStudent,
   };
 
+  /**
+   * 화면이 뜨자마자 서버를 한 번 깨워 둔다.
+   *
+   * GAS는 한동안 요청이 없으면 실행 환경을 내리고, 다음 요청이 그것을 다시
+   * 띄우느라 수십 초를 쓴다. 선생님이 비밀번호를 입력하는 동안 미리 깨워 두면
+   * 그 값을 로그인이 아니라 여기서 치른다.
+   *
+   * 실패해도 무시한다. 이건 준비 운동이지 화면에 필요한 값이 아니다.
+   */
+  function prewarm() {
+    api.call('ping', {}).catch(function () { /* 준비 운동일 뿐이다 */ });
+  }
+
+  prewarm();
   if (sessionKey) showApp();
 })();

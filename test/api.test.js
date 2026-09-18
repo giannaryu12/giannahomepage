@@ -53,11 +53,12 @@ describe('createApi', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('쓰기 요청은 재시도하지 않는다', async () => {
+  it('덧나는 쓰기 요청은 재시도하지 않는다', async () => {
+    // 토큰 재발급은 부를 때마다 새 토큰을 만든다.
     const fetchMock = vi.fn(() => Promise.reject(new Error('boom')));
     const api = createApi('u', fetchMock, { retries: 1 });
 
-    await expect(api.call('admin.saveBatch', {})).rejects.toMatchObject({ code: 'NETWORK' });
+    await expect(api.call('admin.reissueToken', {})).rejects.toMatchObject({ code: 'NETWORK' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -114,10 +115,52 @@ describe('끊긴 요청과 재시도', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('쓰기는 시간 초과에도 다시 걸지 않는다', async () => {
+  it('덧나는 쓰기는 시간 초과에도 다시 걸지 않는다', async () => {
     const fetchMock = vi.fn(() => Promise.reject(abortError()));
     const api = createApi('u', fetchMock, { retries: 1 });
-    await expect(api.call('admin.saveBatch', {})).rejects.toMatchObject({ code: 'TIMEOUT' });
+    await expect(api.call('admin.reissueToken', {})).rejects.toMatchObject({ code: 'TIMEOUT' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('덧나지 않는 요청만 다시 건다', () => {
+  function abortError() {
+    const err = new Error('signal is aborted without reason');
+    err.name = 'AbortError';
+    err.code = 20;
+    return err;
+  }
+
+  it('수업 기록 저장은 다시 건다', async () => {
+    // (studentId, date)로 덮어쓰므로 두 번 보내도 한 건이다.
+    let calls = 0;
+    const fetchMock = vi.fn(() => {
+      calls++;
+      return calls === 1 ? Promise.reject(abortError()) : jsonResponse({ ok: true, data: { saved: 1 } });
+    });
+    const api = createApi('u', fetchMock, { retries: 1 });
+    expect(await api.call('admin.saveBatch', { records: [] })).toEqual({ saved: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('학생 수정은 다시 걸고, 새 학생 등록은 걸지 않는다', async () => {
+    // studentId 없이 다시 걸면 같은 이름의 학생이 둘 생긴다.
+    const update = vi.fn(() => Promise.reject(abortError()));
+    await expect(createApi('u', update, { retries: 1 })
+      .call('admin.upsertStudent', { student: { studentId: 'S001', name: '최지우' } })).rejects.toThrow();
+    expect(update).toHaveBeenCalledTimes(2);
+
+    const create = vi.fn(() => Promise.reject(abortError()));
+    await expect(createApi('u', create, { retries: 1 })
+      .call('admin.upsertStudent', { student: { name: '최지우' } })).rejects.toThrow();
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('토큰 재발급은 다시 걸지 않는다', async () => {
+    // 부를 때마다 새 토큰이 나온다.
+    const fetchMock = vi.fn(() => Promise.reject(abortError()));
+    const api = createApi('u', fetchMock, { retries: 1 });
+    await expect(api.call('admin.reissueToken', { studentId: 'S001' })).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
