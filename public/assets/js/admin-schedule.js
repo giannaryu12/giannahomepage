@@ -46,6 +46,9 @@
     return iso.slice(5).replace('-', '/') + ' (' + S.WEEKDAYS[S.weekdayIndex(iso)] + ')';
   }
 
+  // 빼기의 까닭. 시트에는 영어로 쌓고 화면에는 한글로 보인다.
+  const SKIP_LABEL = { absent: '결석', moved: '변경' };
+
   function entriesOn(iso) {
     return S.applyOverrides(S.studentsOnDate(students, iso), overrides, iso, students);
   }
@@ -55,11 +58,17 @@
   function nameBtnHtml(entry, iso) {
     const s = entry.student;
     // 반이 없으면 기록을 열 수 없다. 누를 수 있게 두면 눌러 보고 나서야 안다.
-    const disabled = s.classId ? '' : ' disabled';
-    return '<button class="gi-choice gi-cal-name' + (entry.overrideId ? ' is-extra' : '') + '"' +
+    // 뺀 줄도 누를 일이 없다 — 그날 오지 않는 학생의 기록을 열 까닭이 없다.
+    const disabled = (s.classId && !entry.skip) ? '' : ' disabled';
+    const mark = entry.skip
+      ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
+      : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+
+    return '<button class="gi-choice gi-cal-name' +
+      (entry.overrideId ? ' is-extra' : '') + (entry.skip ? ' is-off' : '') + '"' +
       ' type="button" data-student="' + A.esc(s.studentId) + '" data-date="' + A.esc(iso) + '"' +
       disabled + '><span class="gi-cal-at">' + A.esc(entry.time) + '</span>' +
-      A.esc(s.name) + '</button>';
+      '<span class="gi-cal-who">' + A.esc(s.name) + '</span>' + mark + '</button>';
   }
 
   function cellHtml(cell, today) {
@@ -113,33 +122,38 @@
     }).join('');
   }
 
+  /**
+   * 하루 칸의 줄 하나.
+   *
+   * 줄이 세 가지다. 평소 일정에서 온 줄은 뺄 수 있고(결석·변경), 이미 뺀
+   * 줄은 되돌릴 수 있고, 하루치로 더한 줄(보충)은 지울 수 있다. 하는 일이
+   * 다르므로 버튼도 다르다.
+   */
   function dayRowHtml(e) {
-    // 평소 일정에서 온 줄은 '빼기'(skip 조각을 더한다), 하루치로 더한 줄은
-    // '지우기'(그 조각을 지운다). 같은 × 하나로 보이지만 하는 일이 다르다.
-    return '<li class="gi-day-row">' +
+    const sid = A.esc(e.student.studentId);
+    let tail;
+
+    if (e.skip) {
+      tail = '<span class="gi-badge is-bad">' + SKIP_LABEL[e.skip.reason] + '</span>' +
+        '<button class="gi-choice" type="button" data-drop="' + A.esc(e.skip.overrideId) +
+          '">되돌리기</button>';
+    } else if (e.overrideId) {
+      tail = '<span class="gi-badge is-extra">보충</span>' +
+        '<button class="gi-choice" type="button" data-drop="' + A.esc(e.overrideId) + '">지우기</button>';
+    } else {
+      // 빼는 까닭을 여기서 고른다. 묻지 않고 빼면 달력에 왜 빠졌는지가
+      // 남지 않는다 — 결석과 날짜 변경은 나중에 전혀 다른 뜻이 된다.
+      tail = '<button class="gi-choice" type="button" data-skip="' + sid +
+          '" data-reason="absent" data-time="' + A.esc(e.time) + '">결석</button>' +
+        '<button class="gi-choice" type="button" data-skip="' + sid +
+          '" data-reason="moved" data-time="' + A.esc(e.time) + '">변경</button>';
+    }
+
+    return '<li class="gi-day-row' + (e.skip ? ' is-off' : '') + '">' +
       '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
       '<span class="gi-day-who">' + A.esc(e.student.name) + '</span>' +
-      (e.overrideId
-        ? '<span class="gi-badge is-good">추가</span>' +
-          '<button class="gi-choice" type="button" data-drop="' + A.esc(e.overrideId) + '">지우기</button>'
-        : '<button class="gi-choice" type="button" data-skip="' + A.esc(e.student.studentId) +
-            '" data-time="' + A.esc(e.time) + '">빼기</button>') +
+      tail +
       '</li>';
-  }
-
-  function skippedRowsHtml() {
-    return overrides.filter(function (o) {
-      return o.date === openDate && o.kind === 'skip';
-    }).map(function (o) {
-      const s = students.filter(function (x) { return x.studentId === o.studentId; })[0];
-      if (!s) return '';
-      return '<li class="gi-day-row is-off">' +
-        '<span class="gi-day-at">' + A.esc(o.time || '종일') + '</span>' +
-        '<span class="gi-day-who">' + A.esc(s.name) + '</span>' +
-        '<span class="gi-badge is-bad">휴강</span>' +
-        '<button class="gi-choice" type="button" data-drop="' + A.esc(o.overrideId) + '">되돌리기</button>' +
-        '</li>';
-    }).join('');
   }
 
   function renderDayEdit() {
@@ -158,7 +172,7 @@
       return;
     }
 
-    const rows = entriesOn(openDate).map(dayRowHtml).join('') + skippedRowsHtml();
+    const rows = entriesOn(openDate).map(dayRowHtml).join('');
 
     $('dayEdit').hidden = false;
     $('dayEdit').innerHTML = '' +
@@ -222,9 +236,12 @@
       .then(function (data) {
         // 서버를 다시 부르지 않고 화면의 목록에 바로 얹는다. 한 번 더 부르면
         // 달력 전체가 깜빡이고, 그날 칸을 다시 찾아 눌러야 한다.
+        // 같은 날 같은 학생을 다시 빼면 서버가 먼저 쌓인 조각을 돌려준다.
+        // 그대로 밀어 넣으면 줄이 두 번 생기므로 있던 것부터 걷어낸다.
+        overrides = overrides.filter(function (x) { return x.overrideId !== data.overrideId; });
         overrides.push({
           overrideId: data.overrideId, date: o.date, studentId: o.studentId,
-          time: o.time || '', kind: o.kind,
+          time: o.time || '', kind: o.kind, reason: o.reason || '',
         });
         render();
       })
@@ -302,7 +319,8 @@
     const skip = e.target.closest('[data-skip]');
     if (skip) {
       saveOverride({
-        date: openDate, studentId: skip.dataset.skip, time: skip.dataset.time, kind: 'skip',
+        date: openDate, studentId: skip.dataset.skip, time: skip.dataset.time,
+        kind: 'skip', reason: skip.dataset.reason,
       });
       return;
     }

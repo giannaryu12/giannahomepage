@@ -175,12 +175,17 @@
   /**
    * 평소 일정 위에 그날 하루치 변경을 얹는다.
    *
-   * skip은 그 학생을 그날에서 뺀다. 시간을 적어 보내면 그 시간 하나만 빠지고,
-   * 비워 두면 그날 전부 빠진다 — 하루에 두 번 오는 학생의 한 번만 쉴 수 있게.
-   * add는 그 시간에 넣는다.
+   * 빼도 줄은 남는다. 지워 버리면 그날 그 학생이 원래 있었는지, 애초에
+   * 수업이 없었는지 달력만 보고는 알 수 없다 — 빠진 사실이 적혀 있어야
+   * 쉰 날과 없던 날이 구별된다. 그래서 줄에 skip을 달아 돌려준다:
+   *   skip.reason 'absent' 결석 — 학생이 안 왔다
+   *   skip.reason 'moved'  변경 — 다른 날로 옮겼다
+   * 시간을 적은 조각은 그 시간 하나만, 비운 조각은 그날 전부에 붙는다 —
+   * 하루에 두 번 오는 학생의 한 번만 쉴 수 있게.
    *
-   * 돌려주는 줄에는 overrideId가 붙는다. 그 줄이 하루치 조각에서 온 것인지
-   * 평소 일정에서 온 것인지 화면이 알아야 — 지울 때 무엇을 지우는지 달라진다.
+   * add로 더한 줄에는 overrideId가 붙는다(보충). 그 줄이 하루치 조각에서
+   * 온 것인지 평소 일정에서 온 것인지 화면이 알아야 — 지울 때 하는 일이
+   * 달라진다.
    */
   function applyOverrides(base, overrides, iso, students) {
     const mine = (overrides || []).filter(function (o) { return String(o.date) === String(iso); });
@@ -188,25 +193,52 @@
     (students || []).forEach(function (s) { if (s) byId[String(s.studentId)] = s; });
 
     const skips = mine.filter(function (o) { return o.kind === 'skip'; });
-    const kept = (base || []).filter(function (e) {
+    const used = {};
+
+    const rows = (base || []).map(function (e) {
       const sid = String(e.student && e.student.studentId);
-      return !skips.some(function (o) {
+      const hit = skips.filter(function (o) {
         return String(o.studentId) === sid && (!o.time || String(o.time) === e.time);
-      });
+      })[0];
+      if (!hit) return e;
+
+      used[String(hit.overrideId)] = true;
+      return { time: e.time, student: e.student, skip: skipOf_(hit) };
+    });
+
+    // 붙을 자리가 없는 빼기 조각도 줄로 남긴다. 뺀 뒤에 평소 요일을 고치면
+    // 조각만 남는데, 안 보이면 되돌릴 방법이 없다.
+    skips.forEach(function (o) {
+      if (used[String(o.overrideId)]) return;
+      const s = byId[String(o.studentId)];
+      if (s) rows.push({ time: String(o.time || ''), student: s, skip: skipOf_(o) });
     });
 
     mine.filter(function (o) { return o.kind === 'add'; }).forEach(function (o) {
       const s = byId[String(o.studentId)];
       // 그만뒀거나 지워진 학생의 조각은 이름을 붙일 수 없다. 조용히 넘긴다.
-      if (s) kept.push({ time: String(o.time || ''), student: s, overrideId: o.overrideId });
+      if (s) rows.push({ time: String(o.time || ''), student: s, overrideId: o.overrideId });
     });
 
-    return kept.sort(function (a, b) {
+    return rows.sort(function (a, b) {
       if (a.time !== b.time) return a.time < b.time ? -1 : 1;
       const an = String(a.student && a.student.name);
       const bn = String(b.student && b.student.name);
       return an < bn ? -1 : an > bn ? 1 : 0;
     });
+  }
+
+  /** 빼기 조각 한 장 → 줄에 달아 둘 표시. 까닭이 비면 결석으로 읽는다. */
+  function skipOf_(o) {
+    return {
+      overrideId: o.overrideId,
+      reason: String(o.reason) === 'moved' ? 'moved' : 'absent',
+    };
+  }
+
+  /** 그날 실제로 오는 줄만. 빼 둔 줄은 뺀다. */
+  function activeOnly(entries) {
+    return (entries || []).filter(function (e) { return !e.skip; });
   }
 
   const api = {
@@ -221,6 +253,7 @@
     monthGrid,
     studentsOnDate,
     applyOverrides,
+    activeOnly,
   };
 
   global.GI_SCHEDULE = api;

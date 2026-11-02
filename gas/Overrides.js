@@ -6,12 +6,16 @@
  * 그래서 그날 하루에만 얹는 조각으로 따로 쌓는다.
  *
  * kind:
- *   add  — 그날 그 시간에 온다 (보강, 추가 수업)
- *   skip — 그날은 오지 않는다 (휴강)
+ *   add  — 그날 그 시간에 온다 (보충)
+ *   skip — 그날은 오지 않는다. 까닭을 reason에 남긴다:
+ *          absent 결석 — 학생이 안 왔다
+ *          moved  변경 — 다른 날로 옮겼다
+ *          둘은 나중에 전혀 다른 뜻이 된다. 묻지 않고 빼면 달력에 왜
+ *          빠졌는지가 남지 않는다.
  */
 
 const OVERRIDES_SHEET = 'Overrides';
-const OVERRIDE_HEADER = ['overrideId', 'date', 'studentId', 'time', 'kind', 'createdAt'];
+const OVERRIDE_HEADER = ['overrideId', 'date', 'studentId', 'time', 'kind', 'reason', 'createdAt'];
 
 /**
  * 시트가 없으면 만든다.
@@ -44,6 +48,7 @@ function listOverrides_(from, to) {
         studentId: String(r.studentId),
         time: String(r.time),
         kind: String(r.kind),
+        reason: String(r.reason || ''),
       };
     });
 }
@@ -61,6 +66,10 @@ function handleAdminSaveOverride(body) {
   if (!o.date || !o.studentId) return fail('MISSING_PARAM', '날짜와 학생이 필요합니다.');
   if (o.kind !== 'add' && o.kind !== 'skip') return fail('MISSING_PARAM', '알 수 없는 변경 종류입니다.');
 
+  // 까닭은 빼기에만 붙는다. 모르는 값은 결석으로 둔다 — 화면이 바뀌어도
+  // 시트에 뜻 모를 글자가 쌓이지 않는다.
+  const reason = o.kind === 'skip' ? (o.reason === 'moved' ? 'moved' : 'absent') : '';
+
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -71,7 +80,15 @@ function handleAdminSaveOverride(body) {
       return r.studentId === String(o.studentId) && r.kind === o.kind &&
         (o.kind === 'skip' || r.time === String(o.time || ''));
     })[0];
-    if (dup) return ok({ overrideId: dup.overrideId });
+    if (dup) {
+      // 결석으로 뺀 뒤 변경으로 고쳐 누를 수 있다. 까닭만 갈아 끼운다 —
+      // 지웠다 다시 넣게 하면 잘못 누른 한 번이 두 걸음이 된다.
+      if (reason && reason !== dup.reason) {
+        updateRowById(OVERRIDES_SHEET, 'overrideId', dup.overrideId, { reason: reason });
+        SpreadsheetApp.flush();
+      }
+      return ok({ overrideId: dup.overrideId });
+    }
 
     const overrideId = 'O' + Date.now() + Utilities.getUuid().slice(0, 8);
     appendRow(OVERRIDES_SHEET, {
@@ -80,6 +97,7 @@ function handleAdminSaveOverride(body) {
       studentId: String(o.studentId),
       time: String(o.time || ''),
       kind: o.kind,
+      reason: reason,
       createdAt: new Date().toISOString(),
     });
     SpreadsheetApp.flush();

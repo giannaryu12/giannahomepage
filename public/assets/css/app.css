@@ -252,6 +252,7 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-badge.is-warn{ color:var(--state-warn); }
 .gi-badge.is-bad{ color:var(--state-bad); }
 .gi-badge.is-none{ color:var(--state-none); }
+.gi-badge.is-extra{ color:var(--state-extra); }
 
 /* ---------- 폼 ---------- */
 .gi-field{ margin-bottom:1rem; }
@@ -596,3 +597,16 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-day-add .gi-select{ flex:1 1 0; min-width:0; font-size:0.84rem; padding:0.4rem 0.5rem; }
 .gi-day-add .gi-input{ width:auto; font-size:0.84rem; padding:0.4rem 0.5rem; }
 .gi-day-add .gi-choice{ flex:0 0 auto; font-size:0.84rem; padding:0.4rem 0.8rem; }
+
+
+/* ---------- 빠진 수업 · 보충 표시 ---------- */
+/* 뺀 학생은 칸에서 지우지 않는다. 지우면 쉰 날과 애초에 수업이 없던 날이
+   구별되지 않는다. 자리는 지키되 흐리게, 이름에는 줄을 긋는다. */
+.gi-cal-name.is-off{ opacity:0.55; }
+.gi-cal-name.is-off .gi-cal-who{ text-decoration:line-through; }
+.gi-cal-tag{ font-size:0.58rem; font-weight:700; margin-left:0.22rem; white-space:nowrap; }
+.gi-cal-tag.is-off{ color:var(--state-bad); }
+.gi-cal-tag.is-extra{ color:var(--state-extra); }
+/* 보충은 평소 일정이 아니다 — 테두리까지 달리 둔다. */
+.gi-cal-name.is-extra{ border-style:dashed; border-color:var(--state-extra); }
+.gi-day-row.is-off .gi-day-at{ opacity:0.6; }

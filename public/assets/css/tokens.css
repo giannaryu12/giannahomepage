@@ -34,6 +34,8 @@
   --state-warn: var(--gold);
   --state-bad: var(--garnet);
   --state-none: var(--text-soft);
+  /* 보충 — 빠진 수업(붉은색)과 한눈에 갈려야 한다. 팔레트 안의 차분한 청색 */
+  --state-extra: #2f5d7c;
 
   --font-display: 'Fraunces', 'Noto Serif KR', ui-serif, Georgia, serif;
   --font-body: 'Rosario', 'Noto Sans KR', ui-sans-serif, system-ui, sans-serif;
@@ -56,6 +58,7 @@
     --state-good: #7fc898;
     --state-warn: #d8ab68;
     --state-bad: #e08585;
+  --state-extra: #8fb9d6;
     --chart-1: #e08585;
     --chart-2: #d8ab68;
     --chart-3: #7fc898;
@@ -76,6 +79,7 @@
   --state-good: #7fc898;
   --state-warn: #d8ab68;
   --state-bad: #e08585;
+  --state-extra: #8fb9d6;
   --chart-1: #e08585;
   --chart-2: #d8ab68;
   --chart-3: #7fc898;
