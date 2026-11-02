@@ -450,3 +450,28 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.84rem;
   padding:0.4rem 0.5rem;
 }
+
+/* 학생 등록 한 줄: 이름 · 학년 · 반 · 등록.
+   세 칸을 같은 폭으로 두는 건 보기 좋으라고가 아니다. 여기는 학생을
+   한 명씩 더하는 자리라 칸을 눈으로 세며 옮겨 다니는데, 폭이 제각각이면
+   매번 어느 칸이 학년인지 다시 읽어야 한다.
+   등록 버튼은 같은 줄 끝에 둔다 — 아래로 내려가면 세 칸을 채운 뒤
+   손이 한 번 더 움직인다. */
+.gi-stu-new{
+  display:flex;
+  gap:0.4rem;
+  align-items:stretch;
+  margin-bottom:1rem;
+}
+.gi-stu-new .gi-input, .gi-stu-new .gi-select{
+  flex:1 1 0;
+  min-width:0;
+  font-size:0.84rem;
+  padding:0.4rem 0.5rem;
+}
+/* 버튼은 세 칸과 폭을 나누지 않는다. '등록' 두 글자만큼만 있으면 된다. */
+.gi-stu-new .gi-btn{
+  flex:0 0 auto;
+  font-size:0.84rem;
+  padding:0.4rem 0.9rem;
+}

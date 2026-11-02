@@ -51,12 +51,12 @@
     $view.innerHTML = '' +
       '<div id="studentsError" class="gi-error" hidden></div>' +
       '<h2 class="gi-h2">학생 등록</h2>' +
-      '<div class="gi-field" style="display:flex;gap:.4rem">' +
-        '<input class="gi-input" style="flex:2" type="text" id="newName" placeholder="이름">' +
-        '<input class="gi-input" style="flex:1" type="text" id="newGrade" placeholder="학년">' +
-        '<select class="gi-select" style="flex:2" id="newClass">' + optionsHtml('') + '</select>' +
+      '<div class="gi-stu-new">' +
+        '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
+        '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
+        '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
+        '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
       '</div>' +
-      '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
       '<h2 class="gi-h2">학생 목록 (' + students.length + '명)</h2>' +
       (students.length ? students.map(studentHtml).join('') : '<p class="gi-note">등록된 학생이 없습니다.</p>');
 
