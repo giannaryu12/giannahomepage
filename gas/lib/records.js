@@ -171,10 +171,19 @@ function lastBooksOf(records) {
  * 그 학생이 마지막으로 적은 회차. 없으면 0.
  *
  * 최신 기록부터 훑어 처음 만나는 숫자를 쓴다. 회차를 빼먹은 날이 있어도
- * 그 앞의 값을 찾아 이어 간다.
+ * 그 앞의 값을 찾아 이어 간다. 결석한 날은 회차가 비어 있으므로 저절로
+ * 건너뛴다 — 수업을 안 한 날은 세지 않는다.
+ *
+ * beforeDate를 주면 그 날짜 앞의 기록만 본다. 보충은 빠진 날보다 뒤,
+ * 그 뒤 수업보다는 앞에 끼어드는 일이 흔하다. 전체에서 가장 큰 회차를
+ * 쓰면 그 뒤 수업의 회차를 받아 와 두 날이 같은 회차가 된다.
+ * 같은 날의 기록도 뺀다 — 고쳐 넣는 중인 그 기록이다.
  */
-function lastSessionNoOf(records) {
-  const sorted = (records || []).slice().sort(function (a, b) {
+function lastSessionNoOf(records, beforeDate) {
+  const limit = String(beforeDate || '');
+  const sorted = (records || []).filter(function (r) {
+    return !limit || String(r.date || '') < limit;
+  }).sort(function (a, b) {
     return String(b.date || '').localeCompare(String(a.date || ''));
   });
 

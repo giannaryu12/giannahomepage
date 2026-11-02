@@ -38,7 +38,9 @@ function handleAdminRoster(body) {
         name: s.name,
         grade: s.grade,
         lastBooks: lastBooksOf(mine),
-        lastSessionNo: lastSessionNoOf(mine),
+        // 그날 앞의 기록만 본다. 보충을 끼워 넣을 때 그 뒤 수업의
+        // 회차를 받아 오면 두 날이 같은 회차가 된다.
+        lastSessionNo: lastSessionNoOf(mine, body.date),
       };
     });
 

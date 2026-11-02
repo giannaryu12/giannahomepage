@@ -230,6 +230,31 @@ describe('lastBooksOf', () => {
 });
 
 describe('lastSessionNoOf', () => {
+  it('beforeDate를 주면 그 앞의 기록만 본다', () => {
+    // 보충은 빠진 날보다 뒤, 그 뒤 수업보다는 앞에 끼어든다. 전체에서
+    // 가장 큰 회차를 쓰면 보충과 그 뒤 수업이 같은 회차가 된다.
+    const recs = [
+      { date: '2026-08-16', sessionNo: 9 },
+      { date: '2026-08-19', sessionNo: '' },
+      { date: '2026-08-23', sessionNo: 11 },
+    ];
+    expect(lastSessionNoOf(recs, '2026-08-21')).toBe(9);
+    expect(lastSessionNoOf(recs, '2026-08-30')).toBe(11);
+    expect(lastSessionNoOf(recs)).toBe(11);
+  });
+
+  it('같은 날의 기록은 제 회차를 물려주지 않는다', () => {
+    // 고쳐 넣는 중인 그 기록이다. 세면 저장할 때마다 회차가 하나씩 는다.
+    expect(lastSessionNoOf([
+      { date: '2026-08-16', sessionNo: 9 },
+      { date: '2026-08-23', sessionNo: 11 },
+    ], '2026-08-23')).toBe(9);
+  });
+
+  it('그 앞에 기록이 없으면 0이다', () => {
+    expect(lastSessionNoOf([{ date: '2026-08-23', sessionNo: 11 }], '2026-08-01')).toBe(0);
+  });
+
   it('가장 최근 기록의 회차를 돌려준다', () => {
     expect(lastSessionNoOf([
       { date: '2026-08-16', sessionNo: 9 },
