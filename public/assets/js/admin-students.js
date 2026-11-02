@@ -30,18 +30,20 @@
           '<span class="gi-note">' + A.esc(s.studentId) + ' · ' +
             (s.active ? A.esc(s.className || '반 없음') : '비활성') + '</span>' +
         '</div>' +
-        '<div class="gi-stu-field">' +
-          '<input class="gi-input" style="flex:2" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
-          '<input class="gi-input" style="flex:1" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
-          '<select class="gi-select" style="flex:2" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
-        '</div>' +
-        '<div class="gi-choices">' +
-          '<button class="gi-choice" type="button" data-act="save">저장</button>' +
-          '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
-          '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
-          '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
-          '<button class="gi-choice" type="button" data-act="toggle">' +
-            (s.active ? '비활성화' : '다시 활성화') + '</button>' +
+        '<div class="gi-stu-row">' +
+          '<div class="gi-stu-field">' +
+            '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
+            '<input class="gi-input" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
+            '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
+          '</div>' +
+          '<div class="gi-choices gi-stu-acts">' +
+            '<button class="gi-choice" type="button" data-act="save">저장</button>' +
+            '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
+            '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
+            '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
+            '<button class="gi-choice" type="button" data-act="toggle">' +
+              (s.active ? '비활성화' : '다시 활성화') + '</button>' +
+          '</div>' +
         '</div>' +
         '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';

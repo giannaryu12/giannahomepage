@@ -396,7 +396,6 @@ body.gi .gi-h2{ color:var(--text); }
    줄이면 수업 기록까지 같이 좁아지므로 여기서만 덮는다. */
 .gi-stu{ margin-bottom:0.35rem; padding:0.6rem; }
 .gi-stu-head{ display:flex; justify-content:space-between; gap:0.6rem; align-items:baseline; }
-.gi-stu-field{ display:flex; gap:0.4rem; margin:0.45rem 0 0.4rem; }
 /* 할 말이 없을 때도 빈 줄만큼 자리를 먹어 카드마다 한 줄씩 늘어난다. */
 .gi-stu-msg{ margin-top:0.3rem; }
 .gi-stu-msg:empty{ display:none; }
@@ -485,3 +484,23 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-roster .gi-rec-date{ font-size:0.84rem; }
 .gi-roster .gi-note{ font-size:0.76rem; }
 .gi-roster .gi-badge{ font-size:0.68rem; padding:0.1rem 0.4rem; margin-right:0; }
+
+/* 학생 카드 한 줄: 이름 · 학년 · 반 + 버튼 묶음.
+   버튼이 아래 줄에 따로 있으면 카드마다 두 줄을 쓰고, 어느 카드의
+   버튼인지 다시 눈으로 맞춰야 한다. 같은 줄에 두면 한 학생이 한 줄이다.
+   좁아지면 버튼 묶음이 통째로 아래로 내려간다 — 세 칸이 먼저 찌그러지면
+   이름이 읽히지 않는다. */
+.gi-stu-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:0.4rem;
+  margin:0.45rem 0 0.4rem;
+}
+/* 세 칸은 서로 같은 폭이다. 폭이 제각각이면 카드를 옮겨 다닐 때마다
+   어느 칸이 학년인지 다시 읽게 된다. 14rem 아래로는 버튼을 먼저 내린다. */
+.gi-stu-field{ display:flex; gap:0.4rem; flex:1 1 14rem; min-width:0; margin:0; }
+.gi-stu-field > .gi-input, .gi-stu-field > .gi-select{ flex:1 1 0; min-width:0; }
+/* 버튼 묶음은 세 칸과 폭을 나누지 않지만, 좁은 화면에서는 줄어들 수 있어야
+   한다. 0 0 auto로 두면 카드 밖으로 삐져나가 마지막 버튼이 잘린다. */
+.gi-stu-acts{ flex:0 1 auto; min-width:0; }
