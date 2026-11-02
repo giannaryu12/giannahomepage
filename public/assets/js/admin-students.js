@@ -116,22 +116,43 @@
     return days.length ? kept[days[0]] : '';
   }
 
-  function studentHtml(s) {
+  /** 적어 둔 요일·시간을 글로. 목록에서는 읽기만 한다. */
+  function schedTextHtml(raw) {
+    const text = S.formatSchedule(S.parseSchedule(raw));
+    return '<p class="gi-note gi-stu-when">' +
+      (text ? A.esc(text) : '요일·시간 미지정') + '</p>';
+  }
+
+  /**
+   * 학생 카드.
+   *
+   * editable이면 이름·학년·반과 요일·시간을 고칠 수 있다 (수정 탭).
+   * 목록에서는 같은 값을 읽기만 한다 — 이름과 반은 카드 머리에 이미
+   * 적혀 있고, 고치는 일은 수정 탭 한 곳에서 한다. 열 하나가 350px인데
+   * 입력 칸까지 넣으면 어느 것도 제 너비를 못 가진다.
+   */
+  function studentHtml(s, editable) {
     return '' +
       '<article class="gi-rec gi-stu" data-id="' + A.esc(s.studentId) + '">' +
         '<div class="gi-stu-head">' +
           '<span class="gi-rec-date">' + A.esc(s.name) + '</span>' +
-          '<span class="gi-note">' + A.esc(s.studentId) + ' · ' +
+          // 학생 번호는 수정 칸에서만 보인다. 목록에서는 쓸 일이 없고,
+          // 350px 줄에서 학년과 반을 밀어낸다.
+          '<span class="gi-note">' +
+            (editable ? A.esc(s.studentId) + ' · ' : '') +
+            A.esc(s.grade || '학년 없음') + ' · ' +
             (s.active ? A.esc(s.className || '반 없음') : '비활성') + '</span>' +
         '</div>' +
         '<div class="gi-stu-row">' +
-          '<div class="gi-stu-field">' +
-            '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
-            '<input class="gi-input" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
-            '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
-          '</div>' +
+          (editable
+            ? '<div class="gi-stu-field">' +
+                '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
+                '<input class="gi-input" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
+                '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
+              '</div>'
+            : '') +
           '<div class="gi-choices gi-stu-acts">' +
-            '<button class="gi-choice" type="button" data-act="save">저장</button>' +
+            (editable ? '<button class="gi-choice" type="button" data-act="save">저장</button>' : '') +
             '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
             '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
             '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
@@ -139,7 +160,7 @@
               (s.active ? '비활성화' : '다시 활성화') + '</button>' +
           '</div>' +
         '</div>' +
-        schedHtml(s.schedule) +
+        (editable ? schedHtml(s.schedule) : schedTextHtml(s.schedule)) +
         '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';
   }
@@ -175,7 +196,7 @@
             (s.active ? '' : ' · 비활성') + '</option>';
         }).join('') +
       '</select>' +
-      studentHtml(cur);
+      studentHtml(cur, true);
   }
 
   /** 한 학교급의 열. 비어 있어도 자리를 지킨다 — 열이 셋이어야 칸이 안 밀린다. */
@@ -184,7 +205,7 @@
 
     return '<section class="gi-stu-col">' +
       '<h3 class="gi-stu-col-title">' + level.label + ' (' + mine.length + '명)</h3>' +
-      (mine.length ? mine.map(studentHtml).join('')
+      (mine.length ? mine.map(function (s) { return studentHtml(s); }).join('')
                    : '<p class="gi-note">아직 없습니다.</p>') +
     '</section>';
   }
@@ -218,7 +239,7 @@
             ? '<div class="gi-stu-cols"><section class="gi-stu-col">' +
                 '<h3 class="gi-stu-col-title">그 외 (' + rest.length + '명)</h3>' +
                 '<p class="gi-note">반 이름이나 학년에 초·중·고가 없는 학생입니다.</p>' +
-                rest.map(studentHtml).join('') +
+                rest.map(function (s) { return studentHtml(s); }).join('') +
               '</section></div>'
             : '')
         : '<p class="gi-note">등록된 학생이 없습니다.</p>');
