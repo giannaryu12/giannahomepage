@@ -125,3 +125,33 @@ function handleParentLoad(body) {
     monthKey: monthKey,
   }));
 }
+
+/**
+ * 달력에 찍을 출결만. 한 달치를 가볍게 읽는다.
+ *
+ * 기록 전체를 돌려주면 코멘트와 진도까지 딸려 와 한 달이 수백 KB가 된다.
+ * 달력이 쓰는 건 그날 그 학생이 왔는지와 몇 회차인지뿐이다.
+ */
+function handleAdminAttendance(body) {
+  requireSession_(body.sessionKey);
+
+  const from = String(body.from || '');
+  const to = String(body.to || '');
+
+  const marks = readTable(SHEETS.RECORDS)
+    .filter(function (r) {
+      const d = String(r.date);
+      return (!from || d >= from) && (!to || d <= to) && String(r.attendance || '') !== '';
+    })
+    .map(function (r) {
+      return {
+        date: String(r.date),
+        studentId: String(r.studentId),
+        attendance: String(r.attendance),
+        sessionNo: r.sessionNo === '' || r.sessionNo === null || r.sessionNo === undefined
+          ? '' : String(r.sessionNo),
+      };
+    });
+
+  return ok({ marks: marks });
+}

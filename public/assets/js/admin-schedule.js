@@ -16,6 +16,9 @@
 
   let students = [];
   let overrides = [];
+  // 이미 적어 둔 출결. '날짜|학생' → { attendance, sessionNo }.
+  // 달력에서 기록을 마친 수업과 아직 안 적은 수업을 가르는 값이다.
+  let marks = {};
   // 화면에 그려진 달 'YYYY-MM'. 비어 있으면 아직 한 번도 안 열어 본 것이다.
   let month = '';
   // 아래에 펼쳐 둔 날짜. 늘 하루가 펼쳐져 있다 — 비워 두면 무엇을 눌러야
@@ -49,6 +52,28 @@
   // 빼기의 까닭. 시트에는 영어로 쌓고 화면에는 한글로 보인다.
   const SKIP_LABEL = { absent: '결석', moved: '변경' };
 
+  // 출결 색. 출석이 초록이고 나머지는 저마다 다르다 — 한 가지만 칠하면
+  // 지각·결석을 적어 둔 수업이 아직 안 적은 수업과 똑같아 보인다.
+  const MARK_CLASS = {
+    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '보강': 'is-extra',
+  };
+
+  function markFor(iso, studentId) {
+    return marks[String(iso) + '|' + String(studentId)];
+  }
+
+  /** 이름 앞 동그라미와 뒤 회차. 안 적은 수업에는 아무것도 붙지 않는다. */
+  function markHtml(iso, studentId) {
+    const m = markFor(iso, studentId);
+    if (!m) return { dot: '', no: '' };
+
+    return {
+      dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
+        ' title="' + A.esc(m.attendance) + '"></span>',
+      no: m.sessionNo ? '<span class="gi-cal-no">' + A.esc(m.sessionNo) + '회</span>' : '',
+    };
+  }
+
   function entriesOn(iso) {
     return S.applyOverrides(S.studentsOnDate(students, iso), overrides, iso, students);
   }
@@ -60,6 +85,7 @@
     // 반이 없으면 기록을 열 수 없다. 누를 수 있게 두면 눌러 보고 나서야 안다.
     // 뺀 줄도 누를 일이 없다 — 그날 오지 않는 학생의 기록을 열 까닭이 없다.
     const disabled = (s.classId && !entry.skip) ? '' : ' disabled';
+    const m = markHtml(iso, s.studentId);
     const mark = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
@@ -67,8 +93,10 @@
     return '<button class="gi-choice gi-cal-name' +
       (entry.overrideId ? ' is-extra' : '') + (entry.skip ? ' is-off' : '') + '"' +
       ' type="button" data-student="' + A.esc(s.studentId) + '" data-date="' + A.esc(iso) + '"' +
+      // 동그라미는 이름 안에 넣는다. 밖에 두면 좁은 칸에서 시간 줄 끝에
+      // 혼자 남고 이름은 다음 줄로 넘어간다.
       disabled + '><span class="gi-cal-at">' + A.esc(entry.time) + '</span>' +
-      '<span class="gi-cal-who">' + A.esc(s.name) + '</span>' + mark + '</button>';
+      '<span class="gi-cal-who">' + m.dot + A.esc(s.name) + '</span>' + m.no + mark + '</button>';
   }
 
   function cellHtml(cell, today) {
@@ -149,9 +177,11 @@
           '" data-reason="moved" data-time="' + A.esc(e.time) + '">변경</button>';
     }
 
+    const m = markHtml(openDate, e.student.studentId);
+
     return '<li class="gi-day-row' + (e.skip ? ' is-off' : '') + '">' +
       '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
-      '<span class="gi-day-who">' + A.esc(e.student.name) + '</span>' +
+      '<span class="gi-day-who">' + m.dot + A.esc(e.student.name) + m.no + '</span>' +
       tail +
       '</li>';
   }
@@ -218,10 +248,18 @@
       A.api.call('admin.overrides', {
         sessionKey: A.getSessionKey(), from: range.from, to: range.to,
       }),
+      A.api.call('admin.attendance', {
+        sessionKey: A.getSessionKey(), from: range.from, to: range.to,
+      }),
     ]).then(function (res) {
       // 비활성 학생은 달력에 넣지 않는다. 그만둔 학생이 계속 칸을 차지한다.
       students = (res[0].students || []).filter(function (s) { return s.active; });
       overrides = res[1].overrides || [];
+
+      marks = {};
+      (res[2].marks || []).forEach(function (m) {
+        marks[String(m.date) + '|' + String(m.studentId)] = m;
+      });
       render();
     }).catch(function (err) {
       if (!A.handleAuthLoss(err)) {

@@ -45,6 +45,7 @@ function dispatch_(parsed) {
     case 'admin.reissueToken':  return handleAdminReissueToken(body);
     case 'admin.roster':        return handleAdminRoster(body);
     case 'admin.saveBatch':     return handleAdminSaveBatch(body);
+    case 'admin.attendance':      return handleAdminAttendance(body);
     case 'admin.overrides':       return handleAdminOverrides(body);
     case 'admin.saveOverride':    return handleAdminSaveOverride(body);
     case 'admin.deleteOverride':  return handleAdminDeleteOverride(body);

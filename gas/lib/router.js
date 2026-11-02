@@ -14,6 +14,8 @@ const ACTIONS = {
   'admin.students':      { auth: 'session', required: [] },
   'admin.upsertStudent': { auth: 'session', required: ['student'] },
   'admin.reissueToken':  { auth: 'session', required: ['studentId'] },
+  // 달력에 찍을 출결. from/to를 비우면 전체를 읽으므로 필수로 두지 않는다.
+  'admin.attendance':     { auth: 'session', required: [] },
   // 하루치 일정 변경. from/to를 비워 보내면 전체를 읽으므로 필수로 두지 않는다.
   'admin.overrides':      { auth: 'session', required: [] },
   'admin.saveOverride':   { auth: 'session', required: ['override'] },
