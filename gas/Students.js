@@ -40,6 +40,8 @@ function handleAdminStudents(body) {
       parentToken: s.parentToken,
       active: String(s.active).toUpperCase() === 'TRUE',
       note: s.note,
+      // 수업 요일·시간. '화 17:00, 목 19:00' 한 칸에 적는다 (schedule.js).
+      schedule: s.schedule || '',
     };
   });
   return ok({ students: students, classes: listClasses_(classRows) });
@@ -77,6 +79,7 @@ function handleAdminUpsertStudent(body) {
       parentToken: secureToken_(32),
       active: 'TRUE',
       note: input.note || '',
+      schedule: input.schedule || '',
       createdAt: new Date().toISOString(),
     });
     SpreadsheetApp.flush();

@@ -35,6 +35,7 @@
   <section id="appView" hidden>
     <nav style="display:flex;gap:.5rem;margin-bottom:1.2rem">
       <button class="gi-choice" id="tabEntry" type="button" aria-pressed="true">수업 입력</button>
+      <button class="gi-choice" id="tabSchedule" type="button" aria-pressed="false">수업 일정</button>
       <button class="gi-choice" id="tabStudents" type="button" aria-pressed="false">학생 관리</button>
       <button class="gi-choice" id="logoutBtn" type="button" style="margin-left:auto">로그아웃</button>
     </nav>
@@ -51,6 +52,18 @@
 
       <div id="entryError" class="gi-error" hidden></div>
       <div id="roster"></div>
+    </div>
+
+    <div id="scheduleView" hidden>
+      <div class="gi-week">
+        <button class="gi-choice" id="weekPrev" type="button">← 지난주</button>
+        <span class="gi-week-label" id="weekLabel"></span>
+        <button class="gi-choice" id="weekNext" type="button">다음주 →</button>
+        <button class="gi-choice" id="weekToday" type="button">이번 주</button>
+      </div>
+
+      <div id="scheduleError" class="gi-error" hidden></div>
+      <div id="timetable"></div>
     </div>
 
     <div id="recordView" hidden>
@@ -123,8 +136,10 @@
 <script src="/assets/js/api.js"></script>
 <script src="/assets/js/progress-areas.js"></script>
 <script src="/assets/js/class-level.js"></script>
+<script src="/assets/js/schedule.js"></script>
 <script src="/assets/js/record-form.js"></script>
 <script src="/assets/js/admin.js"></script>
 <script src="/assets/js/admin-students.js"></script>
+<script src="/assets/js/admin-schedule.js"></script>
 </body>
 </html>

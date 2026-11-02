@@ -113,6 +113,7 @@
 | parentToken | string | 32자 랜덤. 재발급 시 교체 |
 | active | boolean | false면 링크 무효 |
 | note | string | 선생님 메모 (학부모에게 노출 안 됨) |
+| schedule | string | 수업 요일·시간 `화 17:00, 목 19:00` (수업 일정 탭) |
 | createdAt | ISO8601 | |
 
 ### `Classes`

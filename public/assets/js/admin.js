@@ -422,24 +422,31 @@
     $('recordStatus').textContent = '';
   }
 
+  // 탭 이름 → [탭 버튼, 화면]. 탭이 셋이 되면서 둘씩 짝지어 켜고 끄는
+  // 방식으로는 한 곳을 고칠 때마다 나머지를 빠뜨리게 된다.
+  const TABS = {
+    entry: ['tabEntry', 'entryView'],
+    schedule: ['tabSchedule', 'scheduleView'],
+    students: ['tabStudents', 'studentsView'],
+  };
+
+  function showTab(name) {
+    Object.keys(TABS).forEach(function (key) {
+      const pair = TABS[key];
+      $(pair[0]).setAttribute('aria-pressed', key === name ? 'true' : 'false');
+      $(pair[1]).hidden = key !== name;
+    });
+    $('recordView').hidden = true;
+  }
+
   function showRecordView() {
-    $('entryView').hidden = true;
-    $('studentsView').hidden = true;
+    Object.keys(TABS).forEach(function (key) { $(TABS[key][1]).hidden = true; });
     $('recordView').hidden = false;
   }
 
   function goBack() {
-    $('recordView').hidden = true;
     currentStudent = null;
-    if (recordOrigin === 'students') {
-      $('studentsView').hidden = false;
-      $('tabStudents').setAttribute('aria-pressed', 'true');
-      $('tabEntry').setAttribute('aria-pressed', 'false');
-    } else {
-      $('entryView').hidden = false;
-      $('tabEntry').setAttribute('aria-pressed', 'true');
-      $('tabStudents').setAttribute('aria-pressed', 'false');
-    }
+    showTab(TABS[recordOrigin] ? recordOrigin : 'entry');
   }
 
   // records: 학생 관리 탭처럼 수업 탭에서 로드해 둔 것과 다른 반/날짜 조합을
@@ -475,9 +482,12 @@
     showRecordView();
   }
 
-  function openRecordForStudent(student) {
+  // date·origin을 생략하면 오늘, 학생 관리 탭에서 연 것으로 본다.
+  // 수업 일정 탭은 시간표에서 누른 칸의 날짜를 그대로 넘긴다.
+  function openRecordForStudent(student, date, origin) {
     if (!student.classId) return false;
-    const date = todayIso();
+    date = date || todayIso();
+    origin = origin || 'students';
     return api.call('admin.roster', { sessionKey: sessionKey, classId: student.classId, date: date })
       .then(function (data) {
         // 학생 관리 탭의 학생 객체에는 직전 교재가 없다. 명단 응답에서 가져온다.
@@ -489,7 +499,7 @@
           lastSessionNo: inRoster && inRoster.lastSessionNo,
         });
 
-        openRecord(withLast, student.classId, date, 'students', data.existingRecords);
+        openRecord(withLast, student.classId, date, origin, data.existingRecords);
       });
   }
 
@@ -644,19 +654,16 @@
   /* ---------- 탭 ---------- */
 
   $('tabEntry').addEventListener('click', function () {
-    $('tabEntry').setAttribute('aria-pressed', 'true');
-    $('tabStudents').setAttribute('aria-pressed', 'false');
-    $('entryView').hidden = false;
-    $('studentsView').hidden = true;
-    $('recordView').hidden = true;
+    showTab('entry');
+  });
+
+  $('tabSchedule').addEventListener('click', function () {
+    showTab('schedule');
+    if (window.renderScheduleView) window.renderScheduleView();
   });
 
   $('tabStudents').addEventListener('click', function () {
-    $('tabStudents').setAttribute('aria-pressed', 'true');
-    $('tabEntry').setAttribute('aria-pressed', 'false');
-    $('studentsView').hidden = false;
-    $('entryView').hidden = true;
-    $('recordView').hidden = true;
+    showTab('students');
     if (window.renderStudentsView) window.renderStudentsView();
   });
 
@@ -664,6 +671,7 @@
   window.GI_ADMIN = {
     api: api,
     esc: esc,
+    showError: showError,
     getSessionKey: function () { return sessionKey; },
     handleAuthLoss: handleAuthLoss,
     openRecordForStudent: openRecordForStudent,

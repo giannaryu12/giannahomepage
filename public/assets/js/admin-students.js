@@ -6,6 +6,7 @@
  */
 (function () {
   const A = window.GI_ADMIN;
+  const S = window.GI_SCHEDULE;
   const $view = document.getElementById('studentsView');
 
   let students = [];
@@ -20,6 +21,84 @@
       return '<option value="' + A.esc(c.classId) + '"' +
         (c.classId === selectedId ? ' selected' : '') + '>' + A.esc(c.className) + '</option>';
     }).join('');
+  }
+
+  /* ---------- 요일·시간 ---------- */
+
+  /**
+   * 요일 버튼 일곱 개 + 켜진 요일의 시간 칸.
+   *
+   * 요일마다 시간이 다를 수 있어 (화 5시 · 목 7시) 요일 하나에 시간 칸
+   * 하나를 붙인다. 꺼진 요일의 칸은 아예 그리지 않는다 — 일곱 칸이 늘
+   * 떠 있으면 어느 요일에 수업이 있는지가 한눈에 안 들어온다.
+   */
+  function schedHtml(raw) {
+    const entries = S.parseSchedule(raw);
+    const on = {};
+    entries.forEach(function (e) { on[e.day] = e.time; });
+
+    return '<div class="gi-sched" data-sched>' +
+        '<div class="gi-choices gi-sched-days">' +
+          S.WEEKDAYS.map(function (w) {
+            return '<button class="gi-choice" type="button" data-day="' + w + '"' +
+              ' aria-pressed="' + (on[w] ? 'true' : 'false') + '">' + w + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="gi-sched-times" data-times>' + timesHtml(entries) + '</div>' +
+      '</div>';
+  }
+
+  function timesHtml(entries) {
+    return entries.map(function (e) {
+      return '<label class="gi-sched-time">' +
+        '<span>' + e.day + '</span>' +
+        '<input class="gi-input" type="time" data-time="' + e.day + '" value="' + e.time + '">' +
+        '</label>';
+    }).join('');
+  }
+
+  /** 화면에 켜진 요일과 시간을 '화 17:00, 목 19:00' 한 줄로 읽는다. */
+  function readSched(root) {
+    const box = root.querySelector('[data-sched]');
+    if (!box) return '';
+
+    const times = {};
+    box.querySelectorAll('[data-time]').forEach(function (input) {
+      times[input.dataset.time] = input.value;
+    });
+
+    return S.formatSchedule(S.WEEKDAYS.filter(function (w) {
+      return box.querySelector('[data-day="' + w + '"]').getAttribute('aria-pressed') === 'true';
+    }).map(function (w) {
+      // 켜자마자 시간을 안 고르면 저장할 값이 없다. 학원 수업이 가장 많은
+      // 시간대를 기본으로 둔다 — 틀리면 그 자리에서 고치면 된다.
+      return { day: w, time: times[w] || '17:00' };
+    }));
+  }
+
+  /** 요일 버튼을 눌렀을 때 시간 칸을 다시 그린다. 적어 둔 시간은 지키고. */
+  function toggleDay(box, btn) {
+    const nowOn = btn.getAttribute('aria-pressed') !== 'true';
+    btn.setAttribute('aria-pressed', nowOn ? 'true' : 'false');
+
+    const kept = {};
+    box.querySelectorAll('[data-time]').forEach(function (input) {
+      kept[input.dataset.time] = input.value;
+    });
+
+    const entries = S.WEEKDAYS.filter(function (w) {
+      return box.querySelector('[data-day="' + w + '"]').getAttribute('aria-pressed') === 'true';
+    }).map(function (w) {
+      return { day: w, time: kept[w] || firstTime_(kept) || '17:00' };
+    });
+
+    box.querySelector('[data-times]').innerHTML = timesHtml(entries);
+  }
+
+  /** 이미 적어 둔 시간이 있으면 새 요일도 같은 시간으로 시작한다. */
+  function firstTime_(kept) {
+    const days = Object.keys(kept).filter(function (d) { return kept[d]; });
+    return days.length ? kept[days[0]] : '';
   }
 
   function studentHtml(s) {
@@ -45,6 +124,7 @@
               (s.active ? '비활성화' : '다시 활성화') + '</button>' +
           '</div>' +
         '</div>' +
+        schedHtml(s.schedule) +
         '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';
   }
@@ -59,6 +139,7 @@
         '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
         '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
       '</div>' +
+      '<div id="newSched">' + schedHtml('') + '</div>' +
       '<h2 class="gi-h2">학생 목록 (' + students.length + '명)</h2>' +
       (students.length ? students.map(studentHtml).join('') : '<p class="gi-note">등록된 학생이 없습니다.</p>');
 
@@ -89,6 +170,7 @@
         name: name,
         grade: document.getElementById('newGrade').value.trim(),
         classId: document.getElementById('newClass').value,
+        schedule: readSched(document.getElementById('newSched')),
       },
     }).then(load).catch(function (err) {
       if (!A.handleAuthLoss(err)) {
@@ -116,6 +198,14 @@
       $msg.textContent = url;
     }
   }
+
+  // 요일 버튼은 등록 줄과 학생 카드 양쪽에 있다. 한 군데서 받아 누른
+  // 버튼이 속한 묶음만 다시 그린다.
+  $view.addEventListener('click', function (e) {
+    const day = e.target.closest('[data-day]');
+    if (!day) return;
+    toggleDay(day.closest('[data-sched]'), day);
+  });
 
   $view.addEventListener('click', function (e) {
     const btn = e.target.closest('[data-act]');
@@ -165,6 +255,7 @@
       patch.name = card.querySelector('[data-field="name"]').value.trim();
       patch.grade = card.querySelector('[data-field="grade"]').value.trim();
       patch.classId = card.querySelector('[data-field="classId"]').value;
+      patch.schedule = readSched(card);
       if (!patch.name) { $msg.textContent = '이름은 비울 수 없습니다.'; return; }
     } else if (act === 'toggle') {
       patch.active = !student.active;
