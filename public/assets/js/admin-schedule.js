@@ -18,7 +18,8 @@
   let overrides = [];
   // 화면에 그려진 달 'YYYY-MM'. 비어 있으면 아직 한 번도 안 열어 본 것이다.
   let month = '';
-  // 아래에 펼쳐 둔 날짜. 비어 있으면 안 펼친 것이다.
+  // 아래에 펼쳐 둔 날짜. 늘 하루가 펼쳐져 있다 — 비워 두면 무엇을 눌러야
+  // 고칠 수 있는지 화면 어디에도 적혀 있지 않다.
   let openDate = '';
   // 고치는 칸을 화면으로 끌어온 날. 날이 바뀐 순간에만 끌어온다 — 저장할
   // 때마다 끌어오면 칸을 만지는 동안 화면이 계속 움직인다.
@@ -27,6 +28,12 @@
   function todayIso() {
     const d = new Date();
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  /** 그 달에서 처음 펼쳐 둘 날. 이번 달이면 오늘, 아니면 1일이다. */
+  function defaultDateIn(key) {
+    const today = todayIso();
+    return S.monthOf(today) === key ? today : key + '-01';
   }
 
   /** '2026-11' → '2026년 11월'. */
@@ -156,8 +163,10 @@
     $('dayEdit').hidden = false;
     $('dayEdit').innerHTML = '' +
       '<div class="gi-day-head">' +
-        '<h3 class="gi-day-title">' + A.esc(dayLabel(openDate)) + '</h3>' +
-        '<button class="gi-choice" type="button" data-close>닫기</button>' +
+        '<h3 class="gi-day-title">' + A.esc(dayLabel(openDate)) + ' 일정 고치기</h3>' +
+        // 달력을 누르지 않고도 날을 바꿀 수 있어야 한다. 누를 자리를 못
+        // 찾으면 고치는 길이 통째로 막힌다.
+        '<input class="gi-input" type="date" data-pick value="' + A.esc(openDate) + '">' +
       '</div>' +
       (rows ? '<ul class="gi-day-list">' + rows + '</ul>'
             : '<p class="gi-note">이 날은 수업이 없습니다.</p>') +
@@ -240,9 +249,9 @@
 
   function showMonth(key) {
     month = key || S.monthOf(todayIso());
-    // 달을 옮기면 펼쳐 둔 날은 닫는다. 보이지 않는 날이 아래에 남아 있으면
-    // 엉뚱한 날짜를 고치게 된다.
-    openDate = '';
+    // 옮긴 달의 날로 갈아 끼운다. 그냥 두면 보이지 않는 날이 아래에 남아
+    // 엉뚱한 날짜를 고치게 되고, 닫아 버리면 고칠 자리가 화면에서 사라진다.
+    openDate = defaultDateIn(month);
     load();
   }
 
@@ -258,7 +267,8 @@
     if (!btn) {
       const day = e.target.closest('[data-day]');
       if (day) {
-        openDate = day.dataset.day === openDate ? '' : day.dataset.day;
+        // 같은 날을 다시 눌러도 닫지 않는다. 닫히면 고칠 자리가 사라진다.
+        openDate = day.dataset.day;
         render();
       }
       return;
@@ -283,12 +293,6 @@
   });
 
   $('dayEdit').addEventListener('click', function (e) {
-    if (e.target.closest('[data-close]')) {
-      openDate = '';
-      render();
-      return;
-    }
-
     const drop = e.target.closest('[data-drop]');
     if (drop) {
       dropOverride(drop.dataset.drop);
@@ -311,8 +315,27 @@
     }
   });
 
+  $('dayEdit').addEventListener('change', function (e) {
+    const pick = e.target.closest('[data-pick]');
+    if (!pick || !pick.value) return;
+
+    openDate = pick.value;
+    // 다른 달을 고르면 달력도 그 달로 넘긴다. 달력과 아래 칸이 다른 달을
+    // 가리키면 어느 날을 고치는 중인지 알 수 없다.
+    if (S.monthOf(openDate) !== month) {
+      month = S.monthOf(openDate);
+      load();
+      return;
+    }
+    render();
+  });
+
   window.renderScheduleView = function () {
     if (!month) month = S.monthOf(todayIso());
+    if (!openDate) openDate = defaultDateIn(month);
+    // 처음 열 때는 끌어오지 않는다 — 화면이 열리자마자 아래로 내려가면
+    // 달력을 보려고 다시 올려야 한다.
+    shownDate = openDate;
     load();
   };
 })();
