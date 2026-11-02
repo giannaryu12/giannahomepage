@@ -400,3 +400,8 @@ body.gi .gi-h2{ color:var(--text); }
 /* 할 말이 없을 때도 빈 줄만큼 자리를 먹어 카드마다 한 줄씩 늘어난다. */
 .gi-stu-msg{ margin-top:0.3rem; }
 .gi-stu-msg:empty{ display:none; }
+/* 카드 안의 입력칸과 버튼도 한 단계씩 줄인다. 이름·학년·반은 이미 위에
+   한 번 적혀 있어 여기서는 고칠 때만 보면 되고, 버튼은 다섯 개가 한 줄에
+   들어가야 한다. */
+.gi-stu .gi-input, .gi-stu .gi-select{ font-size:0.84rem; padding:0.4rem 0.5rem; }
+.gi-stu .gi-choice{ font-size:0.76rem; padding:0.28rem 0.45rem; }
