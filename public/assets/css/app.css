@@ -654,3 +654,46 @@ body.gi .gi-h2{ color:var(--text); }
 @media (min-width:1100px){
   .gi-cal-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 }
+
+
+/* ---------- 학생 목록 세 열 ---------- */
+/* 초등부·중등부·고등부를 나란히 둔다. 한 줄로 길게 늘어놓으면 중등부
+   학생을 찾느라 초등부 전부를 지나쳐야 한다. 세 열의 폭은 똑같다 —
+   한 열만 넓으면 같은 카드가 열마다 다르게 접힌다. */
+.gi-stu-cols{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0.9rem;
+  align-items:start;
+  margin-bottom:1.2rem;
+}
+.gi-stu-col-title{
+  font-size:0.82rem;
+  font-weight:700;
+  color:var(--heading);
+  margin:0 0 0.5rem;
+  padding-bottom:0.3rem;
+  border-bottom:1px solid var(--border);
+}
+/* 열 하나가 350px 남짓이라 등록 칸과 카드 버튼은 접힌다. 접히게 두되
+   줄 사이를 좁혀 카드가 세로로 길어지지 않게 한다. */
+.gi-stu-new{ flex-wrap:wrap; }
+.gi-stu-cols .gi-stu-new .gi-btn{ flex:1 0 auto; }
+/* 좁은 화면에서는 한 줄로 되돌린다. 350px를 셋으로 또 나누면 이름 칸이
+   글자 두 개 폭이 된다. */
+@media (max-width:900px){
+  .gi-stu-cols{ grid-template-columns:1fr; }
+}
+
+
+/* 카드의 버튼 다섯 개는 한 줄에 선다. 접히면 카드가 세로로 길어져 한 열에
+   들어가는 학생 수가 줄고, 같은 버튼이 카드마다 다른 자리에 놓인다.
+   열 하나가 350px 남짓이라 글자와 여백을 줄여서 맞춘다. */
+.gi-stu-acts{ flex-wrap:nowrap; }
+.gi-stu-acts .gi-choice{
+  font-size:0.64rem;
+  padding:0.26rem 0.3rem;
+  white-space:nowrap;
+}
+/* 줄이 모자라면 버튼이 아니라 이름·학년 칸이 먼저 내려간다. */
+.gi-stu-cols .gi-stu-field{ flex:1 1 100%; }

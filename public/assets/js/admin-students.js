@@ -7,10 +7,21 @@
 (function () {
   const A = window.GI_ADMIN;
   const S = window.GI_SCHEDULE;
+  const CL = window.GI_CLASS_LEVEL;
   const $view = document.getElementById('studentsView');
 
   let students = [];
   let classes = [];
+
+  /**
+   * 학생 한 명의 학교급. 반 이름에서 먼저 읽고, 없으면 학년에서 읽는다.
+   *
+   * 반을 아직 안 정한 학생이 많은데 학년(초5·중2·고1)은 등록할 때 적는다.
+   * 반만 보면 그 학생들이 모두 '그 외'로 몰린다.
+   */
+  function levelOf(s) {
+    return CL.classLevel(s && s.className) || CL.classLevel(s && s.grade) || '';
+  }
 
   function parentUrl(token) {
     return window.location.origin + '/p/' + token;
@@ -129,19 +140,51 @@
       '</article>';
   }
 
+  /** 한 학교급의 열. 비어 있어도 자리를 지킨다 — 열이 셋이어야 칸이 안 밀린다. */
+  function columnHtml(level) {
+    const mine = students.filter(function (s) { return levelOf(s) === level.key; });
+
+    return '<section class="gi-stu-col">' +
+      '<h3 class="gi-stu-col-title">' + level.label + ' (' + mine.length + '명)</h3>' +
+      (mine.length ? mine.map(studentHtml).join('')
+                   : '<p class="gi-note">아직 없습니다.</p>') +
+    '</section>';
+  }
+
   function render() {
+    // 반도 학년도 초·중·고로 읽히지 않는 학생. 열에서 빠지면 등록은 했는데
+    // 화면 어디에도 없는 학생이 된다.
+    const rest = students.filter(function (s) { return !levelOf(s); });
+
     $view.innerHTML = '' +
       '<div id="studentsError" class="gi-error" hidden></div>' +
       '<h2 class="gi-h2">학생 등록</h2>' +
-      '<div class="gi-stu-new">' +
-        '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
-        '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
-        '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
-        '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
+      // 등록 칸은 열 하나 너비다. 같은 격자에 넣어 폭을 맞춘다 — 숫자로
+      // 따로 적으면 열 너비를 고칠 때마다 두 군데를 고쳐야 한다.
+      '<div class="gi-stu-cols">' +
+        '<div>' +
+          '<div class="gi-stu-new">' +
+            '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
+            '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
+            '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
+            '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
+          '</div>' +
+          '<div id="newSched">' + schedHtml('') + '</div>' +
+        '</div>' +
       '</div>' +
-      '<div id="newSched">' + schedHtml('') + '</div>' +
       '<h2 class="gi-h2">학생 목록 (' + students.length + '명)</h2>' +
-      (students.length ? students.map(studentHtml).join('') : '<p class="gi-note">등록된 학생이 없습니다.</p>');
+      (students.length
+        ? '<div class="gi-stu-cols">' + CL.LEVELS.map(columnHtml).join('') + '</div>' +
+          (rest.length
+            // 그 외도 열 하나 폭으로 둔다. 혼자 화면을 가로지르면 수가
+            // 적은데도 가장 큰 덩어리로 보인다.
+            ? '<div class="gi-stu-cols"><section class="gi-stu-col">' +
+                '<h3 class="gi-stu-col-title">그 외 (' + rest.length + '명)</h3>' +
+                '<p class="gi-note">반 이름이나 학년에 초·중·고가 없는 학생입니다.</p>' +
+                rest.map(studentHtml).join('') +
+              '</section></div>'
+            : '')
+        : '<p class="gi-note">등록된 학생이 없습니다.</p>');
 
     document.getElementById('addBtn').addEventListener('click', addStudent);
   }
