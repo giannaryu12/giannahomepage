@@ -42,7 +42,7 @@
     if (!level) return raw;
 
     const num = (/(\d)/.exec(raw) || [])[1];
-    return level.label + (num ? ', ' + num + '학년' : '');
+    return level.label + (num ? ' ' + num + '학년' : '');
   }
 
   function parentUrl(token) {
@@ -159,17 +159,33 @@
    * 적혀 있고, 고치는 일은 수정 탭 한 곳에서 한다. 열 하나가 350px인데
    * 입력 칸까지 넣으면 어느 것도 제 너비를 못 가진다.
    */
+  /**
+   * 이름 옆 한 줄.
+   *
+   * 반 이름은 적지 않는다 — '초등부 5학년 · 초등부 A'처럼 초등부가 두 번
+   * 나오고, 어느 열에 있는지로 이미 학교급을 안다. 반이 없을 때만 적는다.
+   * 그 학생은 기록을 열 수 없어서, 왜 안 되는지가 여기 적혀 있어야 한다.
+   */
+  function headNote(s, editable) {
+    const parts = [];
+    if (editable) parts.push(s.studentId);
+
+    parts.push(gradeLabel(s) || '학년 없음');
+
+    if (!s.active) parts.push('비활성');
+    else if (!s.className) parts.push('반 없음');
+
+    return parts.join(' · ');
+  }
+
   function studentHtml(s, editable) {
     return '' +
       '<article class="gi-rec gi-stu" data-id="' + A.esc(s.studentId) + '">' +
         '<div class="gi-stu-head">' +
           '<span class="gi-rec-date">' + A.esc(s.name) + '</span>' +
           // 학생 번호는 수정 칸에서만 보인다. 목록에서는 쓸 일이 없고,
-          // 350px 줄에서 학년과 반을 밀어낸다.
-          '<span class="gi-note">' +
-            (editable ? A.esc(s.studentId) + ' · ' : '') +
-            A.esc(gradeLabel(s) || '학년 없음') + ' · ' +
-            (s.active ? A.esc(s.className || '반 없음') : '비활성') + '</span>' +
+          // 350px 줄에서 학년을 밀어낸다.
+          '<span class="gi-note">' + A.esc(headNote(s, editable)) + '</span>' +
         '</div>' +
         '<div class="gi-stu-row">' +
           (editable

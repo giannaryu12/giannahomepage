@@ -92,9 +92,13 @@
     // 뺀 줄도 누를 일이 없다 — 그날 오지 않는 학생의 기록을 열 까닭이 없다.
     const disabled = (s.classId && !entry.skip) ? '' : ' disabled';
     const m = markHtml(iso, s.studentId);
+    // 꼬리표는 하나만 단다. 미리 뺀 까닭이 있으면 그것이 먼저다 — 왜 빠진
+    // 날인지를 말해 준다. 그다음이 적어 둔 결석, 그다음이 보충이다.
     const mark = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
-      : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+      : m.off
+        ? '<span class="gi-cal-tag is-off">결석</span>'
+        : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<button class="gi-choice gi-cal-name' +
       (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') + '"' +
@@ -165,6 +169,7 @@
    */
   function dayRowHtml(e) {
     const sid = A.esc(e.student.studentId);
+    const m = markHtml(openDate, e.student.studentId);
     let tail;
 
     if (e.skip) {
@@ -174,6 +179,10 @@
     } else if (e.overrideId) {
       tail = '<span class="gi-badge is-extra">보충</span>' +
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.overrideId) + '">지우기</button>';
+    } else if (m.off) {
+      // 이미 결석으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 — 적어 둔
+      // 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 알 수 없다.
+      tail = '<span class="gi-badge is-bad">결석</span>';
     } else {
       // 빼는 까닭을 여기서 고른다. 묻지 않고 빼면 달력에 왜 빠졌는지가
       // 남지 않는다 — 결석과 날짜 변경은 나중에 전혀 다른 뜻이 된다.
@@ -182,8 +191,6 @@
         '<button class="gi-choice" type="button" data-skip="' + sid +
           '" data-reason="moved" data-time="' + A.esc(e.time) + '">변경</button>';
     }
-
-    const m = markHtml(openDate, e.student.studentId);
 
     return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
       '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
