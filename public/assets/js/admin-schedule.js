@@ -173,7 +173,15 @@
     let tail;
 
     if (e.skip) {
+      // 빼 둔 까닭을 바꾸는 버튼을 남긴다. 결석으로 눌렀다가 알고 보니
+      // 날짜를 옮긴 것일 수 있다. 지웠다 다시 넣게 하면 두 걸음이고,
+      // 그 사이 무엇이 빠졌는지 화면에서 사라진다.
+      const other = e.skip.reason === 'absent' ? 'moved' : 'absent';
+
       tail = '<span class="gi-badge is-bad">' + SKIP_LABEL[e.skip.reason] + '</span>' +
+        '<button class="gi-choice" type="button" data-skip="' + sid +
+          '" data-reason="' + other + '" data-time="' + A.esc(e.time) + '">' +
+          SKIP_LABEL[other] + '으로</button>' +
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.skip.overrideId) +
           '">되돌리기</button>';
     } else if (e.overrideId) {
