@@ -199,6 +199,7 @@
           // 하는 일이고, 고치는 칸에 같이 두면 고치다 말고 누르게 된다.
           (editable ? '' :
             '<div class="gi-choices gi-stu-acts">' +
+              '<button class="gi-choice" type="button" data-act="edit">수정</button>' +
               '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
               '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
               '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
@@ -365,6 +366,16 @@
     const student = findStudent(id);
     const $msg = card.querySelector('[data-role="msg"]');
     const act = btn.dataset.act;
+
+    if (act === 'edit') {
+      // 위 수정 칸을 이 학생으로 연다. 드롭박스에서 같은 학생을 다시
+      // 찾게 하면, 목록에서 눈으로 찾은 일을 한 번 더 하는 셈이다.
+      mode = 'edit';
+      editId = id;
+      render();
+      $view.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
 
     if (act === 'copy') {
       copyLink(student.parentToken, $msg);

@@ -46,6 +46,7 @@ function dispatch_(parsed) {
     case 'admin.roster':        return handleAdminRoster(body);
     case 'admin.saveBatch':     return handleAdminSaveBatch(body);
     case 'admin.attendance':      return handleAdminAttendance(body);
+    case 'admin.setAttendance':   return handleAdminSetAttendance(body);
     case 'admin.overrides':       return handleAdminOverrides(body);
     case 'admin.saveOverride':    return handleAdminSaveOverride(body);
     case 'admin.deleteOverride':  return handleAdminDeleteOverride(body);

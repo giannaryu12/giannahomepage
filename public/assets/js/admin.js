@@ -22,7 +22,7 @@
   const REMEMBER_STORE = 'gi.remember';
   const DRAFT_PREFIX = 'gi.draft.';
 
-  const ATTENDANCE = ['출석', '지각', '결석', '보강'];
+  const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
   const HOMEWORK = ['제출', '부분제출', '미제출', '해당없음'];
   const LEVELS = ['상', '중', '하'];
 
@@ -40,7 +40,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261102z';
+  const BUILD = 'v20261103a';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -468,10 +468,11 @@
    */
   function syncSessionNo(restore) {
     const box = $('recSessionNo');
-    const absent = recordForm.attendance === '결석';
+    // 변경도 그날은 수업을 안 한 것이다. 옮긴 날에 가서 회차를 센다.
+    const absent = recordForm.attendance === '결석' || recordForm.attendance === '변경';
 
     box.disabled = absent;
-    box.placeholder = absent ? '결석 — 회차를 세지 않습니다' : '예: 12';
+    box.placeholder = absent ? recordForm.attendance + ' — 회차를 세지 않습니다' : '예: 12';
 
     if (absent) {
       recordForm.sessionNo = '';

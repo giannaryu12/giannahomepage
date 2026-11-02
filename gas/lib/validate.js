@@ -4,7 +4,9 @@
 
 const HOMEWORK_STATUS = ['제출', '부분제출', '미제출', '해당없음'];
 const HOMEWORK_LEVEL = ['상', '중', '하', ''];
-const ATTENDANCE = ['출석', '지각', '결석', '보강'];
+// 변경 — 그날 수업을 다른 날로 옮겼다. 안 온 것과 구별해야 한다:
+// 결석은 수업이 사라지고, 변경은 옮긴 날에 그 수업이 있다.
+const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
 
 function isBlank(v) {
   return v === '' || v === null || v === undefined;

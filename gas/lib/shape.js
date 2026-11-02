@@ -96,7 +96,8 @@ function filled_(v) {
 function hasParentContent_(record) {
   const rec = record || {};
 
-  if (rec.attendance === '결석') return true;
+  // 결석과 변경은 그 자체가 전할 내용이다. 다른 칸이 비어 있어도 보인다.
+  if (rec.attendance === '결석' || rec.attendance === '변경') return true;
   if (filled_(rec.comment)) return true;
 
   if (filled_(rec.progress)) return true;

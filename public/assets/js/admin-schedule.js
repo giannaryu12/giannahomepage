@@ -55,8 +55,16 @@
   // 출결 색. 출석이 초록이고 나머지는 저마다 다르다 — 한 가지만 칠하면
   // 지각·결석을 적어 둔 수업이 아직 안 적은 수업과 똑같아 보인다.
   const MARK_CLASS = {
-    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '보강': 'is-extra',
+    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '변경': 'is-bad',
+    '보강': 'is-extra',
   };
+
+  // 하루 칸에서 바로 고르는 출결. 기록 화면의 차례와 같아야 한다 —
+  // 두 곳의 순서가 다르면 손이 기억한 자리에 다른 것이 있다.
+  const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
+
+  // 그날 수업을 안 한 출결. 이름을 흐리게 하고 줄을 긋는다.
+  const OFF_MARKS = ['결석', '변경'];
 
   function markFor(iso, studentId) {
     return marks[String(iso) + '|' + String(studentId)];
@@ -65,18 +73,20 @@
   /** 이름 앞 동그라미와 뒤 회차. 안 적은 수업에는 아무것도 붙지 않는다. */
   function markHtml(iso, studentId) {
     const m = markFor(iso, studentId);
-    if (!m) return { dot: '', no: '', off: false };
+    if (!m) return { dot: '', no: '', off: false, word: '' };
 
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
         ' title="' + A.esc(m.attendance) + '"></span>',
       // 결석한 날은 회차를 안 센다. 서버가 저장할 때 비우지만, 규칙이
       // 생기기 전에 쌓인 기록에는 숫자가 남아 있다 — 화면에서도 가린다.
-      no: (m.sessionNo && m.attendance !== '결석')
+      no: (m.sessionNo && OFF_MARKS.indexOf(m.attendance) === -1)
         ? '<span class="gi-cal-no">' + A.esc(m.sessionNo) + '회</span>' : '',
       // 안 온 학생은 이름을 흐리게 하고 줄을 긋는다. 빨간 점 하나로는 칸이
       // 이름으로 가득 찼을 때 눈에 걸리지 않는다.
-      off: m.attendance === '결석',
+      off: OFF_MARKS.indexOf(m.attendance) !== -1,
+      // 꼬리표에 적을 말. 적어 둔 출결을 그대로 쓴다.
+      word: m.attendance,
     };
   }
 
@@ -97,7 +107,7 @@
     const mark = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
-        ? '<span class="gi-cal-tag is-off">결석</span>'
+        ? '<span class="gi-cal-tag is-off">' + A.esc(m.word) + '</span>'
         : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<button class="gi-choice gi-cal-name' +
@@ -167,6 +177,19 @@
    * 줄은 되돌릴 수 있고, 하루치로 더한 줄(보충)은 지울 수 있다. 하는 일이
    * 다르므로 버튼도 다르다.
    */
+  /** 줄 하나의 출결 드롭박스. 비어 있으면 아직 안 적은 것이다. */
+  function attendHtml(studentId) {
+    const now = markFor(openDate, studentId);
+    const cur = (now && now.attendance) || '';
+
+    return '<select class="gi-select gi-day-att" data-att="' + A.esc(studentId) + '">' +
+        '<option value=""' + (cur ? '' : ' selected') + '>출결</option>' +
+        ATTENDANCE.map(function (v) {
+          return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + v + '</option>';
+        }).join('') +
+      '</select>';
+  }
+
   function dayRowHtml(e) {
     const sid = A.esc(e.student.studentId);
     const m = markHtml(openDate, e.student.studentId);
@@ -188,9 +211,9 @@
       tail = '<span class="gi-badge is-extra">보충</span>' +
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.overrideId) + '">지우기</button>';
     } else if (m.off) {
-      // 이미 결석으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 — 적어 둔
-      // 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 알 수 없다.
-      tail = '<span class="gi-badge is-bad">결석</span>';
+      // 이미 결석·변경으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 —
+      // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.
+      tail = '<span class="gi-badge is-bad">' + A.esc(m.word) + '</span>';
     } else {
       // 빼는 까닭을 여기서 고른다. 묻지 않고 빼면 달력에 왜 빠졌는지가
       // 남지 않는다 — 결석과 날짜 변경은 나중에 전혀 다른 뜻이 된다.
@@ -203,6 +226,8 @@
     return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
       '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
       '<span class="gi-day-who">' + m.dot + A.esc(e.student.name) + m.no + '</span>' +
+      // 학생 관리 탭을 거치지 않고 여기서 바로 출결을 적는다.
+      attendHtml(e.student.studentId) +
       tail +
       '</li>';
   }
@@ -309,6 +334,32 @@
       });
   }
 
+  /**
+   * 출결 한 칸만 저장한다.
+   *
+   * 서버가 회차까지 정해 돌려주므로 받아서 화면에 꽂는다. 화면에서 따로
+   * 세면 두 곳의 규칙이 갈라진다.
+   */
+  function setAttendance(studentId, value) {
+    A.showError($('scheduleError'), '');
+    const key = openDate + '|' + studentId;
+
+    return A.api.call('admin.setAttendance', {
+      sessionKey: A.getSessionKey(), studentId: studentId, date: openDate, attendance: value,
+    }).then(function (data) {
+      if (!value) delete marks[key];
+      else {
+        marks[key] = {
+          date: openDate, studentId: studentId, attendance: value,
+          sessionNo: String(data.sessionNo || ''),
+        };
+      }
+      render();
+    }).catch(function (err) {
+      if (!A.handleAuthLoss(err)) A.showError($('scheduleError'), err.message);
+    });
+  }
+
   function dropOverride(id) {
     A.showError($('scheduleError'), '');
     return A.api.call('admin.deleteOverride', { sessionKey: A.getSessionKey(), overrideId: id })
@@ -393,6 +444,12 @@
   });
 
   $('dayEdit').addEventListener('change', function (e) {
+    const att = e.target.closest('[data-att]');
+    if (att) {
+      setAttendance(att.dataset.att, att.value);
+      return;
+    }
+
     const pick = e.target.closest('[data-pick]');
     if (!pick || !pick.value) return;
 

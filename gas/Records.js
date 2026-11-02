@@ -157,3 +157,74 @@ function handleAdminAttendance(body) {
 
   return ok({ marks: marks });
 }
+
+/**
+ * 출결 한 칸만 고친다. 달력의 하루 칸에서 쓴다.
+ *
+ * saveBatch를 쓰지 않는 이유: 그쪽은 레코드 한 건을 통째로 다시 쓴다.
+ * 출결만 보내면 진도·시험·코멘트가 빈 문자열로 덮여 사라진다. 여기서는
+ * 있는 행의 출결(과 회차)만 건드리고 나머지 칸은 손대지 않는다.
+ *
+ * 그날 기록이 없으면 새로 만든다 — 달력에서 출결만 찍어 두고 나중에
+ * 기록 화면에서 나머지를 채우는 쓰임을 막지 않는다.
+ */
+function handleAdminSetAttendance(body) {
+  requireSession_(body.sessionKey);
+
+  const studentId = String(body.studentId || '');
+  const date = String(body.date || '');
+  const attendance = String(body.attendance || '');
+  if (!studentId || !date) return fail('MISSING_PARAM', '학생과 날짜가 필요합니다.');
+
+  // 빈 값은 '아직 안 적음'으로 되돌리는 것이다.
+  if (attendance && ATTENDANCE.indexOf(attendance) === -1) {
+    return fail('INVALID_RECORD', '알 수 없는 출결입니다.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const rows = readTable(SHEETS.RECORDS);
+    const mine = rows.filter(function (r) { return String(r.studentId) === studentId; });
+    const today = mine.filter(function (r) { return String(r.date) === date; })[0];
+
+    // 수업을 안 한 날은 회차를 세지 않는다. 적어 둔 숫자가 있으면 비운다.
+    // 다시 출석으로 돌리면 그날 앞의 기록에서 이어 간다.
+    const sessionNo = isAbsent_(attendance) || !attendance
+      ? ''
+      : (today && today.sessionNo) || (lastSessionNoOf(mine, date) + 1);
+
+    if (today) {
+      updateRowById(SHEETS.RECORDS, 'recordId', today.recordId, {
+        attendance: attendance,
+        sessionNo: sessionNo,
+        updatedAt: new Date().toISOString(),
+      });
+      SpreadsheetApp.flush();
+      return ok({ recordId: today.recordId, sessionNo: sessionNo });
+    }
+
+    const student = readTable(SHEETS.STUDENTS).filter(function (s) {
+      return String(s.studentId) === studentId;
+    })[0];
+    if (!student) return fail('INVALID_RECORD', '학생을 찾을 수 없습니다.');
+
+    const now = new Date();
+    const recordId = generateRecordId(now);
+    appendRow(SHEETS.RECORDS, {
+      recordId: recordId,
+      studentId: studentId,
+      classId: student.classId || '',
+      date: date,
+      attendance: attendance,
+      sessionNo: sessionNo,
+      clientRequestId: 'cal-' + recordId,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+    SpreadsheetApp.flush();
+    return ok({ recordId: recordId, sessionNo: sessionNo });
+  } finally {
+    lock.releaseLock();
+  }
+}
