@@ -13,3 +13,16 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# 화면 파일은 늘 새로 확인한다. 선생님 화면은 고칠 때마다 바뀌는데,
+# 브라우저가 옛 파일을 들고 있으면 새 칸이 통째로 없는 화면이 뜬다 —
+# 눌러도 아무 일이 없고, 고장과 구별되지 않는다.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

@@ -136,6 +136,14 @@
   }
 
   function renderDayEdit() {
+    // 브라우저가 옛 화면 파일을 들고 있으면 이 칸이 아예 없다. 조용히
+    // 넘기면 날짜를 눌러도 아무 일이 없고, 고장과 구별되지 않는다.
+    if (!$('dayEdit')) {
+      A.showError($('scheduleError'),
+        '화면이 오래된 상태입니다. 새로고침해 주세요.');
+      return;
+    }
+
     if (!openDate) {
       $('dayEdit').hidden = true;
       $('dayEdit').innerHTML = '';
