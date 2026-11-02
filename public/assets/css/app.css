@@ -722,3 +722,13 @@ body.gi .gi-h2{ color:var(--text); }
   color:var(--forest);
   border-color:var(--forest);
 }
+
+
+/* 고치는 칸은 달력 세 칸 폭이다. 전체 폭으로 펼치면 한 줄에서 이름과
+   버튼 사이가 멀어져 눈이 가로로 길게 건너야 한다. 달력이 7칸이므로
+   3/7로 잡는다 — 칸 수를 바꿔도 따라간다.
+   좁은 화면에서는 그대로 다 쓴다. 350px를 다시 나눌 수는 없다. */
+#dayEdit{ max-width:calc(100% * 3 / 7); }
+@media (max-width:900px){
+  #dayEdit{ max-width:none; }
+}
