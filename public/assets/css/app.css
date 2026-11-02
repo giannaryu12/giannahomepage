@@ -634,7 +634,7 @@ body.gi .gi-h2{ color:var(--text); }
 }
 .gi-dot.is-good{ color:var(--state-good-dot); }
 .gi-dot.is-warn{ color:var(--state-warn); }
-.gi-dot.is-bad{ color:var(--state-bad); }
+.gi-dot.is-bad{ color:var(--state-bad-dot); }
 .gi-dot.is-extra{ color:var(--state-extra-dot); }
 .gi-dot.is-none{ color:var(--state-none); }
 /* 회차는 이름 뒤에 작게. 읽을 값이 아니라 가늠하는 값이다. */
