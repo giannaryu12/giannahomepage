@@ -70,7 +70,10 @@
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
         ' title="' + A.esc(m.attendance) + '"></span>',
-      no: m.sessionNo ? '<span class="gi-cal-no">' + A.esc(m.sessionNo) + '회</span>' : '',
+      // 결석한 날은 회차를 안 센다. 서버가 저장할 때 비우지만, 규칙이
+      // 생기기 전에 쌓인 기록에는 숫자가 남아 있다 — 화면에서도 가린다.
+      no: (m.sessionNo && m.attendance !== '결석')
+        ? '<span class="gi-cal-no">' + A.esc(m.sessionNo) + '회</span>' : '',
       // 안 온 학생은 이름을 흐리게 하고 줄을 긋는다. 빨간 점 하나로는 칸이
       // 이름으로 가득 찼을 때 눈에 걸리지 않는다.
       off: m.attendance === '결석',
