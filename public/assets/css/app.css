@@ -700,3 +700,11 @@ body.gi .gi-h2{ color:var(--text); }
 }
 /* 줄이 모자라면 버튼이 아니라 이름·학년 칸이 먼저 내려간다. */
 .gi-stu-cols .gi-stu-field{ flex:1 1 100%; }
+
+
+/* 등록 / 수정 — 위 칸 하나를 두 가지로 쓴다. 수정 칸을 따로 두면 같은
+   이름·학년·반이 화면에 두 번 나와 어느 쪽이 진짜인지 헷갈린다. */
+.gi-stu-tabs{ margin-bottom:0.6rem; }
+.gi-stu-pick{ margin-bottom:0.5rem; }
+/* 수정 칸의 카드는 열 하나를 통으로 쓴다 — 목록 카드보다 여유가 있다. */
+.gi-stu-tabs + .gi-stu-pick + .gi-stu{ margin-top:0; }

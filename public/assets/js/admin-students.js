@@ -12,6 +12,10 @@
 
   let students = [];
   let classes = [];
+  // 위 칸이 등록 중인지 수정 중인지. 'new' | 'edit'
+  let mode = 'new';
+  // 수정 칸이 보고 있는 학생.
+  let editId = '';
 
   /**
    * 학생 한 명의 학교급. 반 이름에서 먼저 읽고, 없으면 학년에서 읽는다.
@@ -140,6 +144,40 @@
       '</article>';
   }
 
+  function newFormHtml() {
+    return '<div class="gi-stu-new">' +
+        '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
+        '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
+        '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
+        '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
+      '</div>' +
+      '<div id="newSched">' + schedHtml('') + '</div>';
+  }
+
+  /**
+   * 수정 칸. 학생을 고르면 그 학생의 카드를 그대로 띄운다.
+   *
+   * 목록의 카드와 같은 마크업이라 저장·링크 복사 같은 동작이 한 벌로 끝난다.
+   * 목록은 세 열로 나뉘어 한 칸이 350px인데, 여기서는 열 하나를 통으로
+   * 쓰므로 같은 카드가 더 넓게 펼쳐진다.
+   */
+  function editFormHtml() {
+    if (!students.length) return '<p class="gi-note">등록된 학생이 없습니다.</p>';
+
+    const cur = findStudent(editId) || students[0];
+    editId = cur.studentId;
+
+    return '<select class="gi-select gi-stu-pick" id="editWho">' +
+        students.map(function (s) {
+          return '<option value="' + A.esc(s.studentId) + '"' +
+            (s.studentId === cur.studentId ? ' selected' : '') + '>' +
+            A.esc(s.name) + (s.grade ? ' (' + A.esc(s.grade) + ')' : '') +
+            (s.active ? '' : ' · 비활성') + '</option>';
+        }).join('') +
+      '</select>' +
+      studentHtml(cur);
+  }
+
   /** 한 학교급의 열. 비어 있어도 자리를 지킨다 — 열이 셋이어야 칸이 안 밀린다. */
   function columnHtml(level) {
     const mine = students.filter(function (s) { return levelOf(s) === level.key; });
@@ -158,18 +196,17 @@
 
     $view.innerHTML = '' +
       '<div id="studentsError" class="gi-error" hidden></div>' +
-      '<h2 class="gi-h2">학생 등록</h2>' +
-      // 등록 칸은 열 하나 너비다. 같은 격자에 넣어 폭을 맞춘다 — 숫자로
+      // 위 칸은 열 하나 너비다. 같은 격자에 넣어 폭을 맞춘다 — 숫자로
       // 따로 적으면 열 너비를 고칠 때마다 두 군데를 고쳐야 한다.
       '<div class="gi-stu-cols">' +
         '<div>' +
-          '<div class="gi-stu-new">' +
-            '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
-            '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
-            '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
-            '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
+          '<div class="gi-choices gi-stu-tabs">' +
+            '<button class="gi-choice" type="button" data-mode="new"' +
+              ' aria-pressed="' + (mode === 'new') + '">학생 등록</button>' +
+            '<button class="gi-choice" type="button" data-mode="edit"' +
+              ' aria-pressed="' + (mode === 'edit') + '">수정</button>' +
           '</div>' +
-          '<div id="newSched">' + schedHtml('') + '</div>' +
+          (mode === 'edit' ? editFormHtml() : newFormHtml()) +
         '</div>' +
       '</div>' +
       '<h2 class="gi-h2">학생 목록 (' + students.length + '명)</h2>' +
@@ -186,7 +223,8 @@
             : '')
         : '<p class="gi-note">등록된 학생이 없습니다.</p>');
 
-    document.getElementById('addBtn').addEventListener('click', addStudent);
+    const add = document.getElementById('addBtn');
+    if (add) add.addEventListener('click', addStudent);
   }
 
   function load() {
@@ -312,6 +350,21 @@
       .catch(function (err) {
         if (!A.handleAuthLoss(err)) $msg.textContent = err.message;
       });
+  });
+
+  $view.addEventListener('click', function (e) {
+    const tab = e.target.closest('[data-mode]');
+    if (!tab) return;
+
+    mode = tab.dataset.mode;
+    render();
+  });
+
+  $view.addEventListener('change', function (e) {
+    if (e.target.id !== 'editWho') return;
+
+    editId = e.target.value;
+    render();
   });
 
   window.renderStudentsView = load;
