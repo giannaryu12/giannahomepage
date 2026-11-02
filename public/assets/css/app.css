@@ -477,7 +477,10 @@ body.gi .gi-h2{ color:var(--text); }
 
 /* ---------- 수업 일정 (한 달 달력) ---------- */
 .gi-week{ display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; margin-bottom:0.8rem; }
-.gi-week-label{ font-size:0.9rem; font-weight:700; color:var(--heading); margin-right:auto; }
+/* 달 이름과 달을 옮기는 버튼은 붙여 둔다. 버튼을 화면 양 끝으로 밀면
+   넓은 화면에서 '11월'을 보고 '다음달'을 누르기까지 눈과 손이 1000px을
+   건너야 한다. */
+.gi-week-label{ font-size:0.9rem; font-weight:700; color:var(--heading); margin:0 0.3rem; }
 
 /* 칸 하나에 학생이 여러 명 쌓인다. 세로 정렬은 위로 붙이고 폭은 일곱 칸으로
    고정한다 — 학생이 많은 날만 넓어지면 날짜가 요일과 어긋나 보인다. */
