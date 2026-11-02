@@ -493,7 +493,7 @@ body.gi .gi-h2{ color:var(--text); }
   background:var(--surface);
   padding:0.25rem 0.2rem;
 }
-.gi-cal-cell{ height:4.2rem; }
+.gi-cal-cell{ height:4.2rem; cursor:pointer; }
 .gi-cal-day{
   display:block;
   font-size:0.7rem;

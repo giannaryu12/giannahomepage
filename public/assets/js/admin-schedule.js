@@ -20,6 +20,9 @@
   let month = '';
   // 아래에 펼쳐 둔 날짜. 비어 있으면 안 펼친 것이다.
   let openDate = '';
+  // 고치는 칸을 화면으로 끌어온 날. 날이 바뀐 순간에만 끌어온다 — 저장할
+  // 때마다 끌어오면 칸을 만지는 동안 화면이 계속 움직인다.
+  let shownDate = '';
 
   function todayIso() {
     const d = new Date();
@@ -58,9 +61,11 @@
       (cell.iso === today ? ' is-today' : '') +
       (cell.iso === openDate ? ' is-open' : '');
 
-    return '<td class="' + cls + '">' +
-      // 날짜를 누르면 그날 일정을 고치는 칸이 달력 아래에 열린다. 칸 안에
-      // 넣기에는 휴대폰에서 한 칸이 50px도 안 된다.
+    // 칸 어디를 눌러도 그날 일정 고치는 칸이 열린다. 숫자만 누를 수 있게
+    // 두면 휴대폰에서 글자 높이 12px이 유일한 과녁이 된다. 학생 이름은
+    // 먼저 걸러지므로(아래 눌렀을 때) 이름을 눌렀다가 날이 열리지 않는다.
+    return '<td class="' + cls + '" data-day="' + A.esc(cell.iso) + '">' +
+      // 숫자는 버튼으로 남긴다 — 키보드로도 날을 열 수 있어야 한다.
       '<button class="gi-cal-day" type="button" data-day="' + A.esc(cell.iso) + '">' +
         cell.day + '</button>' +
       entriesOn(cell.iso).map(function (e) { return nameBtnHtml(e, cell.iso); }).join('') +
@@ -134,6 +139,7 @@
     if (!openDate) {
       $('dayEdit').hidden = true;
       $('dayEdit').innerHTML = '';
+      shownDate = '';
       return;
     }
 
@@ -153,6 +159,13 @@
         '<button class="gi-choice" type="button" data-add>추가</button>' +
       '</div>' +
       '<p class="gi-note">이 날 하루만 바뀝니다. 평소 요일·시간은 그대로입니다.</p>';
+
+    // 달력 한 달이 화면을 다 쓰므로 고치는 칸은 접힌 아래에서 열린다.
+    // 끌어오지 않으면 눌러도 아무 일이 없어 보인다.
+    if (openDate !== shownDate) {
+      shownDate = openDate;
+      $('dayEdit').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   }
 
   /* ---------- 서버 ---------- */
@@ -230,15 +243,18 @@
   $('weekToday').addEventListener('click', function () { showMonth(S.monthOf(todayIso())); });
 
   $('timetable').addEventListener('click', function (e) {
-    const day = e.target.closest('[data-day]');
-    if (day) {
-      openDate = day.dataset.day === openDate ? '' : day.dataset.day;
-      render();
+    // 이름을 먼저 본다. 이름 버튼도 날짜 칸 안에 있으므로 날짜를 먼저 보면
+    // 이름을 누를 때마다 기록 대신 일정 칸이 열린다.
+    const btn = e.target.closest('[data-student]');
+
+    if (!btn) {
+      const day = e.target.closest('[data-day]');
+      if (day) {
+        openDate = day.dataset.day === openDate ? '' : day.dataset.day;
+        render();
+      }
       return;
     }
-
-    const btn = e.target.closest('[data-student]');
-    if (!btn) return;
 
     const student = students.filter(function (s) {
       return s.studentId === btn.dataset.student;
