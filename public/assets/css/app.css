@@ -509,7 +509,12 @@ body.gi .gi-h2{ color:var(--text); }
    화면이라 머리글이 인사 역할을 하지만, 선생님은 수업마다 들어와 반과
    명단부터 본다. 매번 같은 글자가 화면 첫 칸을 다 쓸 이유가 없다.
    .gi-head를 직접 줄이면 학부모 화면까지 같이 낮아지므로 여기서만 덮는다. */
-.gi-head-tight{ padding:0.6rem 0 0.7rem; margin-bottom:0.9rem; }
+.gi-head-tight{ padding:0.45rem 0 0.5rem; margin-bottom:0.9rem; }
+/* 세 줄을 한 줄로 눕힌다. 브랜드·제목·선생님 전용은 셋 다 짧아 한 줄에
+   들어가고, 선생님은 이 글자를 읽으러 오는 게 아니라 아래 명단을 보러 온다.
+   좁아지면 줄이 나뉘도록 wrap은 열어 둔다. */
+.gi-head-line{ display:flex; flex-wrap:wrap; align-items:baseline; gap:0 0.6rem; }
+.gi-head-line .gi-head-brand, .gi-head-line .gi-head-sub{ margin:0; }
 .gi-head-tight .gi-head-brand{ font-size:0.6rem; line-height:1.2; margin-bottom:0.2rem; }
 .gi-head-tight h1{ font-size:1.1rem; }
 .gi-head-tight .gi-head-sub{ margin-top:0.1rem; font-size:0.72rem; line-height:1.3; }
