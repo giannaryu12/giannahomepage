@@ -27,6 +27,24 @@
     return CL.classLevel(s && s.className) || CL.classLevel(s && s.grade) || '';
   }
 
+  /**
+   * 화면에 적을 학년. '초5' → '초등부, 5학년'.
+   *
+   * 시트에는 '초5'처럼 짧게 적는다 — 선생님이 손으로 넣는 칸이라 짧은 편이
+   * 낫다. 화면에서는 풀어 적는다. 학교급과 학년이 두 글자에 붙어 있으면
+   * 읽는 쪽이 매번 머릿속에서 풀어야 한다.
+   * 읽을 수 없는 학년은 손대지 않고 적힌 그대로 보여 준다.
+   */
+  function gradeLabel(s) {
+    const raw = String((s && s.grade) || '').trim();
+    const key = CL.classLevel(raw) || CL.classLevel(s && s.className);
+    const level = CL.LEVELS.filter(function (l) { return l.key === key; })[0];
+    if (!level) return raw;
+
+    const num = (/(\d)/.exec(raw) || [])[1];
+    return level.label + (num ? ', ' + num + '학년' : '');
+  }
+
   function parentUrl(token) {
     return window.location.origin + '/p/' + token;
   }
@@ -140,7 +158,7 @@
           // 350px 줄에서 학년과 반을 밀어낸다.
           '<span class="gi-note">' +
             (editable ? A.esc(s.studentId) + ' · ' : '') +
-            A.esc(s.grade || '학년 없음') + ' · ' +
+            A.esc(gradeLabel(s) || '학년 없음') + ' · ' +
             (s.active ? A.esc(s.className || '반 없음') : '비활성') + '</span>' +
         '</div>' +
         '<div class="gi-stu-row">' +
@@ -192,7 +210,8 @@
         students.map(function (s) {
           return '<option value="' + A.esc(s.studentId) + '"' +
             (s.studentId === cur.studentId ? ' selected' : '') + '>' +
-            A.esc(s.name) + (s.grade ? ' (' + A.esc(s.grade) + ')' : '') +
+            A.esc(s.name) +
+            (gradeLabel(s) ? ' (' + A.esc(gradeLabel(s)) + ')' : '') +
             (s.active ? '' : ' · 비활성') + '</option>';
         }).join('') +
       '</select>' +
