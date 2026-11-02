@@ -108,6 +108,27 @@ describe('buildRecordPayload', () => {
     RECORD_AREA_FIELDS.forEach((f) => expect(payload[f]).toBe(''));
   });
 
+  it('결석한 날은 회차를 세지 않는다', () => {
+    // 수업을 안 했으니 다음에 오는 날이 그 회차다. 화면이 숫자를 보내도
+    // 비운다 — 출결보다 회차가 먼저 채워지므로 누른 순서에 따라 남을 수 있다.
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', attendance: '결석', sessionNo: 12 },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    expect(payload.sessionNo).toBe('');
+    expect(payload.attendance).toBe('결석');
+  });
+
+  it('결석이 아니면 회차를 그대로 둔다', () => {
+    ['출석', '지각', '보강', ''].forEach((att) => {
+      const payload = buildRecordPayload(
+        { studentId: 'S001', date: '2026-08-30', attendance: att, sessionNo: 12 },
+        'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+      );
+      expect(payload.sessionNo).toBe(12);
+    });
+  });
+
   it('시험 점수 0점이 빈 칸으로 뭉개지지 않는다', () => {
     const payload = buildRecordPayload(
       { studentId: 'S001', date: '2026-08-30', vocabTestScore: 0, vocabTestMax: 20 },

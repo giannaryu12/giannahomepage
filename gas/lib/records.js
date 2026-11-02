@@ -100,6 +100,11 @@ function findRecordMatch(rows, studentId, date) {
   return match || null;
 }
 
+/** 결석한 날인가. 회차를 세지 않는 유일한 출결이다. */
+function isAbsent_(attendance) {
+  return String(attendance || '') === '결석';
+}
+
 /** 저장할 레코드 한 건의 시트 페이로드를 만든다. recordId·createdAt은 호출자가 신규 행일 때만 붙인다. */
 function buildRecordPayload(rec, classId, clientRequestId, now) {
   const payload = {
@@ -112,7 +117,12 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     homeworkStatus: rec.homeworkStatus || '',
     homeworkLevel: rec.homeworkLevel || '',
     // 회차. 0이나 빈 값을 `||`로 뭉개면 안 되므로 따로 본다.
-    sessionNo: rec.sessionNo === '' || rec.sessionNo === null || rec.sessionNo === undefined
+    // 결석한 날은 회차를 세지 않는다 — 수업을 안 했으니 다음에 오는 날이
+    // 그 회차다. 화면이 보낸 값이 있어도 여기서 비운다. 출결을 고르기 전에
+    // 회차가 먼저 채워져 있어서, 비우는 일을 화면에만 맡기면 눌러 둔 순서에
+    // 따라 남기도 하고 안 남기도 한다.
+    sessionNo: isAbsent_(rec.attendance) ||
+      rec.sessionNo === '' || rec.sessionNo === null || rec.sessionNo === undefined
       ? '' : rec.sessionNo,
     testName: rec.testName || '',
     testScore: rec.testScore === '' || rec.testScore === null ? '' : rec.testScore,

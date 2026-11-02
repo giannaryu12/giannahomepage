@@ -40,7 +40,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261102o';
+  const BUILD = 'v20261102p';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -295,6 +295,7 @@
     $('recSessionNo').value = recordForm.sessionNo;
     $('recComment').value = recordForm.comment;
     renderChoiceGroup('recAttendance', ATTENDANCE, 'attendance');
+    syncSessionNo();
     renderChoiceGroup('recHomeworkStatus', HOMEWORK, 'homeworkStatus');
     renderChoiceGroup('recHomeworkLevel', LEVELS, 'homeworkLevel');
     showError($('recordError'), '');
@@ -447,8 +448,41 @@
     if (!wasOn) btn.setAttribute('aria-pressed', 'true');
 
     recordForm[field] = wasOn ? '' : value;
+    if (field === 'attendance') syncSessionNo(true);
     saveRecordDraft();
   });
+
+  /**
+   * 결석을 고르면 회차 칸을 비우고 잠근다.
+   *
+   * 결석한 날은 회차를 세지 않는다 — 수업을 안 했으니 다음에 오는 날이 그
+   * 회차다. 서버도 같은 규칙으로 비우지만, 화면에 숫자가 남아 있으면
+   * 저장한 뒤에야 사라진 것을 보게 된다.
+   *
+   * restore는 선생님이 출결을 눌렀을 때만 참이다. 결석을 눌렀다 무르면
+   * 비워 둔 회차를 도로 채워 준다 — 잘못 눌렀다고 숫자를 다시 적게 할
+   * 일은 아니다. 화면을 처음 그릴 때는 채우지 않는다. 회차를 비워 둔 채
+   * 저장해 둔 기록을 열었을 뿐인데 숫자가 생기면 안 된다.
+   */
+  function syncSessionNo(restore) {
+    const box = $('recSessionNo');
+    const absent = recordForm.attendance === '결석';
+
+    box.disabled = absent;
+    box.placeholder = absent ? '결석 — 회차를 세지 않습니다' : '예: 12';
+
+    if (absent) {
+      recordForm.sessionNo = '';
+      box.value = '';
+      return;
+    }
+
+    if (!restore || recordForm.sessionNo || !currentStudent) return;
+
+    const filled = RF.withSessionDefault(recordForm, currentStudent.lastSessionNo);
+    recordForm.sessionNo = filled.sessionNo;
+    box.value = filled.sessionNo;
+  }
 
   $('recordView').addEventListener('input', function (e) {
     const field = e.target.dataset && e.target.dataset.field;
