@@ -389,3 +389,14 @@ body.gi .gi-h2{ color:var(--text); }
 @media (min-width: 600px){
   .gi-head h1{ font-size:2.1rem; }
 }
+
+/* ---------- 학생 목록 ---------- */
+/* 학생 카드는 한 장씩 읽는 게 아니라 목록을 훑어 찾는 용도다. 학부모 화면의
+   수업 기록보다 촘촘해야 한 화면에 더 많은 이름이 들어온다. .gi-rec를 직접
+   줄이면 수업 기록까지 같이 좁아지므로 여기서만 덮는다. */
+.gi-stu{ margin-bottom:0.35rem; padding:0.6rem; }
+.gi-stu-head{ display:flex; justify-content:space-between; gap:0.6rem; align-items:baseline; }
+.gi-stu-field{ display:flex; gap:0.4rem; margin:0.45rem 0 0.4rem; }
+/* 할 말이 없을 때도 빈 줄만큼 자리를 먹어 카드마다 한 줄씩 늘어난다. */
+.gi-stu-msg{ margin-top:0.3rem; }
+.gi-stu-msg:empty{ display:none; }

@@ -24,13 +24,13 @@
 
   function studentHtml(s) {
     return '' +
-      '<article class="gi-rec" style="padding:.9rem" data-id="' + A.esc(s.studentId) + '">' +
-        '<div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">' +
+      '<article class="gi-rec gi-stu" data-id="' + A.esc(s.studentId) + '">' +
+        '<div class="gi-stu-head">' +
           '<span class="gi-rec-date">' + A.esc(s.name) + '</span>' +
           '<span class="gi-note">' + A.esc(s.studentId) + ' · ' +
             (s.active ? A.esc(s.className || '반 없음') : '비활성') + '</span>' +
         '</div>' +
-        '<div class="gi-field" style="display:flex;gap:.4rem;margin-top:.7rem;margin-bottom:.6rem">' +
+        '<div class="gi-stu-field">' +
           '<input class="gi-input" style="flex:2" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
           '<input class="gi-input" style="flex:1" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
           '<select class="gi-select" style="flex:2" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
@@ -43,7 +43,7 @@
           '<button class="gi-choice" type="button" data-act="toggle">' +
             (s.active ? '비활성화' : '다시 활성화') + '</button>' +
         '</div>' +
-        '<p class="gi-note" data-role="msg" style="margin-top:.5rem"></p>' +
+        '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';
   }
 
