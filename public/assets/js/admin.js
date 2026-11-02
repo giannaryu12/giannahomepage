@@ -40,7 +40,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261102x';
+  const BUILD = 'v20261102y';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -65,6 +65,7 @@
     $('loginView').hidden = true;
     $('appView').hidden = false;
     $('headSub').textContent = '선생님 전용 · 로그인됨 · ' + BUILD;
+    $('logoutBtn').hidden = false;
     if (window.renderScheduleView) window.renderScheduleView();
   }
 
@@ -118,6 +119,7 @@
   }
 
   function showLoginView(message) {
+    $('logoutBtn').hidden = true;
     $('appView').hidden = true;
     $('loginView').hidden = false;
     showError($('loginError'), message || '');

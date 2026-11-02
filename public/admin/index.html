@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261102x">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261102x">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261102y">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261102y">
 </head>
 <body class="gi">
 
@@ -17,6 +17,9 @@
     <p class="gi-head-brand">Gianna English</p>
     <h1>수업 기록 입력</h1>
     <p class="gi-head-sub" id="headSub">선생님 전용</p>
+    <!-- 로그인 전에는 누를 일이 없다. 머리글은 두 화면이 함께 쓰므로
+         화면이 바뀔 때 admin.js가 켜고 끈다. -->
+    <button class="gi-choice gi-head-out" id="logoutBtn" type="button" hidden>로그아웃</button>
   </div>
 </header>
 
@@ -36,7 +39,6 @@
     <nav style="display:flex;gap:.5rem;margin-bottom:1.2rem">
       <button class="gi-choice" id="tabSchedule" type="button" aria-pressed="true">수업 일정</button>
       <button class="gi-choice" id="tabStudents" type="button" aria-pressed="false">학생 관리</button>
-      <button class="gi-choice" id="logoutBtn" type="button" style="margin-left:auto">로그아웃</button>
     </nav>
 
     <div id="scheduleView">
@@ -122,14 +124,14 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261102x"></script>
-<script src="/assets/js/api.js?v=20261102x"></script>
-<script src="/assets/js/progress-areas.js?v=20261102x"></script>
-<script src="/assets/js/class-level.js?v=20261102x"></script>
-<script src="/assets/js/schedule.js?v=20261102x"></script>
-<script src="/assets/js/record-form.js?v=20261102x"></script>
-<script src="/assets/js/admin.js?v=20261102x"></script>
-<script src="/assets/js/admin-students.js?v=20261102x"></script>
-<script src="/assets/js/admin-schedule.js?v=20261102x"></script>
+<script src="/assets/js/config.js?v=20261102y"></script>
+<script src="/assets/js/api.js?v=20261102y"></script>
+<script src="/assets/js/progress-areas.js?v=20261102y"></script>
+<script src="/assets/js/class-level.js?v=20261102y"></script>
+<script src="/assets/js/schedule.js?v=20261102y"></script>
+<script src="/assets/js/record-form.js?v=20261102y"></script>
+<script src="/assets/js/admin.js?v=20261102y"></script>
+<script src="/assets/js/admin-students.js?v=20261102y"></script>
+<script src="/assets/js/admin-schedule.js?v=20261102y"></script>
 </body>
 </html>
