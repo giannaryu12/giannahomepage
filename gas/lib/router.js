@@ -6,6 +6,8 @@ const ACTIONS = {
   'ping':                { auth: 'none',    required: [] },
   'parent.load':         { auth: 'token',   required: ['token'] },
   'admin.login':         { auth: 'none',    required: ['password'] },
+  'admin.resume':        { auth: 'none',    required: ['rememberToken'] },
+  'admin.logout':        { auth: 'session', required: [] },
   'admin.classes':       { auth: 'session', required: [] },
   'admin.roster':        { auth: 'session', required: ['classId', 'date'] },
   'admin.saveBatch':     { auth: 'session', required: ['classId', 'date', 'records', 'clientRequestId'] },

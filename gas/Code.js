@@ -37,6 +37,8 @@ function dispatch_(parsed) {
   switch (parsed.action) {
     case 'ping':                return handlePing(body);
     case 'admin.login':         return handleAdminLogin(body);
+    case 'admin.resume':        return handleAdminResume(body);
+    case 'admin.logout':        return handleAdminLogout(body);
     case 'admin.classes':       return handleAdminClasses(body);
     case 'admin.students':      return handleAdminStudents(body);
     case 'admin.upsertStudent': return handleAdminUpsertStudent(body);

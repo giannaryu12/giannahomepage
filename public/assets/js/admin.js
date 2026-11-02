@@ -17,6 +17,8 @@
   // 값을 채워 넣어야 하는, JS가 그리는 입력칸 묶음
   const FIELD_CONTAINERS = ['recAreas', 'recTests', 'recNext'];
   const SESSION_STORE = 'gi.session';
+  // 세션키는 탭을 닫으면 사라진다. 날을 넘겨 기억하는 건 이 열쇠다.
+  const REMEMBER_STORE = 'gi.remember';
   const DRAFT_PREFIX = 'gi.draft.';
 
   const ATTENDANCE = ['출석', '지각', '결석', '보강'];
@@ -81,6 +83,8 @@
     api.call('admin.login', { password: pw }).then(function (data) {
       sessionKey = data.sessionKey;
       sessionStorage.setItem(SESSION_STORE, sessionKey);
+      // 이 기기에서는 당분간 비밀번호를 묻지 않는다.
+      setRemember(data.rememberToken || '');
       $('password').value = '';
       showApp();
     }).catch(function (err) {
@@ -92,16 +96,86 @@
     });
   }
 
-  function handleAuthLoss(err) {
-    if (err.code === 'UNAUTHORIZED') {
-      sessionKey = '';
-      sessionStorage.removeItem(SESSION_STORE);
-      $('appView').hidden = true;
-      $('loginView').hidden = false;
-      showError($('loginError'), err.message);
-      return true;
+  /* ---------- 로그인 상태 유지 ---------- */
+
+  function storedRemember() {
+    try {
+      return localStorage.getItem(REMEMBER_STORE) || '';
+    } catch (e) {
+      return '';
     }
-    return false;
+  }
+
+  function setRemember(token) {
+    try {
+      if (token) localStorage.setItem(REMEMBER_STORE, token);
+      else localStorage.removeItem(REMEMBER_STORE);
+    } catch (e) {
+      // 저장 공간이 없으면 다음에 비밀번호를 다시 물을 뿐이다.
+    }
+  }
+
+  function showLoginView(message) {
+    $('appView').hidden = true;
+    $('loginView').hidden = false;
+    showError($('loginError'), message || '');
+  }
+
+  /**
+   * 저장해 둔 열쇠로 비밀번호 없이 세션을 다시 받는다.
+   *
+   * 실패하면 열쇠를 버리고 조용히 비밀번호 화면에 둔다. 기간이 지났거나
+   * 선생님이 비밀번호를 바꾼 경우라, 알릴 만한 사고가 아니다.
+   */
+  function resumeSession() {
+    const token = storedRemember();
+    if (!token) return Promise.resolve(false);
+
+    $('loginStatus').textContent = '로그인 중…';
+    return api.call('admin.resume', { rememberToken: token })
+      .then(function (data) {
+        sessionKey = data.sessionKey;
+        sessionStorage.setItem(SESSION_STORE, sessionKey);
+        showApp();
+        return true;
+      })
+      .catch(function () {
+        setRemember('');
+        return false;
+      })
+      .finally(function () {
+        $('loginStatus').textContent = '';
+      });
+  }
+
+  function logout() {
+    const token = storedRemember();
+    const key = sessionKey;
+
+    // 화면은 먼저 정리한다. 서버 응답을 기다리느라 로그인된 채로 남으면
+    // 자리를 비우는 선생님이 나간 줄 알고 그냥 간다.
+    setRemember('');
+    sessionKey = '';
+    sessionStorage.removeItem(SESSION_STORE);
+    showLoginView('');
+
+    if (key) {
+      api.call('admin.logout', { sessionKey: key, rememberToken: token })
+        .catch(function () { /* 끊겼어도 이 기기에서는 이미 나갔다 */ });
+    }
+  }
+
+  function handleAuthLoss(err) {
+    if (err.code !== 'UNAUTHORIZED') return false;
+
+    sessionKey = '';
+    sessionStorage.removeItem(SESSION_STORE);
+    showLoginView(err.message);
+
+    // 세션은 6시간이라 수업 중에도 끊긴다. 열쇠가 있으면 말없이 다시 받는다.
+    // 하던 작업은 이미 실패했지만, 입력한 내용은 이 기기에 남아 있다.
+    resumeSession();
+    return true;
   }
 
   /* ---------- 반 목록 ---------- */
@@ -559,6 +633,9 @@
     api.call('ping', {}).catch(function () { /* 준비 운동일 뿐이다 */ });
   }
 
+  $('logoutBtn').addEventListener('click', logout);
+
   prewarm();
   if (sessionKey) showApp();
+  else resumeSession();
 })();

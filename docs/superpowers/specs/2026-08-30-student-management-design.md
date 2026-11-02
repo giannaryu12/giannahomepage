@@ -211,7 +211,9 @@ GAS는 한동안 요청이 없으면 실행 환경을 내리고, 다음 요청�
 
 | action | 요청 | 응답 |
 |---|---|---|
-| `admin.login` | `{password}` | `{sessionKey, expiresAt}` |
+| `admin.login` | `{password}` | `{sessionKey, expiresAt, rememberToken, rememberExpiresAt}` |
+| `admin.resume` | `{rememberToken}` | `{sessionKey, expiresAt}` |
+| `admin.logout` | `{sessionKey, rememberToken?}` | `{loggedOut: true}` |
 | `admin.classes` | `{sessionKey}` | `{classes[]}` |
 | `admin.roster` | `{sessionKey, classId, date}` | `{students[], existingRecords[]}` |
 | `admin.saveBatch` | `{sessionKey, classId, date, records[], clientRequestId}` | `{saved: n}` |
@@ -231,7 +233,15 @@ GAS는 한동안 요청이 없으면 실행 환경을 내리고, 다음 요청�
 ### 채택한 구조
 
 - **학부모**: 32자 랜덤 토큰 링크만으로 열람. PIN 없음, 시도 횟수 제한 없음.
-- **선생님**: 비밀번호(Script Properties의 `ADMIN_PASSWORD`) → 성공 시 랜덤 `sessionKey` 발급, CacheService에 8시간 TTL. 이후 요청은 sessionKey만 전송해 비밀번호가 매번 네트워크를 오가지 않게 한다.
+- **선생님**: 비밀번호(Script Properties의 `ADMIN_PASSWORD`) → 성공 시 랜덤 `sessionKey` 발급, CacheService에 6시간 TTL. 이후 요청은 sessionKey만 전송해 비밀번호가 매번 네트워크를 오가지 않게 한다.
+
+- **로그인 상태 유지**: 로그인에 성공하면 32자 `rememberToken`을 함께 내려보내 선생님 기기의 `localStorage`에 둔다. 화면을 다시 열면 `admin.resume`이 이 열쇠로 세션만 새로 받는다 — 비밀번호를 묻지 않는다. 세션키를 그대로 오래 두지 않는 이유는 CacheService의 보관 기한이 최대 6시간이어서다. 그래서 열쇠만 ScriptProperties에 `remember:<토큰>` → `만료시각|비밀번호지문` 으로 적는다.
+
+  열쇠는 30일이면 만료된다. 돌리지는 않는다 — 선생님이 탭을 여럿 열어 두는 경우가 흔한데, 돌리면 먼저 쓴 탭 하나만 살고 나머지가 조용히 로그아웃된다.
+
+  함께 적어 두는 **비밀번호 지문**(SHA-256 앞 8바이트)이 끊는 수단이다. 비밀번호를 바꾸면 지문이 달라져 남아 있던 열쇠가 **전부 한꺼번에** 무효가 된다. 기기를 잃어버렸을 때 쓸 수 있는 유일한 방법이라 반드시 유지해야 한다. 이 기기 하나만 끊을 때는 `admin.logout`을 쓴다.
+
+  만료된 열쇠는 로그인할 때마다 한 번씩 치운다. ScriptProperties에 쌓이면 저장 한도를 먹는다. 치우는 대상은 `remember:` 접두사가 붙은 것뿐이다 — `ADMIN_PASSWORD`·`SHEET_ID`를 건드리면 안 되므로 `test/remember.test.js`가 이를 지킨다.
 - GAS 배포 설정: `실행: 나(선생님 계정) / 접근: 모든 사용자`. 이 조합이라야 학부모가 구글 로그인 없이 호출할 수 있고, 인증 책임은 전적으로 애플리케이션 코드가 진다.
 
 ### 명시적으로 감수한 위험
