@@ -11,6 +11,7 @@
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
   const RF = window.GI_RECORD_FORM;
   const PA = window.GI_PROGRESS_AREAS;
+  const CL = window.GI_CLASS_LEVEL;
   const AREAS = PA.PROGRESS_AREAS;
   const TEST_AREAS = PA.TEST_AREAS;
 
@@ -28,6 +29,7 @@
   let sessionKey = sessionStorage.getItem(SESSION_STORE) || '';
 
   // 수업 탭(조회 전용) 상태
+  let entryClassId = '';
   let entryRoster = [];
   let entryExistingRecords = [];
 
@@ -180,11 +182,46 @@
 
   /* ---------- 반 목록 ---------- */
 
+  function classBtnHtml(c) {
+    return '<button class="gi-choice" type="button" data-class="' + esc(c.classId) + '"' +
+      ' aria-pressed="' + (c.classId === entryClassId ? 'true' : 'false') + '">' +
+      esc(c.className) + '</button>';
+  }
+
+  function classColHtml(group) {
+    return '' +
+      '<div class="gi-classpick-col">' +
+        '<span class="gi-classpick-head">' + esc(group.label) + '</span>' +
+        (group.classes.length
+          ? group.classes.map(classBtnHtml).join('')
+          : '<span class="gi-classpick-empty">없음</span>') +
+      '</div>';
+  }
+
+  function renderClassPicker(classes) {
+    const split = CL.groupByLevel(classes);
+
+    // 이름에서 학교급을 읽을 수 없는 반은 세 열 아래 한 줄에 그대로 둔다.
+    // 숨겨 버리면 이름을 아직 안 고친 반이 없어진 것처럼 보인다.
+    const other = split.other.length
+      ? '<div class="gi-classpick-col gi-classpick-other">' +
+          '<span class="gi-classpick-head">구분 없음 — 반 이름 앞에 초·중·고를 넣으면 위로 올라갑니다</span>' +
+          split.other.map(classBtnHtml).join('') +
+        '</div>'
+      : '';
+
+    $('classPicker').innerHTML = split.groups.map(classColHtml).join('') + other;
+  }
+
   function loadClasses() {
     api.call('admin.classes', { sessionKey: sessionKey }).then(function (data) {
-      $('classSelect').innerHTML = data.classes.map(function (c) {
-        return '<option value="' + esc(c.classId) + '">' + esc(c.className) + '</option>';
-      }).join('');
+      const classes = data.classes || [];
+      // 반이 하나뿐이던 드롭다운과 달리 버튼은 아무것도 눌려 있지 않을 수 있다.
+      // 들고 있던 반이 없어졌으면 첫 반으로 옮긴다.
+      const stillThere = classes.filter(function (c) { return c.classId === entryClassId; }).length;
+      if (!stillThere) entryClassId = classes.length ? classes[0].classId : '';
+
+      renderClassPicker(classes);
       if (!$('dateInput').value) $('dateInput').value = todayIso();
       loadRoster();
     }).catch(function (err) {
@@ -215,7 +252,7 @@
   }
 
   function loadRoster() {
-    const classId = $('classSelect').value;
+    const classId = entryClassId;
     const date = $('dateInput').value;
     if (!classId || !date) return;
 
@@ -246,10 +283,22 @@
     const id = btn.dataset.student;
     const student = entryRoster.filter(function (s) { return s.studentId === id; })[0];
     if (!student) return;
-    openRecord(student, $('classSelect').value, $('dateInput').value, 'entry');
+    openRecord(student, entryClassId, $('dateInput').value, 'entry');
   });
 
-  $('classSelect').addEventListener('change', loadRoster);
+  // 버튼 묶음은 눌린 것이 늘 하나여야 한다. 모든 버튼을 끄고 누른 것만 켠다.
+  $('classPicker').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-class]');
+    if (!btn || btn.dataset.class === entryClassId) return;
+
+    entryClassId = btn.dataset.class;
+    const all = $('classPicker').querySelectorAll('[data-class]');
+    for (let i = 0; i < all.length; i++) {
+      all[i].setAttribute('aria-pressed', all[i] === btn ? 'true' : 'false');
+    }
+    loadRoster();
+  });
+
   $('dateInput').addEventListener('change', loadRoster);
 
   /* ---------- 기록 입력 화면 ---------- */
@@ -559,7 +608,7 @@
     }).then(function () {
       clearRecordDraft(cid, dt, st.studentId);
       if (stillOpen()) $('recordStatus').textContent = '저장했습니다.';
-      if (cid === $('classSelect').value && dt === $('dateInput').value) {
+      if (cid === entryClassId && dt === $('dateInput').value) {
         upsertExistingRecord(record);
         renderRoster();
       }

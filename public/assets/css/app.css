@@ -405,3 +405,38 @@ body.gi .gi-h2{ color:var(--text); }
    들어가야 한다. */
 .gi-stu .gi-input, .gi-stu .gi-select{ font-size:0.84rem; padding:0.4rem 0.5rem; }
 .gi-stu .gi-choice{ font-size:0.76rem; padding:0.28rem 0.45rem; }
+
+/* ---------- 반 고르기 (수업 입력) ---------- */
+/* 반이 한 줄 드롭다운이면 초등부 반을 찾으려고 목록을 끝까지 열어 봐야 한다.
+   초·중·고를 세 열로 세워 두면 찾는 반이 어느 열에 있는지 먼저 정해진다.
+   열은 비어 있어도 자리를 지킨다 — 열이 접히면 반의 위치가 매번 바뀐다. */
+.gi-classpick{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:0.4rem;
+}
+.gi-classpick-col{ display:flex; flex-direction:column; gap:0.25rem; min-width:0; }
+.gi-classpick-head{
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:0.04em;
+  color:var(--text-soft);
+  padding:0 0.1rem 0.1rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0.15rem;
+}
+/* 반 이름은 '초등부 Phonics 월수 4시'처럼 길다. 세 열 안에서 줄이 넘어가야
+   가로 스크롤이 생기지 않는다. */
+.gi-classpick .gi-choice{
+  display:block;
+  width:100%;
+  text-align:left;
+  font-size:0.78rem;
+  padding:0.35rem 0.4rem;
+  white-space:normal;
+  word-break:keep-all;
+}
+/* 열이 빈 학교급에도 높이를 남겨 줄이 흐트러지지 않게 한다. */
+.gi-classpick-empty{ font-size:0.72rem; color:var(--state-none); padding:0.35rem 0.4rem; }
+/* 이름에서 학교급을 읽을 수 없는 반. 셋 중 어느 열도 아니므로 아래 한 줄을 다 쓴다. */
+.gi-classpick-other{ grid-column:1 / -1; }
