@@ -709,3 +709,13 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-stu-pick{ margin-bottom:0.5rem; }
 /* 수정 칸의 카드는 열 하나를 통으로 쓴다 — 목록 카드보다 여유가 있다. */
 .gi-stu-tabs + .gi-stu-pick + .gi-stu{ margin-top:0; }
+
+
+/* 저장은 요일 줄 맨 끝에. 요일 일곱 개와 붙여 두면 여덟 번째 요일처럼
+   읽히므로 남는 자리만큼 밀어 둔다. */
+.gi-sched-save{
+  margin-left:auto;
+  font-weight:700;
+  color:var(--forest);
+  border-color:var(--forest);
+}

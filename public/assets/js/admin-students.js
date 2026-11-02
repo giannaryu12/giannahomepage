@@ -65,7 +65,14 @@
    * 하나를 붙인다. 꺼진 요일의 칸은 아예 그리지 않는다 — 일곱 칸이 늘
    * 떠 있으면 어느 요일에 수업이 있는지가 한눈에 안 들어온다.
    */
-  function schedHtml(raw) {
+  /**
+   * 요일·시간 고르는 칸.
+   *
+   * withSave면 요일 줄 맨 끝에 저장 버튼이 붙는다. 수정 칸에서는 고칠
+   * 것이 이 줄까지이므로, 버튼을 따로 떼어 두면 눈이 아래로 한 번 더
+   * 내려갔다 와야 한다.
+   */
+  function schedHtml(raw, withSave) {
     const entries = S.parseSchedule(raw);
     const on = {};
     entries.forEach(function (e) { on[e.day] = e.time; });
@@ -76,6 +83,9 @@
             return '<button class="gi-choice" type="button" data-day="' + w + '"' +
               ' aria-pressed="' + (on[w] ? 'true' : 'false') + '">' + w + '</button>';
           }).join('') +
+          (withSave
+            ? '<button class="gi-choice gi-sched-save" type="button" data-act="save">저장</button>'
+            : '') +
         '</div>' +
         '<div class="gi-sched-times" data-times>' + timesHtml(entries) + '</div>' +
       '</div>';
@@ -169,16 +179,18 @@
                 '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
               '</div>'
             : '') +
-          '<div class="gi-choices gi-stu-acts">' +
-            (editable ? '<button class="gi-choice" type="button" data-act="save">저장</button>' : '') +
-            '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
-            '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
-            '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
-            '<button class="gi-choice" type="button" data-act="toggle">' +
-              (s.active ? '비활성화' : '다시 활성화') + '</button>' +
-          '</div>' +
+          // 수정 칸에는 저장만 둔다. 기록 입력·링크·비활성화는 목록에서
+          // 하는 일이고, 고치는 칸에 같이 두면 고치다 말고 누르게 된다.
+          (editable ? '' :
+            '<div class="gi-choices gi-stu-acts">' +
+              '<button class="gi-choice" type="button" data-act="record">기록 입력</button>' +
+              '<button class="gi-choice" type="button" data-act="copy">링크 복사</button>' +
+              '<button class="gi-choice" type="button" data-act="reissue">링크 재발급</button>' +
+              '<button class="gi-choice" type="button" data-act="toggle">' +
+                (s.active ? '비활성화' : '다시 활성화') + '</button>' +
+            '</div>') +
         '</div>' +
-        (editable ? schedHtml(s.schedule) : schedTextHtml(s.schedule)) +
+        (editable ? schedHtml(s.schedule, true) : schedTextHtml(s.schedule)) +
         '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';
   }
