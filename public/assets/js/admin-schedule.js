@@ -65,12 +65,15 @@
   /** 이름 앞 동그라미와 뒤 회차. 안 적은 수업에는 아무것도 붙지 않는다. */
   function markHtml(iso, studentId) {
     const m = markFor(iso, studentId);
-    if (!m) return { dot: '', no: '' };
+    if (!m) return { dot: '', no: '', off: false };
 
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
         ' title="' + A.esc(m.attendance) + '"></span>',
       no: m.sessionNo ? '<span class="gi-cal-no">' + A.esc(m.sessionNo) + '회</span>' : '',
+      // 안 온 학생은 이름을 흐리게 하고 줄을 긋는다. 빨간 점 하나로는 칸이
+      // 이름으로 가득 찼을 때 눈에 걸리지 않는다.
+      off: m.attendance === '결석',
     };
   }
 
@@ -91,7 +94,7 @@
       : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<button class="gi-choice gi-cal-name' +
-      (entry.overrideId ? ' is-extra' : '') + (entry.skip ? ' is-off' : '') + '"' +
+      (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') + '"' +
       ' type="button" data-student="' + A.esc(s.studentId) + '" data-date="' + A.esc(iso) + '"' +
       // 동그라미는 이름 안에 넣는다. 밖에 두면 좁은 칸에서 시간 줄 끝에
       // 혼자 남고 이름은 다음 줄로 넘어간다.
@@ -179,7 +182,7 @@
 
     const m = markHtml(openDate, e.student.studentId);
 
-    return '<li class="gi-day-row' + (e.skip ? ' is-off' : '') + '">' +
+    return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
       '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
       '<span class="gi-day-who">' + m.dot + A.esc(e.student.name) + m.no + '</span>' +
       tail +
