@@ -34,27 +34,12 @@
 
   <section id="appView" hidden>
     <nav style="display:flex;gap:.5rem;margin-bottom:1.2rem">
-      <button class="gi-choice" id="tabEntry" type="button" aria-pressed="true">수업 입력</button>
-      <button class="gi-choice" id="tabSchedule" type="button" aria-pressed="false">수업 일정</button>
+      <button class="gi-choice" id="tabSchedule" type="button" aria-pressed="true">수업 일정</button>
       <button class="gi-choice" id="tabStudents" type="button" aria-pressed="false">학생 관리</button>
       <button class="gi-choice" id="logoutBtn" type="button" style="margin-left:auto">로그아웃</button>
     </nav>
 
-    <div id="entryView">
-      <div class="gi-field">
-        <span class="gi-label">반</span>
-        <div class="gi-classpick" id="classPicker" role="group" aria-label="반"></div>
-      </div>
-      <div class="gi-field">
-        <label class="gi-label" for="dateInput">날짜</label>
-        <input class="gi-input" type="date" id="dateInput">
-      </div>
-
-      <div id="entryError" class="gi-error" hidden></div>
-      <div id="roster"></div>
-    </div>
-
-    <div id="scheduleView" hidden>
+    <div id="scheduleView">
       <div class="gi-week">
         <button class="gi-choice" id="weekPrev" type="button">← 지난달</button>
         <span class="gi-week-label" id="weekLabel"></span>
@@ -64,6 +49,7 @@
 
       <div id="scheduleError" class="gi-error" hidden></div>
       <div id="timetable"></div>
+      <div id="dayEdit" hidden></div>
     </div>
 
     <div id="recordView" hidden>

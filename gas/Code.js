@@ -45,6 +45,9 @@ function dispatch_(parsed) {
     case 'admin.reissueToken':  return handleAdminReissueToken(body);
     case 'admin.roster':        return handleAdminRoster(body);
     case 'admin.saveBatch':     return handleAdminSaveBatch(body);
+    case 'admin.overrides':       return handleAdminOverrides(body);
+    case 'admin.saveOverride':    return handleAdminSaveOverride(body);
+    case 'admin.deleteOverride':  return handleAdminDeleteOverride(body);
     case 'parent.load':         return handleParentLoad(body);
     default:                    return fail('UNKNOWN_ACTION', '알 수 없는 요청입니다.');
   }

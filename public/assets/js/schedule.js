@@ -100,41 +100,6 @@
     return isoOf_(d);
   }
 
-  /**
-   * 학생 목록 → 시간표.
-   *
-   * 시간 행은 실제 등록된 시간만 만든다. 9시부터 10시까지 빈 줄을 늘어놓으면
-   * 정작 수업이 있는 칸을 찾기 어렵다.
-   *
-   * 요일·시간이 비어 있는 학생은 unscheduled로 뺀다. 시간표에서 통째로
-   * 사라지면 등록은 했는데 보이지 않는 학생이 생긴다.
-   */
-  function buildTimetable(students) {
-    const byTime = {};
-    const unscheduled = [];
-
-    (students || []).forEach(function (s) {
-      const entries = parseSchedule(s && s.schedule);
-      if (!entries.length) {
-        unscheduled.push(s);
-        return;
-      }
-
-      entries.forEach(function (e) {
-        if (!byTime[e.time]) {
-          byTime[e.time] = WEEKDAYS.map(function () { return []; });
-        }
-        byTime[e.time][WEEKDAYS.indexOf(e.day)].push(s);
-      });
-    });
-
-    const rows = Object.keys(byTime).sort().map(function (time) {
-      return { time: time, days: byTime[time] };
-    });
-
-    return { rows: rows, unscheduled: unscheduled };
-  }
-
   /** 'YYYY-MM-DD' → 'YYYY-MM'. 달력이 어느 달을 보고 있는지 가리키는 값. */
   function monthOf(iso) {
     return /^\d{4}-\d{2}/.test(String(iso == null ? '' : iso)) ? String(iso).slice(0, 7) : '';
@@ -207,6 +172,43 @@
     });
   }
 
+  /**
+   * 평소 일정 위에 그날 하루치 변경을 얹는다.
+   *
+   * skip은 그 학생을 그날에서 뺀다. 시간을 적어 보내면 그 시간 하나만 빠지고,
+   * 비워 두면 그날 전부 빠진다 — 하루에 두 번 오는 학생의 한 번만 쉴 수 있게.
+   * add는 그 시간에 넣는다.
+   *
+   * 돌려주는 줄에는 overrideId가 붙는다. 그 줄이 하루치 조각에서 온 것인지
+   * 평소 일정에서 온 것인지 화면이 알아야 — 지울 때 무엇을 지우는지 달라진다.
+   */
+  function applyOverrides(base, overrides, iso, students) {
+    const mine = (overrides || []).filter(function (o) { return String(o.date) === String(iso); });
+    const byId = {};
+    (students || []).forEach(function (s) { if (s) byId[String(s.studentId)] = s; });
+
+    const skips = mine.filter(function (o) { return o.kind === 'skip'; });
+    const kept = (base || []).filter(function (e) {
+      const sid = String(e.student && e.student.studentId);
+      return !skips.some(function (o) {
+        return String(o.studentId) === sid && (!o.time || String(o.time) === e.time);
+      });
+    });
+
+    mine.filter(function (o) { return o.kind === 'add'; }).forEach(function (o) {
+      const s = byId[String(o.studentId)];
+      // 그만뒀거나 지워진 학생의 조각은 이름을 붙일 수 없다. 조용히 넘긴다.
+      if (s) kept.push({ time: String(o.time || ''), student: s, overrideId: o.overrideId });
+    });
+
+    return kept.sort(function (a, b) {
+      if (a.time !== b.time) return a.time < b.time ? -1 : 1;
+      const an = String(a.student && a.student.name);
+      const bn = String(b.student && b.student.name);
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
+  }
+
   const api = {
     WEEKDAYS,
     parseSchedule,
@@ -214,11 +216,11 @@
     weekdayIndex,
     mondayOf,
     addDays,
-    buildTimetable,
     monthOf,
     addMonths,
     monthGrid,
     studentsOnDate,
+    applyOverrides,
   };
 
   global.GI_SCHEDULE = api;

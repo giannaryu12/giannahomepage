@@ -28,16 +28,11 @@
 
   let sessionKey = sessionStorage.getItem(SESSION_STORE) || '';
 
-  // 수업 탭(조회 전용) 상태
-  let entryClassId = '';
-  let entryRoster = [];
-  let entryExistingRecords = [];
-
   // 기록 입력 화면 상태
   let currentStudent = null;
   let currentClassId = '';
   let currentDate = '';
-  let recordOrigin = 'entry'; // 'entry' | 'students' — 돌아가기 목적지
+  let recordOrigin = 'schedule'; // 'schedule' | 'students' — 돌아가기 목적지
   let recordForm = {};
 
   const $ = function (id) { return document.getElementById(id); };
@@ -65,7 +60,7 @@
     $('loginView').hidden = true;
     $('appView').hidden = false;
     $('headSub').textContent = '선생님 전용 · 로그인됨';
-    loadClasses();
+    if (window.renderScheduleView) window.renderScheduleView();
   }
 
   function login() {
@@ -179,127 +174,6 @@
     resumeSession();
     return true;
   }
-
-  /* ---------- 반 목록 ---------- */
-
-  function classBtnHtml(c) {
-    return '<button class="gi-choice" type="button" data-class="' + esc(c.classId) + '"' +
-      ' aria-pressed="' + (c.classId === entryClassId ? 'true' : 'false') + '">' +
-      esc(c.className) + '</button>';
-  }
-
-  function classColHtml(group) {
-    return '' +
-      '<div class="gi-classpick-col">' +
-        '<span class="gi-classpick-head">' + esc(group.label) + '</span>' +
-        (group.classes.length
-          ? group.classes.map(classBtnHtml).join('')
-          : '<span class="gi-classpick-empty">없음</span>') +
-      '</div>';
-  }
-
-  function renderClassPicker(classes) {
-    const split = CL.groupByLevel(classes);
-
-    // 이름에서 학교급을 읽을 수 없는 반은 세 열 아래 한 줄에 그대로 둔다.
-    // 숨겨 버리면 이름을 아직 안 고친 반이 없어진 것처럼 보인다.
-    const other = split.other.length
-      ? '<div class="gi-classpick-col gi-classpick-other">' +
-          '<span class="gi-classpick-head">구분 없음 — 반 이름 앞에 초·중·고를 넣으면 위로 올라갑니다</span>' +
-          split.other.map(classBtnHtml).join('') +
-        '</div>'
-      : '';
-
-    $('classPicker').innerHTML = split.groups.map(classColHtml).join('') + other;
-  }
-
-  function loadClasses() {
-    api.call('admin.classes', { sessionKey: sessionKey }).then(function (data) {
-      const classes = data.classes || [];
-      // 반이 하나뿐이던 드롭다운과 달리 버튼은 아무것도 눌려 있지 않을 수 있다.
-      // 들고 있던 반이 없어졌으면 첫 반으로 옮긴다.
-      const stillThere = classes.filter(function (c) { return c.classId === entryClassId; }).length;
-      if (!stillThere) entryClassId = classes.length ? classes[0].classId : '';
-
-      renderClassPicker(classes);
-      if (!$('dateInput').value) $('dateInput').value = todayIso();
-      loadRoster();
-    }).catch(function (err) {
-      if (!handleAuthLoss(err)) showError($('entryError'), err.message);
-    });
-  }
-
-  /* ---------- 수업 탭 명단 (조회 전용) ---------- */
-
-  function rosterRowHtml(s) {
-    return '' +
-      '<div class="gi-rec gi-roster">' +
-        '<button type="button" class="gi-rec-top" data-student="' + esc(s.studentId) + '">' +
-          '<span class="gi-rec-date">' + esc(s.name) + '</span>' +
-          '<span class="gi-note">' + esc(s.grade || '') + '</span>' +
-          '<span class="gi-badge ' + (s.hasRecord ? 'is-good' : 'is-none') + '" style="margin-left:auto">' +
-            (s.hasRecord ? '입력됨' : '미입력') +
-          '</span>' +
-        '</button>' +
-      '</div>';
-  }
-
-  function renderRoster() {
-    const statuses = RF.rosterStatus(entryRoster, entryExistingRecords);
-    $('roster').innerHTML = statuses.length
-      ? statuses.map(rosterRowHtml).join('')
-      : '<p class="gi-note">이 반에 등록된 학생이 없습니다. 학생 관리 탭에서 등록해 주세요.</p>';
-  }
-
-  function loadRoster() {
-    const classId = entryClassId;
-    const date = $('dateInput').value;
-    if (!classId || !date) return;
-
-    showError($('entryError'), '');
-    $('roster').innerHTML = '<p class="gi-state">불러오는 중…</p>';
-
-    api.call('admin.roster', { sessionKey: sessionKey, classId: classId, date: date })
-      .then(function (data) {
-        entryRoster = data.students || [];
-        entryExistingRecords = data.existingRecords || [];
-        renderRoster();
-      })
-      .catch(function (err) {
-        if (!handleAuthLoss(err)) showError($('entryError'), err.message);
-        $('roster').innerHTML = '';
-      });
-  }
-
-  function upsertExistingRecord(rec) {
-    const idx = entryExistingRecords.findIndex(function (r) { return r.studentId === rec.studentId; });
-    if (idx >= 0) entryExistingRecords[idx] = rec;
-    else entryExistingRecords.push(rec);
-  }
-
-  $('roster').addEventListener('click', function (e) {
-    const btn = e.target.closest('[data-student]');
-    if (!btn) return;
-    const id = btn.dataset.student;
-    const student = entryRoster.filter(function (s) { return s.studentId === id; })[0];
-    if (!student) return;
-    openRecord(student, entryClassId, $('dateInput').value, 'entry');
-  });
-
-  // 버튼 묶음은 눌린 것이 늘 하나여야 한다. 모든 버튼을 끄고 누른 것만 켠다.
-  $('classPicker').addEventListener('click', function (e) {
-    const btn = e.target.closest('[data-class]');
-    if (!btn || btn.dataset.class === entryClassId) return;
-
-    entryClassId = btn.dataset.class;
-    const all = $('classPicker').querySelectorAll('[data-class]');
-    for (let i = 0; i < all.length; i++) {
-      all[i].setAttribute('aria-pressed', all[i] === btn ? 'true' : 'false');
-    }
-    loadRoster();
-  });
-
-  $('dateInput').addEventListener('change', loadRoster);
 
   /* ---------- 기록 입력 화면 ---------- */
 
@@ -422,10 +296,8 @@
     $('recordStatus').textContent = '';
   }
 
-  // 탭 이름 → [탭 버튼, 화면]. 탭이 셋이 되면서 둘씩 짝지어 켜고 끄는
-  // 방식으로는 한 곳을 고칠 때마다 나머지를 빠뜨리게 된다.
+  // 탭 이름 → [탭 버튼, 화면].
   const TABS = {
-    entry: ['tabEntry', 'entryView'],
     schedule: ['tabSchedule', 'scheduleView'],
     students: ['tabStudents', 'studentsView'],
   };
@@ -446,7 +318,7 @@
 
   function goBack() {
     currentStudent = null;
-    showTab(TABS[recordOrigin] ? recordOrigin : 'entry');
+    showTab(TABS[recordOrigin] ? recordOrigin : 'schedule');
   }
 
   // records: 학생 관리 탭처럼 수업 탭에서 로드해 둔 것과 다른 반/날짜 조합을
@@ -459,7 +331,7 @@
 
     // records를 넘겼으면 그것만 본다. 빈 배열도 유효한 답(기록 없음)이므로
     // 수업 탭이 들고 있는 다른 반/날짜 기록으로 넘어가면 안 된다.
-    const lookupRecords = records === undefined ? entryExistingRecords : (records || []);
+    const lookupRecords = records || [];
     const rec = RF.findRecordFor(lookupRecords, student.studentId);
     let values = RF.toFormValues(rec);
 
@@ -618,10 +490,6 @@
     }).then(function () {
       clearRecordDraft(cid, dt, st.studentId);
       if (stillOpen()) $('recordStatus').textContent = '저장했습니다.';
-      if (cid === entryClassId && dt === $('dateInput').value) {
-        upsertExistingRecord(record);
-        renderRoster();
-      }
     }).catch(function (err) {
       if (stillOpen()) $('recordStatus').textContent = '';
       if (!handleAuthLoss(err) && stillOpen()) {
@@ -652,10 +520,6 @@
   });
 
   /* ---------- 탭 ---------- */
-
-  $('tabEntry').addEventListener('click', function () {
-    showTab('entry');
-  });
 
   $('tabSchedule').addEventListener('click', function () {
     showTab('schedule');

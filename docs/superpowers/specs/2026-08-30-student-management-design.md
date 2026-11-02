@@ -125,6 +125,17 @@
 | schedule | 표시용 문자열 |
 | active | boolean |
 
+### `Overrides` — 하루치 일정 변경 (수업 일정 탭이 만든다)
+
+| 컬럼 | 설명 |
+|---|---|
+| overrideId | `O` + 타임스탬프 + UUID 8자 |
+| date | `YYYY-MM-DD` |
+| studentId | 참조 |
+| time | `HH:MM`. skip에서 비면 그날 전부 |
+| kind | `add`(보강·추가) / `skip`(휴강) |
+| createdAt | ISO8601 |
+
 ### `Records` — 매 수업 1행, 여기가 누적된다
 
 | 컬럼 | 값 |

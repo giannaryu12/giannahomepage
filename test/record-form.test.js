@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  findRecordFor, toFormValues, buildRecord, rosterStatus,
+  findRecordFor, toFormValues, buildRecord,
   withBookDefaults, withSessionDefault,
 } from '../public/assets/js/record-form.js';
 import { RECORD_AREA_FIELDS } from '../public/assets/js/progress-areas.js';
@@ -112,34 +112,6 @@ describe('buildRecord', () => {
     expect(rec.studentId).toBe('s1');
     expect(rec.date).toBe('2026-08-30');
     expect(rec.progress).toBe('');
-  });
-});
-
-describe('rosterStatus', () => {
-  const students = [
-    { studentId: 's1', name: '김학생', grade: '고1' },
-    { studentId: 's2', name: '이학생', grade: '고2' },
-    { studentId: 's3', name: '박학생', grade: '고3' },
-  ];
-  const existingRecords = [
-    { studentId: 's2', progress: 'Unit 2' },
-  ];
-
-  it('기록 유무를 정확히 표시하고 students 순서를 유지한다', () => {
-    expect(rosterStatus(students, existingRecords)).toEqual([
-      { studentId: 's1', name: '김학생', grade: '고1', hasRecord: false },
-      { studentId: 's2', name: '이학생', grade: '고2', hasRecord: true },
-      { studentId: 's3', name: '박학생', grade: '고3', hasRecord: false },
-    ]);
-  });
-
-  it('existingRecords가 없으면 전부 미입력이다', () => {
-    const result = rosterStatus(students, []);
-    expect(result.every((r) => r.hasRecord === false)).toBe(true);
-  });
-
-  it('students가 비어 있으면 빈 배열', () => {
-    expect(rosterStatus([], existingRecords)).toEqual([]);
   });
 });
 

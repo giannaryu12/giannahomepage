@@ -405,41 +405,6 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-stu .gi-input, .gi-stu .gi-select{ font-size:0.84rem; padding:0.4rem 0.5rem; }
 .gi-stu .gi-choice{ font-size:0.76rem; padding:0.28rem 0.45rem; }
 
-/* ---------- 반 고르기 (수업 입력) ---------- */
-/* 반이 한 줄 드롭다운이면 초등부 반을 찾으려고 목록을 끝까지 열어 봐야 한다.
-   초·중·고를 세 열로 세워 두면 찾는 반이 어느 열에 있는지 먼저 정해진다.
-   열은 비어 있어도 자리를 지킨다 — 열이 접히면 반의 위치가 매번 바뀐다. */
-.gi-classpick{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:0.4rem;
-}
-.gi-classpick-col{ display:flex; flex-direction:column; gap:0.25rem; min-width:0; }
-.gi-classpick-head{
-  font-size:0.72rem;
-  font-weight:700;
-  letter-spacing:0.04em;
-  color:var(--text-soft);
-  padding:0 0.1rem 0.1rem;
-  border-bottom:1px solid var(--border);
-  margin-bottom:0.15rem;
-}
-/* 반 이름은 '초등부 Phonics 월수 4시'처럼 길다. 세 열 안에서 줄이 넘어가야
-   가로 스크롤이 생기지 않는다. */
-.gi-classpick .gi-choice{
-  display:block;
-  width:100%;
-  text-align:left;
-  font-size:0.78rem;
-  padding:0.35rem 0.4rem;
-  white-space:normal;
-  word-break:keep-all;
-}
-/* 열이 빈 학교급에도 높이를 남겨 줄이 흐트러지지 않게 한다. */
-.gi-classpick-empty{ font-size:0.72rem; color:var(--state-none); padding:0.35rem 0.4rem; }
-/* 이름에서 학교급을 읽을 수 없는 반. 셋 중 어느 열도 아니므로 아래 한 줄을 다 쓴다. */
-.gi-classpick-other{ grid-column:1 / -1; }
-
 /* 날짜 칸은 '연도-월-일' 여덟 글자가 전부다. 다른 입력칸처럼 한 줄을 다
    차지하면 화면에서 가장 큰 칸이 되어, 정작 읽어야 할 반·명단보다 먼저
    눈에 들어온다. 글자를 한 단계 줄이고 폭은 내용만큼만 준다. */
@@ -474,16 +439,6 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.84rem;
   padding:0.4rem 0.9rem;
 }
-
-/* ---------- 수업 입력 명단 ---------- */
-/* 명단은 읽는 화면이 아니라 '누가 아직 미입력인지' 훑는 화면이다. 한 반이
-   한눈에 들어와야 하므로 학생 카드처럼 촘촘하게 둔다. .gi-rec를 직접 줄이면
-   학부모 화면의 수업 기록까지 같이 좁아지므로 여기서만 덮는다. */
-.gi-roster{ margin-bottom:0.35rem; }
-.gi-roster .gi-rec-top{ padding:0.5rem 0.6rem; gap:0.5rem; }
-.gi-roster .gi-rec-date{ font-size:0.84rem; }
-.gi-roster .gi-note{ font-size:0.76rem; }
-.gi-roster .gi-badge{ font-size:0.68rem; padding:0.1rem 0.4rem; margin-right:0; }
 
 /* 학생 카드 한 줄: 이름 · 학년 · 반 + 버튼 묶음.
    버튼이 아래 줄에 따로 있으면 카드마다 두 줄을 쓰고, 어느 카드의
@@ -592,10 +547,43 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.76rem;
   padding:0.25rem 0.35rem;
 }
-/* 휴대폰에서는 칸 하나가 40px 남짓이다. 이름을 한 줄로 붙들면 칸 밖으로
-   나가 잘린다. 세 글자 이름이 두 줄로 접히는 편이 낫다. */
-@media (max-width:520px){
-  .gi-tt-name{ font-size:0.64rem; padding:0.15rem; word-break:break-all; }
-  .gi-tt-time{ width:2.8rem; font-size:0.66rem; }
-  .gi-tt th, .gi-tt td{ padding:0.15rem; }
+
+/* 달력의 날짜 숫자는 누를 수 있다 — 그날 일정을 고치는 칸이 아래에 열린다. */
+.gi-cal-day{
+  display:block;
+  width:100%;
+  text-align:left;
+  font:inherit;
+  font-size:0.7rem;
+  font-weight:700;
+  color:var(--text-soft);
+  background:none;
+  border:0;
+  padding:0 0 0.15rem;
+  cursor:pointer;
 }
+.gi-cal-day:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+.gi-cal-cell.is-open{ outline:2px solid var(--forest); outline-offset:-2px; }
+/* 하루치로 더한 수업은 평소 일정과 구별돼야 한다 — 지울 때 하는 일이 다르다. */
+.gi-cal-name.is-extra{ border-style:dashed; }
+
+/* ---------- 하루 고치기 ---------- */
+.gi-day-head{ display:flex; align-items:center; gap:0.5rem; margin:0.9rem 0 0.4rem; }
+.gi-day-title{ font-size:0.9rem; font-weight:700; color:var(--heading); margin:0; margin-right:auto; }
+.gi-day-list{ list-style:none; margin:0 0 0.5rem; padding:0; }
+.gi-day-row{
+  display:flex;
+  align-items:center;
+  gap:0.4rem;
+  padding:0.3rem 0;
+  border-bottom:1px solid var(--border);
+}
+/* 휴강 줄은 자리를 지키되 눈에 먼저 들어오지 않게 둔다. */
+.gi-day-row.is-off .gi-day-who{ text-decoration:line-through; color:var(--text-soft); }
+.gi-day-at{ font-size:0.76rem; color:var(--text-soft); width:3.2rem; flex:none; }
+.gi-day-who{ font-size:0.84rem; margin-right:auto; }
+.gi-day-row .gi-choice{ font-size:0.72rem; padding:0.22rem 0.45rem; }
+.gi-day-add{ display:flex; gap:0.4rem; align-items:center; margin-bottom:0.4rem; }
+.gi-day-add .gi-select{ flex:1 1 0; min-width:0; font-size:0.84rem; padding:0.4rem 0.5rem; }
+.gi-day-add .gi-input{ width:auto; font-size:0.84rem; padding:0.4rem 0.5rem; }
+.gi-day-add .gi-choice{ flex:0 0 auto; font-size:0.84rem; padding:0.4rem 0.8rem; }

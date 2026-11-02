@@ -99,20 +99,8 @@
     return out;
   }
 
-  function rosterStatus(students, existingRecords) {
-    const list = students || [];
-    return list.map(function (s) {
-      return {
-        studentId: s.studentId,
-        name: s.name,
-        grade: s.grade,
-        hasRecord: !!findRecordFor(existingRecords, s.studentId),
-      };
-    });
-  }
-
   const api = {
-    findRecordFor, toFormValues, buildRecord, rosterStatus,
+    findRecordFor, toFormValues, buildRecord,
     withBookDefaults, withSessionDefault,
   };
 

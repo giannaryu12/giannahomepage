@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   WEEKDAYS, parseSchedule, formatSchedule,
-  weekdayIndex, mondayOf, addDays, buildTimetable,
-  monthOf, addMonths, monthGrid, studentsOnDate,
+  weekdayIndex, mondayOf, addDays,
+  monthOf, addMonths, monthGrid, studentsOnDate, applyOverrides,
 } from '../public/assets/js/schedule.js';
 
 describe('parseSchedule', () => {
@@ -128,53 +128,6 @@ describe('addDays', () => {
   });
 });
 
-describe('buildTimetable', () => {
-  const students = [
-    { studentId: 'S1', name: '김민준', schedule: '화 17:00, 목 19:00' },
-    { studentId: 'S2', name: '이서연', schedule: '화 17:00' },
-    { studentId: 'S3', name: '박지후', schedule: '' },
-    { studentId: 'S4', name: '최예준', schedule: '월 15:00' },
-  ];
-
-  it('등록된 시간만 행으로 만든다', () => {
-    // 9시부터 10시까지 빈 줄을 늘어놓으면 정작 수업이 있는 칸을 찾기 어렵다.
-    expect(buildTimetable(students).rows.map((r) => r.time))
-      .toEqual(['15:00', '17:00', '19:00']);
-  });
-
-  it('학생을 자기 요일 칸에 넣는다', () => {
-    const rows = buildTimetable(students).rows;
-    const at = (time, day) => rows.filter((r) => r.time === time)[0]
-      .days[WEEKDAYS.indexOf(day)].map((s) => s.name);
-
-    expect(at('17:00', '화')).toEqual(['김민준', '이서연']);
-    expect(at('19:00', '목')).toEqual(['김민준']);
-    expect(at('15:00', '월')).toEqual(['최예준']);
-    expect(at('17:00', '월')).toEqual([]);
-  });
-
-  it('한 학생이 요일마다 다른 시간에 들어간다', () => {
-    const rows = buildTimetable([students[0]]).rows;
-    expect(rows.map((r) => r.time)).toEqual(['17:00', '19:00']);
-    expect(rows[0].days[WEEKDAYS.indexOf('화')]).toHaveLength(1);
-    expect(rows[1].days[WEEKDAYS.indexOf('목')]).toHaveLength(1);
-  });
-
-  it('요일·시간이 비어 있는 학생은 따로 모은다', () => {
-    // 시간표에서 통째로 사라지면 등록은 했는데 보이지 않는 학생이 생긴다.
-    expect(buildTimetable(students).unscheduled.map((s) => s.name)).toEqual(['박지후']);
-  });
-
-  it('모든 행이 일곱 칸이다', () => {
-    buildTimetable(students).rows.forEach((r) => expect(r.days).toHaveLength(7));
-  });
-
-  it('빈 값에 흔들리지 않는다', () => {
-    expect(buildTimetable(null)).toEqual({ rows: [], unscheduled: [] });
-    expect(buildTimetable([])).toEqual({ rows: [], unscheduled: [] });
-  });
-});
-
 describe('monthOf / addMonths', () => {
   it('날짜에서 달을 떼어낸다', () => {
     expect(monthOf('2026-11-05')).toBe('2026-11');
@@ -272,5 +225,67 @@ describe('studentsOnDate', () => {
   it('빈 값에 흔들리지 않는다', () => {
     expect(studentsOnDate(null, '2026-11-03')).toEqual([]);
     expect(studentsOnDate(students, '나중에')).toEqual([]);
+  });
+});
+
+describe('applyOverrides — 하루치 일정 변경', () => {
+  const students = [
+    { studentId: 'S1', name: '김민준', schedule: '화 17:00' },
+    { studentId: 'S2', name: '이서연', schedule: '화 17:00' },
+    { studentId: 'S3', name: '최예준', schedule: '' },
+  ];
+  const TUE = '2026-11-03';
+  const base = () => studentsOnDate(students, TUE);
+
+  it('변경이 없으면 평소 일정 그대로다', () => {
+    expect(applyOverrides(base(), [], TUE, students).map((e) => e.student.name))
+      .toEqual(['김민준', '이서연']);
+    expect(applyOverrides(base(), null, TUE, students)).toHaveLength(2);
+  });
+
+  it('skip은 그날 그 학생을 뺀다', () => {
+    const ov = [{ overrideId: 'O1', date: TUE, studentId: 'S1', time: '', kind: 'skip' }];
+    expect(applyOverrides(base(), ov, TUE, students).map((e) => e.student.name))
+      .toEqual(['이서연']);
+  });
+
+  it('skip에 시간을 적으면 그 시간 하나만 뺀다', () => {
+    // 하루에 두 번 오는 학생의 한 번만 쉴 수 있어야 한다.
+    const twice = [{ studentId: 'S1', name: '김민준', schedule: '화 17:00, 화 19:00' }];
+    const ov = [{ overrideId: 'O1', date: TUE, studentId: 'S1', time: '17:00', kind: 'skip' }];
+    expect(applyOverrides(studentsOnDate(twice, TUE), ov, TUE, twice).map((e) => e.time))
+      .toEqual(['19:00']);
+  });
+
+  it('add는 평소 일정에 없는 날에도 넣는다', () => {
+    const ov = [{ overrideId: 'O2', date: TUE, studentId: 'S3', time: '16:00', kind: 'add' }];
+    const out = applyOverrides(base(), ov, TUE, students);
+    expect(out.map((e) => e.student.name)).toEqual(['최예준', '김민준', '이서연']);
+    expect(out[0].overrideId).toBe('O2');
+  });
+
+  it('평소 일정에서 온 줄에는 overrideId가 없다', () => {
+    // 지울 때 평소 일정을 건드릴지 조각만 지울지가 여기서 갈린다.
+    const ov = [{ overrideId: 'O2', date: TUE, studentId: 'S3', time: '16:00', kind: 'add' }];
+    const out = applyOverrides(base(), ov, TUE, students);
+    expect(out.filter((e) => !e.overrideId).map((e) => e.student.name))
+      .toEqual(['김민준', '이서연']);
+  });
+
+  it('다른 날의 변경에 흔들리지 않는다', () => {
+    const ov = [{ overrideId: 'O1', date: '2026-11-10', studentId: 'S1', time: '', kind: 'skip' }];
+    expect(applyOverrides(base(), ov, TUE, students)).toHaveLength(2);
+  });
+
+  it('없는 학생의 조각은 조용히 넘긴다', () => {
+    // 그만둔 학생의 조각이 남아 있어도 달력이 깨지면 안 된다.
+    const ov = [{ overrideId: 'O9', date: TUE, studentId: '없음', time: '16:00', kind: 'add' }];
+    expect(applyOverrides(base(), ov, TUE, students)).toHaveLength(2);
+  });
+
+  it('더한 뒤에도 이른 시간부터, 같은 시간이면 이름 순이다', () => {
+    const ov = [{ overrideId: 'O3', date: TUE, studentId: 'S3', time: '17:00', kind: 'add' }];
+    expect(applyOverrides(base(), ov, TUE, students).map((e) => e.student.name))
+      .toEqual(['김민준', '이서연', '최예준']);
   });
 });
