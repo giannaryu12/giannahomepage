@@ -233,7 +233,7 @@
 
   function rosterRowHtml(s) {
     return '' +
-      '<div class="gi-rec">' +
+      '<div class="gi-rec gi-roster">' +
         '<button type="button" class="gi-rec-top" data-student="' + esc(s.studentId) + '">' +
           '<span class="gi-rec-date">' + esc(s.name) + '</span>' +
           '<span class="gi-note">' + esc(s.grade || '') + '</span>' +

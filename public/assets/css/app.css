@@ -475,3 +475,13 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.84rem;
   padding:0.4rem 0.9rem;
 }
+
+/* ---------- 수업 입력 명단 ---------- */
+/* 명단은 읽는 화면이 아니라 '누가 아직 미입력인지' 훑는 화면이다. 한 반이
+   한눈에 들어와야 하므로 학생 카드처럼 촘촘하게 둔다. .gi-rec를 직접 줄이면
+   학부모 화면의 수업 기록까지 같이 좁아지므로 여기서만 덮는다. */
+.gi-roster{ margin-bottom:0.35rem; }
+.gi-roster .gi-rec-top{ padding:0.5rem 0.6rem; gap:0.5rem; }
+.gi-roster .gi-rec-date{ font-size:0.84rem; }
+.gi-roster .gi-note{ font-size:0.76rem; }
+.gi-roster .gi-badge{ font-size:0.68rem; padding:0.1rem 0.4rem; margin-right:0; }
