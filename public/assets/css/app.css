@@ -252,7 +252,9 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-badge.is-warn{ color:var(--state-warn); }
 .gi-badge.is-bad{ color:var(--state-bad); }
 .gi-badge.is-none{ color:var(--state-none); }
-.gi-badge.is-extra{ color:var(--state-extra); }
+/* 보충은 점이든 글자든 한 가지 파랑이다. 짙고 옅은 파랑이 섞이면 둘이
+   다른 뜻으로 읽힌다. */
+.gi-badge.is-extra{ color:var(--state-extra-dot); }
 
 /* ---------- 폼 ---------- */
 .gi-field{ margin-bottom:1rem; }
