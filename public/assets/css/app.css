@@ -504,3 +504,12 @@ body.gi .gi-h2{ color:var(--text); }
 /* 버튼 묶음은 세 칸과 폭을 나누지 않지만, 좁은 화면에서는 줄어들 수 있어야
    한다. 0 0 auto로 두면 카드 밖으로 삐져나가 마지막 버튼이 잘린다. */
 .gi-stu-acts{ flex:0 1 auto; min-width:0; }
+
+/* 선생님 화면의 머리글만 낮춘다. 학부모는 링크를 받아 한 번 열어 보는
+   화면이라 머리글이 인사 역할을 하지만, 선생님은 수업마다 들어와 반과
+   명단부터 본다. 매번 같은 글자가 화면 첫 칸을 다 쓸 이유가 없다.
+   .gi-head를 직접 줄이면 학부모 화면까지 같이 낮아지므로 여기서만 덮는다. */
+.gi-head-tight{ padding:0.6rem 0 0.7rem; margin-bottom:0.9rem; }
+.gi-head-tight .gi-head-brand{ font-size:0.6rem; line-height:1.2; margin-bottom:0.2rem; }
+.gi-head-tight h1{ font-size:1.1rem; }
+.gi-head-tight .gi-head-sub{ margin-top:0.1rem; font-size:0.72rem; line-height:1.3; }
