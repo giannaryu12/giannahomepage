@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { parseRequest, ok, fail, ACTIONS } from '../gas/lib/router.js';
 
 describe('parseRequest', () => {
@@ -79,5 +81,20 @@ describe('ok / fail', () => {
 
   it('fail은 실패 봉투를 만든다', () => {
     expect(fail('X', '문제')).toEqual({ ok: false, error: 'X', message: '문제' });
+  });
+});
+
+describe('ACTIONS와 dispatch_의 액션 목록', () => {
+  it('둘이 정확히 같다', () => {
+    // 액션을 더할 때 Code.js의 switch만 고치면 ACTIONS가 먼저 걸러내
+    // UNKNOWN_ACTION이 난다. 핸들러는 멀쩡한데 요청이 닿지 않으므로
+    // 어디가 잘못됐는지 보이지 않는다. 실제로 한 번 그렇게 배포했다.
+    const src = fs.readFileSync(path.resolve(__dirname, '..', 'gas', 'Code.js'), 'utf8');
+    const cases = [];
+    const re = /case\s+'([^']+)':/g;
+    let m;
+    while ((m = re.exec(src))) cases.push(m[1]);
+
+    expect(cases.sort()).toEqual(Object.keys(ACTIONS).sort());
   });
 });
