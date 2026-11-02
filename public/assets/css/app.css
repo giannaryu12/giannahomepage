@@ -612,7 +612,8 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-cal-who{ white-space:nowrap; }
 .gi-cal-tag{ font-size:0.58rem; font-weight:700; margin-left:0.22rem; white-space:nowrap; }
 .gi-cal-tag.is-off{ color:var(--state-bad); }
-.gi-cal-tag.is-extra{ color:var(--state-extra); }
+/* 꼬리표도 같은 청색으로. 점과 글자가 다른 파랑이면 다른 뜻으로 읽힌다. */
+.gi-cal-tag.is-extra{ color:var(--state-extra-dot); }
 /* 보충은 평소 일정이 아니다 — 테두리까지 달리 둔다. */
 .gi-cal-name.is-extra{ border-style:dashed; border-color:var(--state-extra); }
 .gi-day-row.is-off .gi-day-at{ opacity:0.6; }
@@ -634,7 +635,7 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-dot.is-good{ color:var(--state-good-dot); }
 .gi-dot.is-warn{ color:var(--state-warn); }
 .gi-dot.is-bad{ color:var(--state-bad); }
-.gi-dot.is-extra{ color:var(--state-extra); }
+.gi-dot.is-extra{ color:var(--state-extra-dot); }
 .gi-dot.is-none{ color:var(--state-none); }
 /* 회차는 이름 뒤에 작게. 읽을 값이 아니라 가늠하는 값이다. */
 .gi-cal-no{ font-size:0.58rem; color:var(--text-soft); margin-left:0.22rem; white-space:nowrap; }
