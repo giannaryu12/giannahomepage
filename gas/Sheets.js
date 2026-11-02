@@ -126,7 +126,9 @@ function getHeader_(sheetName) {
 
 function appendRow(sheetName, obj) {
   const sheet = getSheet_(sheetName);
-  const header = getHeader_(sheetName);
+  // 보낸 필드 중 시트에 없는 칸은 만들어 둔다. 만들지 않으면 아래 map이
+  // 그 값을 조용히 버리고 "저장했습니다"만 뜬다.
+  const header = ensureColumns_(sheet, getHeader_(sheetName), Object.keys(obj || {}));
   const row = header.map(function (key) {
     return obj[key] === null || obj[key] === undefined ? '' : obj[key];
   });
@@ -157,7 +159,11 @@ function updateRowById(sheetName, idColumn, idValue, patch) {
   })[0];
   if (!target) return false;
 
-  view.header.forEach(function (key, j) {
+  // 고치려는 칸이 시트에 없으면 만든다. 없는 채로 두면 아래 forEach가
+  // 그 칸을 건너뛰어, 선생님이 입력한 값이 사라진 채 저장이 끝난다.
+  const header = ensureColumns_(view.sheet, view.header, Object.keys(patch || {}));
+
+  header.forEach(function (key, j) {
     if (key && Object.prototype.hasOwnProperty.call(patch, key)) {
       const cell = view.sheet.getRange(target._rowIndex, j + 1);
       cell.setNumberFormat(isNumericColumn_(key) ? 'General' : '@');
