@@ -635,3 +635,13 @@ body.gi .gi-h2{ color:var(--text); }
 /* 회차는 이름 뒤에 작게. 읽을 값이 아니라 가늠하는 값이다. */
 .gi-cal-no{ font-size:0.58rem; color:var(--text-soft); margin-left:0.22rem; white-space:nowrap; }
 .gi-day-who .gi-cal-no{ font-size:0.72rem; }
+
+
+/* ---------- 선생님 화면은 넓게 ---------- */
+/* 44rem은 글을 읽는 폭이다. 달력은 한 줄에 일곱 칸이라 그 폭에서는 이름이
+   두세 줄로 접히고 칸이 세로로 길어진다. 선생님 화면에만 넓은 폭을 준다 —
+   학부모 화면은 읽는 화면이므로 그대로 둔다. */
+.gi-wrap-wide{ max-width:76rem; }
+/* 다만 적는 칸은 넓히지 않는다. 코멘트 칸이 1200px로 늘어나면 한 줄이
+   눈으로 좇기 어려워진다. */
+#recordView{ max-width:44rem; }
