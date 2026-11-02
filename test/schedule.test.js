@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   WEEKDAYS, parseSchedule, formatSchedule,
   weekdayIndex, mondayOf, addDays, buildTimetable,
+  monthOf, addMonths, monthGrid, studentsOnDate,
 } from '../public/assets/js/schedule.js';
 
 describe('parseSchedule', () => {
@@ -171,5 +172,105 @@ describe('buildTimetable', () => {
   it('빈 값에 흔들리지 않는다', () => {
     expect(buildTimetable(null)).toEqual({ rows: [], unscheduled: [] });
     expect(buildTimetable([])).toEqual({ rows: [], unscheduled: [] });
+  });
+});
+
+describe('monthOf / addMonths', () => {
+  it('날짜에서 달을 떼어낸다', () => {
+    expect(monthOf('2026-11-05')).toBe('2026-11');
+    expect(monthOf('나중에')).toBe('');
+  });
+
+  it('달을 앞뒤로 옮긴다', () => {
+    expect(addMonths('2026-11', 1)).toBe('2026-12');
+    expect(addMonths('2026-11', -1)).toBe('2026-10');
+  });
+
+  it('해를 넘어간다', () => {
+    expect(addMonths('2026-12', 1)).toBe('2027-01');
+    expect(addMonths('2026-01', -1)).toBe('2025-12');
+  });
+
+  it('달이 아니면 빈 문자열이다', () => {
+    expect(addMonths('2026-11-05', 1)).toBe('');
+    expect(addMonths('', 1)).toBe('');
+  });
+});
+
+describe('monthGrid', () => {
+  it('월요일로 시작하는 주 단위다', () => {
+    const weeks = monthGrid('2026-11');
+    weeks.forEach((w) => expect(w).toHaveLength(7));
+    // 2026-11-01은 일요일 — 그 주의 월요일은 10월 26일이다.
+    expect(weeks[0][0].iso).toBe('2026-10-26');
+  });
+
+  it('그 달의 1일과 말일이 모두 들어 있다', () => {
+    const flat = monthGrid('2026-11').flat();
+    const inMonth = flat.filter((c) => c.inMonth).map((c) => c.day);
+    expect(inMonth[0]).toBe(1);
+    expect(inMonth[inMonth.length - 1]).toBe(30);
+    expect(inMonth).toHaveLength(30);
+  });
+
+  it('앞뒤 모자란 칸은 옆 달 날짜로 채우고 표시해 둔다', () => {
+    // 빈 칸으로 두면 첫 주와 마지막 주에서 요일과 칸이 어긋나 보인다.
+    const weeks = monthGrid('2026-12');
+    expect(weeks[0][0].iso).toBe('2026-11-30');
+    expect(weeks[0][0].inMonth).toBe(false);
+    expect(weeks[0][1].inMonth).toBe(true);
+  });
+
+  it('마지막 줄이 통째로 옆 달인 달을 만들지 않는다', () => {
+    // 늘 6주를 그리면 2월처럼 딱 떨어지는 달에서 빈 줄이 남는다.
+    const weeks = monthGrid('2027-02');
+    expect(weeks).toHaveLength(4);
+    expect(weeks.flat().every((c) => c.inMonth)).toBe(true);
+  });
+
+  it('윤년 2월 29일이 들어 있다', () => {
+    expect(monthGrid('2028-02').flat().filter((c) => c.inMonth)).toHaveLength(29);
+  });
+
+  it('달이 아니면 빈 배열이다', () => {
+    expect(monthGrid('나중에')).toEqual([]);
+  });
+});
+
+describe('studentsOnDate', () => {
+  const students = [
+    { studentId: 'S1', name: '김민준', schedule: '화 17:00, 목 19:00' },
+    { studentId: 'S2', name: '이서연', schedule: '화 17:00' },
+    { studentId: 'S3', name: '강하늘', schedule: '화 17:00' },
+    { studentId: 'S4', name: '박지후', schedule: '' },
+  ];
+
+  it('그 요일에 수업이 있는 학생만 낸다', () => {
+    // 2026-11-03은 화요일.
+    expect(studentsOnDate(students, '2026-11-03').map((e) => e.student.name))
+      .toEqual(['강하늘', '김민준', '이서연']);
+    expect(studentsOnDate(students, '2026-11-04')).toEqual([]);
+  });
+
+  it('이른 시간이 먼저고 같은 시간이면 이름 순이다', () => {
+    // 매번 순서가 바뀌면 어제 본 자리에 오늘은 다른 학생이 있다.
+    const mixed = [
+      { name: '가', schedule: '화 19:00' },
+      { name: '다', schedule: '화 17:00' },
+      { name: '나', schedule: '화 17:00' },
+    ];
+    expect(studentsOnDate(mixed, '2026-11-03').map((e) => e.time + ' ' + e.student.name))
+      .toEqual(['17:00 나', '17:00 다', '19:00 가']);
+  });
+
+  it('요일마다 다른 시간을 그날 시간으로 낸다', () => {
+    expect(studentsOnDate(students, '2026-11-05')).toEqual([
+      { time: '19:00', student: students[0] },
+    ]);
+  });
+
+  it('빈 값에 흔들리지 않는다', () => {
+    expect(studentsOnDate(null, '2026-11-03')).toEqual([]);
+    expect(studentsOnDate(students, '나중에')).toEqual([]);
   });
 });

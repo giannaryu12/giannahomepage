@@ -135,6 +135,78 @@
     return { rows: rows, unscheduled: unscheduled };
   }
 
+  /** 'YYYY-MM-DD' → 'YYYY-MM'. 달력이 어느 달을 보고 있는지 가리키는 값. */
+  function monthOf(iso) {
+    return /^\d{4}-\d{2}/.test(String(iso == null ? '' : iso)) ? String(iso).slice(0, 7) : '';
+  }
+
+  /** 달을 앞뒤로 옮긴다. 12월에서 한 달 뒤는 다음 해 1월이다. */
+  function addMonths(monthKey, n) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(monthKey == null ? '' : monthKey));
+    if (!m) return '';
+
+    const d = new Date(Number(m[1]), Number(m[2]) - 1 + Number(n), 1);
+    return d.getFullYear() + '-' + pad2_(d.getMonth() + 1);
+  }
+
+  /**
+   * 한 달 달력의 칸들. 월요일로 시작하는 주 단위 배열이다.
+   *
+   * 앞뒤로 모자란 칸은 옆 달 날짜로 채우고 inMonth:false로 표시한다. 빈 칸으로
+   * 두면 달의 첫 주와 마지막 주에서 요일과 칸이 어긋나 보인다.
+   */
+  function monthGrid(monthKey) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(monthKey == null ? '' : monthKey));
+    if (!m) return [];
+
+    const first = m[1] + '-' + m[2] + '-01';
+    const last = new Date(Number(m[1]), Number(m[2]), 0).getDate();
+    const start = mondayOf(first);
+    const weeks = [];
+
+    // 앞의 빈 칸 + 그 달의 날 수를 7로 올림한 만큼만 그린다. 늘 6주를 그리면
+    // 마지막 한 줄이 통째로 옆 달인 달이 생긴다.
+    const lead = weekdayIndex(first);
+    const rows = Math.ceil((lead + last) / 7);
+
+    for (let w = 0; w < rows; w++) {
+      const week = [];
+      for (let d = 0; d < 7; d++) {
+        const iso = addDays(start, w * 7 + d);
+        week.push({ iso: iso, day: Number(iso.slice(8)), inMonth: monthOf(iso) === monthKey });
+      }
+      weeks.push(week);
+    }
+    return weeks;
+  }
+
+  /**
+   * 그 날짜에 수업이 있는 학생을 이른 시간부터.
+   *
+   * 같은 시간이면 이름 순이다. 매번 순서가 바뀌면 어제 본 자리에 오늘은
+   * 다른 학생이 있어 눈이 다시 처음부터 훑어야 한다.
+   */
+  function studentsOnDate(students, iso) {
+    const idx = weekdayIndex(iso);
+    if (idx < 0) return [];
+
+    const day = WEEKDAYS[idx];
+    const out = [];
+
+    (students || []).forEach(function (s) {
+      parseSchedule(s && s.schedule).forEach(function (e) {
+        if (e.day === day) out.push({ time: e.time, student: s });
+      });
+    });
+
+    return out.sort(function (a, b) {
+      if (a.time !== b.time) return a.time < b.time ? -1 : 1;
+      const an = String(a.student && a.student.name);
+      const bn = String(b.student && b.student.name);
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
+  }
+
   const api = {
     WEEKDAYS,
     parseSchedule,
@@ -143,6 +215,10 @@
     mondayOf,
     addDays,
     buildTimetable,
+    monthOf,
+    addMonths,
+    monthGrid,
+    studentsOnDate,
   };
 
   global.GI_SCHEDULE = api;
