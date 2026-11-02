@@ -520,7 +520,11 @@ body.gi .gi-h2{ color:var(--text); }
 }
 /* 시간은 이름 앞에 작게. 같은 칸에서 순서를 가늠하는 값이지 읽을 값은 아니다. */
 .gi-cal-at{ color:var(--state-none); margin-right:0.2rem; }
-.gi-cal-name:disabled{ opacity:0.5; cursor:not-allowed; }
+.gi-cal-name:disabled{ opacity:0.5; }
+/* 못 누르는 이름이 손가락을 가로막으면 그 자리는 눌러도 아무 일이 없다.
+   휴대폰에서는 칸이 이름으로 가득 차 빈자리가 거의 없다. 뒤의 날짜
+   칸이 대신 받게 둔다. */
+.gi-cal-name:disabled{ pointer-events:none; }
 .gi-cal-name:disabled .gi-cal-at{ color:inherit; }
 .gi-cal-rest{ margin-top:0.6rem; }
 
@@ -559,9 +563,14 @@ body.gi .gi-h2{ color:var(--text); }
   color:var(--text-soft);
   background:none;
   border:0;
-  padding:0 0 0.15rem;
+  /* 글자 높이 12px짜리 줄은 손가락 과녁이 못 된다. 칸 너비만큼 띠로 둔다. */
+  min-height:1.5rem;
+  padding:0.2rem 0.25rem;
+  margin:-0.2rem -0.25rem 0.1rem;
+  border-radius:3px;
   cursor:pointer;
 }
+.gi-cal-day:active{ background:var(--surface); }
 .gi-cal-day:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
 .gi-cal-cell.is-open{ outline:2px solid var(--forest); outline-offset:-2px; }
 /* 하루치로 더한 수업은 평소 일정과 구별돼야 한다 — 지울 때 하는 일이 다르다. */
