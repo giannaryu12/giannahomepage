@@ -182,6 +182,10 @@ function lastBooksOf(records) {
 function lastSessionNoOf(records, beforeDate) {
   const limit = String(beforeDate || '');
   const sorted = (records || []).filter(function (r) {
+    // 결석한 날은 세지 않는다. 저장할 때 회차를 비우지만, 그 규칙이 생기기
+    // 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를 이어받으면 안 온 날이
+    // 한 회차를 먹는다.
+    if (isAbsent_(r && r.attendance)) return false;
     return !limit || String(r.date || '') < limit;
   }).sort(function (a, b) {
     return String(b.date || '').localeCompare(String(a.date || ''));

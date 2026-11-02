@@ -230,6 +230,15 @@ describe('lastBooksOf', () => {
 });
 
 describe('lastSessionNoOf', () => {
+  it('결석한 날은 숫자가 남아 있어도 세지 않는다', () => {
+    // 규칙이 생기기 전에 쌓인 결석 기록에는 회차가 적혀 있다. 그 숫자를
+    // 이어받으면 안 온 날이 한 회차를 먹는다.
+    expect(lastSessionNoOf([
+      { date: '2026-08-16', sessionNo: 9, attendance: '출석' },
+      { date: '2026-08-23', sessionNo: 10, attendance: '결석' },
+    ])).toBe(9);
+  });
+
   it('beforeDate를 주면 그 앞의 기록만 본다', () => {
     // 보충은 빠진 날보다 뒤, 그 뒤 수업보다는 앞에 끼어든다. 전체에서
     // 가장 큰 회차를 쓰면 보충과 그 뒤 수업이 같은 회차가 된다.
