@@ -31,6 +31,26 @@
   }
 
   /**
+   * 화면에 적을 학년. '초5' → '초등부 5학년'.
+   *
+   * 시트에는 짧게 적는다 — 선생님이 손으로 넣는 칸이라 짧은 편이 낫다.
+   * 화면에서는 풀어 적는다. 학교급과 학년이 두 글자에 붙어 있으면 읽는
+   * 쪽이 매번 머릿속에서 풀어야 한다.
+   *
+   * 학년을 읽을 수 없으면 반 이름에서 학교급만 읽고, 그것도 없으면 적힌
+   * 그대로 돌려준다 — 손으로 적어 둔 값을 추측해서 고치지 않는다.
+   */
+  function gradeLabel(grade, className) {
+    const raw = String(grade == null ? '' : grade).trim();
+    const key = classLevel(raw) || classLevel(className);
+    const level = LEVELS.filter(function (l) { return l.key === key; })[0];
+    if (!level) return raw;
+
+    const num = (/(\d)/.exec(raw) || [])[1];
+    return level.label + (num ? ' ' + num + '학년' : '');
+  }
+
+  /**
    * 반 목록을 세 학교급으로 나눈다. 순서는 늘 초·중·고로 고정이고,
    * 비어 있는 학교급도 자리를 지킨다 — 열이 셋이어야 칸이 밀리지 않는다.
    *
@@ -53,7 +73,7 @@
     };
   }
 
-  const api = { LEVELS, classLevel, groupByLevel };
+  const api = { LEVELS, classLevel, gradeLabel, groupByLevel };
 
   global.GI_CLASS_LEVEL = api;
 

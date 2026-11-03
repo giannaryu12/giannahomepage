@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classLevel, groupByLevel, LEVELS } from '../public/assets/js/class-level.js';
+import { classLevel, gradeLabel, groupByLevel, LEVELS } from '../public/assets/js/class-level.js';
 
 describe('classLevel', () => {
   it('이름 맨 앞의 초·중·고를 읽는다', () => {
@@ -94,5 +94,28 @@ describe('groupByLevel', () => {
 
   it('LEVELS는 화면이 그리는 세 열과 같다', () => {
     expect(LEVELS.map((l) => l.key)).toEqual(['elem', 'mid', 'high']);
+  });
+});
+
+
+describe('gradeLabel — 화면에 적을 학년', () => {
+  it("'초5'를 '초등부 5학년'으로 푼다", () => {
+    expect(gradeLabel('초5')).toBe('초등부 5학년');
+    expect(gradeLabel('중2')).toBe('중등부 2학년');
+    expect(gradeLabel('고3')).toBe('고등부 3학년');
+  });
+
+  it('학년에 학교급이 없으면 반 이름에서 읽는다', () => {
+    expect(gradeLabel('6학년', '초등부 A')).toBe('초등부 6학년');
+  });
+
+  it('학교급만 있으면 학년은 적지 않는다', () => {
+    expect(gradeLabel('초')).toBe('초등부');
+  });
+
+  it('읽을 수 없으면 적힌 그대로 둔다', () => {
+    expect(gradeLabel('예비고1반')).toBe('예비고1반');
+    expect(gradeLabel('')).toBe('');
+    expect(gradeLabel(null)).toBe('');
   });
 });

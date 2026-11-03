@@ -30,22 +30,9 @@
     return CL.classLevel(s && s.grade) || CL.classLevel(s && s.className) || '';
   }
 
-  /**
-   * 화면에 적을 학년. '초5' → '초등부, 5학년'.
-   *
-   * 시트에는 '초5'처럼 짧게 적는다 — 선생님이 손으로 넣는 칸이라 짧은 편이
-   * 낫다. 화면에서는 풀어 적는다. 학교급과 학년이 두 글자에 붙어 있으면
-   * 읽는 쪽이 매번 머릿속에서 풀어야 한다.
-   * 읽을 수 없는 학년은 손대지 않고 적힌 그대로 보여 준다.
-   */
+  /** 화면에 적을 학년. '초5' → '초등부 5학년'. 학부모 화면도 같은 것을 쓴다. */
   function gradeLabel(s) {
-    const raw = String((s && s.grade) || '').trim();
-    const key = CL.classLevel(raw) || CL.classLevel(s && s.className);
-    const level = CL.LEVELS.filter(function (l) { return l.key === key; })[0];
-    if (!level) return raw;
-
-    const num = (/(\d)/.exec(raw) || [])[1];
-    return level.label + (num ? ' ' + num + '학년' : '');
+    return CL.gradeLabel(s && s.grade, s && s.className);
   }
 
   /** 학교급마다 있는 학년. 초등은 6학년까지, 중·고는 3학년까지다. */

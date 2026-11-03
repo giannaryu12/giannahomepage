@@ -6,6 +6,7 @@
   const api = createApi(window.GIANNA_CONFIG.GAS_URL);
   const PA = window.GI_PROGRESS_AREAS;
   const FMT = window.GI_FORMAT;
+  const CL = window.GI_CLASS_LEVEL;
   const $state = document.getElementById('state');
   const $content = document.getElementById('content');
 
@@ -483,8 +484,10 @@
 
     api.call('parent.load', { token: token }).then(function (data) {
       document.getElementById('studentName').textContent = data.student.name + ' 학습 리포트';
+      // '초5 · 초등부 A'가 아니라 '초등부 5학년'. 반 이름은 적지 않는다 —
+      // 초등부가 두 번 나오고, 학부모에게 반 이름은 알려 준 적 없는 말이다.
       document.getElementById('studentMeta').textContent =
-        [data.student.grade, data.student.className].filter(Boolean).join(' · ');
+        CL.gradeLabel(data.student.grade, data.student.className);
       document.title = data.student.name + ' 학습 리포트 · 지아나영어';
 
       renderCards(data.summary);
