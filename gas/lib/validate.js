@@ -7,6 +7,8 @@ const HOMEWORK_LEVEL = ['상', '중', '하', ''];
 // 변경 — 그날 수업을 다른 날로 옮겼다. 안 온 것과 구별해야 한다:
 // 결석은 수업이 사라지고, 변경은 옮긴 날에 그 수업이 있다.
 const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
+const RECORD_KINDS = ['regular', 'exam'];
+const EXAM_ITEM_FIELDS = ['examItems', 'examNext'];
 
 function isBlank(v) {
   return v === '' || v === null || v === undefined;
@@ -20,6 +22,17 @@ function validateRecord(rec) {
   const errors = [];
 
   if (isBlank(rec.studentId)) errors.push('studentId 누락');
+
+  // 갈래. 빈 값은 정기수업이다 (gas/lib/records.js의 recordKind_).
+  if (!isBlank(rec.kind) && RECORD_KINDS.indexOf(String(rec.kind)) === -1) {
+    errors.push('kind 값 오류');
+  }
+
+  // 시험대비 칸 목록은 JSON 한 줄이다. 길이만 막는다 — 한 셀에 50000자까지
+  // 들어가므로 실수로 붙여 넣은 긴 글이 시트를 통째로 망가뜨릴 수 있다.
+  EXAM_ITEM_FIELDS.forEach(function (f) {
+    if (!isBlank(rec[f]) && String(rec[f]).length > 8000) errors.push(f + ' 너무 깁니다');
+  });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(rec.date || ''))) errors.push('date 형식 오류');
 
   if (!isBlank(rec.attendance) && ATTENDANCE.indexOf(rec.attendance) === -1) {

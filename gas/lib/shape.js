@@ -10,6 +10,11 @@
 // 어긋나지 않는지는 test/field-parity.test.js가 확인한다.
 const PARENT_RECORD_FIELDS = [
   'date',
+  // 'regular' 정기수업 · 'exam' 시험대비. 화면이 꼬리표를 달고, 시험대비는
+  // 진도·숙제 두 줄만 그린다.
+  'kind',
+  'examItems',
+  'examNext',
   'sessionNo',
   'progress',
   'vocabBook',
@@ -98,6 +103,9 @@ function hasParentContent_(record) {
 
   // 결석과 변경은 그 자체가 전할 내용이다. 다른 칸이 비어 있어도 보인다.
   if (rec.attendance === '결석' || rec.attendance === '변경') return true;
+
+  // 시험대비는 적어 둔 칸이 전부다. 출결도 시험 점수도 없다.
+  if (filled_(rec.examItems) || filled_(rec.examNext)) return true;
   if (filled_(rec.comment)) return true;
 
   if (filled_(rec.progress)) return true;

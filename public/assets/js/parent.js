@@ -7,6 +7,7 @@
   const PA = window.GI_PROGRESS_AREAS;
   const FMT = window.GI_FORMAT;
   const CL = window.GI_CLASS_LEVEL;
+  const EI = window.GI_EXAM_ITEMS;
   const $state = document.getElementById('state');
   const $content = document.getElementById('content');
 
@@ -398,6 +399,26 @@
     return r.attendance === '결석' ? '결석' : '';
   }
 
+  /**
+   * 시험대비 기록의 한 줄. 선생님이 만든 칸을 그대로 옮긴다.
+   *
+   * 칸 이름이 자유로우므로 정해진 영역 이름(단어·문법…)으로 바꾸지 않는다.
+   * 선생님이 '모의고사 3회분'이라고 적었으면 학부모도 그대로 읽는다.
+   */
+  function examRows(label, raw) {
+    const items = EI.parseItems(raw);
+    if (!items.length) return '';
+
+    return groupRow(label, items.map(function (it) {
+      return { label: it.name || '—', book: it.book, bookBelow: true, text: it.text };
+    }));
+  }
+
+  /** 시험대비 기록인가. 빈 값은 정기수업이다. */
+  function isExam(r) {
+    return String((r && r.kind) || '') === 'exam';
+  }
+
   function recordHtml(r, index) {
     const badges =
       badge(r.attendance, ATTENDANCE_TONE[r.attendance]) +
@@ -413,21 +434,28 @@
           '<p class="gi-say-text">' + esc(r.comment) + '</p>' +
         '</div>' : '';
 
+    // 시험대비에는 출결도 시험 점수도 없다. 적어 둔 칸만 그린다.
+    const inner = isExam(r)
+      ? examRows('진도', r.examItems) + examRows('숙제', r.examNext)
+      : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
+        // 상태 · 시험 · 진도 · 숙제 차례다. 학부모가 먼저 찾는 것은
+        // 그날 본 시험 점수이고, 진도와 숙제는 그 뒤에 읽는다.
+        testRows(r) + progressRows(r) + nextRows(r);
+
+    // 접힌 줄에서도 어느 쪽 수업인지 보여야 한다. 같은 날 두 줄이 서면
+    // 날짜만으로는 구별되지 않는다.
+    const tail = isExam(r)
+      ? '<span class="gi-rec-kind">시험대비</span>'
+      : '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>';
+
     return '' +
       '<article class="gi-rec">' +
         '<button class="gi-rec-top" type="button" aria-expanded="false" aria-controls="rb' + index + '">' +
           '<span class="gi-rec-date">' + esc(FMT.dateLabel(r.date)) + '</span>' +
-          '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>' +
+          tail +
         '</button>' +
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
-          '<dl style="margin:0">' +
-            '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
-            // 상태 · 시험 · 진도 · 숙제 차례다. 학부모가 먼저 찾는 것은
-            // 그날 본 시험 점수이고, 진도와 숙제는 그 뒤에 읽는다.
-            testRows(r) +
-            progressRows(r) +
-            nextRows(r) +
-          '</dl>' + comment +
+          '<dl style="margin:0">' + inner + '</dl>' + comment +
         '</div>' +
       '</article>';
   }

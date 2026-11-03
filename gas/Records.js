@@ -18,6 +18,25 @@ function recordsOfStudent_(studentId) {
   });
 }
 
+/**
+ * 그 학생이 마지막으로 쓴 시험대비 칸 구성. 없으면 빈 목록이다.
+ *
+ * 가장 최근 시험대비 기록의 칸 이름만 뽑는다. 따로 저장해 두지 않는
+ * 까닭: 구성은 결국 "지난번에 뭘 했나"이고, 그 답은 이미 기록에 있다.
+ * 칸 목록을 또 어딘가에 적어 두면 기록과 어긋날 자리가 하나 생긴다.
+ */
+function lastExamTemplateOf_(records) {
+  const exams = (records || [])
+    .filter(function (r) { return recordKind_(r && r.kind) === 'exam'; })
+    .sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+
+  const last = exams[0];
+  return {
+    items: itemTemplate(parseItems(last && last.examItems)),
+    next: itemTemplate(parseItems(last && last.examNext)),
+  };
+}
+
 function handleAdminRoster(body) {
   requireSession_(body.sessionKey);
 
@@ -41,6 +60,10 @@ function handleAdminRoster(body) {
         // 그날 앞의 기록만 본다. 보충을 끼워 넣을 때 그 뒤 수업의
         // 회차를 받아 오면 두 날이 같은 회차가 된다.
         lastSessionNo: lastSessionNoOf(mine, body.date),
+        // 시험대비 칸 구성. 이름만 물려준다 — 칸은 학생마다 다르고
+        // 잘 바뀌지 않지만, 지난주에 푼 교재·범위까지 따라오면 하지 않은
+        // 수업이 기록에 남는다.
+        lastExam: lastExamTemplateOf_(mine),
       };
     });
 

@@ -30,6 +30,10 @@
 
   // 기록 입력 화면 상태
   let currentStudent = null;
+  // 'regular' 정기수업 · 'exam' 시험대비. 같은 날에 둘이 따로 쌓인다.
+  let currentKind = 'regular';
+  // 그 날짜에 이미 있는 기록들. 탭을 옮길 때 서버에 다시 묻지 않으려고 쥐고 있다.
+  let openRecords = [];
   let currentClassId = '';
   let currentDate = '';
   let recordOrigin = 'schedule'; // 'schedule' | 'students' — 돌아가기 목적지
@@ -40,7 +44,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261103p';
+  const BUILD = 'v20261103q';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -184,29 +188,32 @@
 
   /* ---------- 기록 입력 화면 ---------- */
 
-  function recordDraftKey(classId, date, studentId) {
-    return DRAFT_PREFIX + classId + '.' + date + '.' + studentId;
+  // 갈래까지 키에 넣는다. 같은 날 정기수업과 시험대비를 번갈아 적을 때
+  // 키가 같으면 한쪽 초안이 다른 쪽을 덮어쓴다.
+  function recordDraftKey(classId, date, studentId, kind) {
+    return DRAFT_PREFIX + classId + '.' + date + '.' + studentId +
+      (kind === 'exam' ? '.exam' : '');
   }
 
   function saveRecordDraft() {
     if (!currentStudent) return;
     try {
       localStorage.setItem(
-        recordDraftKey(currentClassId, currentDate, currentStudent.studentId),
+        recordDraftKey(currentClassId, currentDate, currentStudent.studentId, currentKind),
         JSON.stringify(recordForm)
       );
     } catch (e) { /* 저장 공간이 없으면 조용히 넘어간다 */ }
   }
 
-  function loadRecordDraft(classId, date, studentId) {
+  function loadRecordDraft(classId, date, studentId, kind) {
     try {
-      const raw = localStorage.getItem(recordDraftKey(classId, date, studentId));
+      const raw = localStorage.getItem(recordDraftKey(classId, date, studentId, kind));
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   }
 
-  function clearRecordDraft(classId, date, studentId) {
-    try { localStorage.removeItem(recordDraftKey(classId, date, studentId)); } catch (e) { /* noop */ }
+  function clearRecordDraft(classId, date, studentId, kind) {
+    try { localStorage.removeItem(recordDraftKey(classId, date, studentId, kind)); } catch (e) { /* noop */ }
   }
 
   function renderChoiceGroup(containerId, values, field) {
@@ -255,6 +262,49 @@
     }).join('');
   }
 
+  /* ---------- 시험대비 칸 ---------- */
+
+  /**
+   * 칸 한 줄 — 이름 · 교재 · 내용 · 지우기.
+   *
+   * 줄마다 자리 번호를 붙인다. 지울 때 그 번호로 빼므로, 같은 이름의 칸이
+   * 둘 있어도 누른 줄만 사라진다.
+   */
+  function examRowHtml(list, at, row) {
+    const cell = function (key, placeholder) {
+      return '<input class="gi-input" type="text"' +
+        ' data-exam="' + list + '" data-at="' + at + '" data-key="' + key + '"' +
+        ' placeholder="' + placeholder + '" aria-label="' + placeholder + '">';
+    };
+
+    return '<div class="gi-area gi-exam-row">' +
+      cell('name', '이름') + cell('book', '교재') + cell('text', '내용') +
+      '<button class="gi-choice gi-exam-del" type="button"' +
+      ' data-exam-del="' + list + '" data-at="' + at + '"' +
+      ' aria-label="이 칸 지우기">✕</button>' +
+    '</div>';
+  }
+
+  function renderExamList(list) {
+    const rows = recordForm[list] || [];
+
+    $(list).innerHTML = rows.length
+      ? rows.map(function (row, at) { return examRowHtml(list, at, row); }).join('')
+      : '<p class="gi-note">아직 칸이 없습니다. 아래 + 칸 추가를 눌러 주세요.</p>';
+
+    // 값은 속성이 아니라 프로퍼티로 넣는다. 따옴표가 든 교재명이 마크업을
+    // 깨뜨리지 않는다 (영역 입력칸과 같은 이유).
+    $(list).querySelectorAll('[data-exam]').forEach(function (el) {
+      const row = rows[Number(el.dataset.at)] || {};
+      el.value = row[el.dataset.key] || '';
+    });
+  }
+
+  function renderExamFields() {
+    renderExamList('examItems');
+    renderExamList('examNext');
+  }
+
   function fillFieldValues() {
     // value는 속성 문자열이 아니라 프로퍼티로 넣는다. 따옴표가 든 교재명이
     // 마크업을 깨뜨리지 않는다.
@@ -284,9 +334,19 @@
     return [name, scoreText].filter(Boolean).join(' ');
   }
 
+  function syncKindTabs() {
+    $('recKindTabs').querySelectorAll('[data-kind]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.kind === currentKind));
+    });
+    $('regularFields').hidden = currentKind !== 'regular';
+    $('examFields').hidden = currentKind !== 'exam';
+  }
+
   function fillRecordView() {
     $('recordWho').textContent = currentStudent.name + (currentStudent.grade ? ' · ' + currentStudent.grade : '');
     $('recordDateInput').value = currentDate;
+    syncKindTabs();
+    renderExamFields();
     renderFieldGroups();
     fillFieldValues();
 
@@ -339,11 +399,23 @@
 
     // records를 넘겼으면 그것만 본다. 빈 배열도 유효한 답(기록 없음)이므로
     // 수업 탭이 들고 있는 다른 반/날짜 기록으로 넘어가면 안 된다.
-    const lookupRecords = records || [];
-    const rec = RF.findRecordFor(lookupRecords, student.studentId);
-    let values = RF.toFormValues(rec);
+    openRecords = records || [];
+    loadKind();
+  }
 
-    const saved = loadRecordDraft(classId, date, student.studentId);
+  /**
+   * 열어 둔 날짜의 기록 중 지금 갈래의 것을 화면에 올린다.
+   *
+   * 탭을 옮길 때도 이 함수만 다시 부른다 — 그 날짜 기록은 이미 손에
+   * 있으므로 서버에 다시 묻지 않는다.
+   */
+  function loadKind() {
+    const student = currentStudent;
+    const rec = RF.findRecordFor(openRecords, student.studentId, currentKind);
+    let values = RF.toFormValues(rec);
+    values.kind = currentKind;
+
+    const saved = loadRecordDraft(currentClassId, currentDate, student.studentId, currentKind);
     if (saved) values = Object.assign({}, values, saved);
 
     // 자동 채움은 초안을 얹은 뒤에 한다. 먼저 채우면, 교재가 빈 채로 저장된
@@ -352,9 +424,17 @@
     //
     // 그날 기록이 아직 없을 때만 채운다. 지난 기록을 고치러 열었을 때
     // 채우면 그때 쓰지 않던 최신 교재가 옛 기록에 들어앉는다.
-    if (!rec) {
+    if (!rec && currentKind === 'regular') {
       values = RF.withBookDefaults(values, student.lastBooks);
       values = RF.withSessionDefault(values, student.lastSessionNo);
+    }
+
+    // 시험대비는 칸 이름만 지난번 구성에서 물려받는다. 적어 둔 것도
+    // 초안도 없을 때만이다 — 있으면 그것이 선생님이 만든 구성이다.
+    if (!rec && !saved && currentKind === 'exam') {
+      const last = (student.lastExam || {});
+      values.examItems = (last.items || []).slice();
+      values.examNext = (last.next || []).slice();
     }
 
     recordForm = values;
@@ -377,6 +457,8 @@
         const withLast = Object.assign({}, student, {
           lastBooks: inRoster && inRoster.lastBooks,
           lastSessionNo: inRoster && inRoster.lastSessionNo,
+          // 시험대비 칸 구성(이름만). 그 학생의 지난 시험대비 기록에서 왔다.
+          lastExam: inRoster && inRoster.lastExam,
         });
 
         openRecord(withLast, student.classId, date, origin, data.existingRecords);
@@ -440,6 +522,11 @@
     if (!btn) return;
 
     const field = btn.dataset.field;
+    // 출결·과제처럼 값을 고르는 단추만 여기서 다룬다. 갈래 탭과 칸
+    // 더하기·지우기도 같은 .gi-choice인데, 걸러 내지 않으면 그 단추를
+    // 누를 때마다 recordForm[undefined]에 값이 적히고 눌러 둔 탭이 꺼진다.
+    if (!field) return;
+
     const value = btn.dataset.value;
     const wasOn = btn.getAttribute('aria-pressed') === 'true';
     const group = btn.parentElement;
@@ -488,10 +575,62 @@
   }
 
   $('recordView').addEventListener('input', function (e) {
-    const field = e.target.dataset && e.target.dataset.field;
-    if (!field) return;
-    recordForm[field] = e.target.value;
+    const data = e.target.dataset || {};
+
+    if (data.exam) {
+      const rows = recordForm[data.exam] || [];
+      const row = rows[Number(data.at)];
+      if (!row) return;
+
+      row[data.key] = e.target.value;
+      saveRecordDraft();
+      return;
+    }
+
+    if (!data.field) return;
+    recordForm[data.field] = e.target.value;
     saveRecordDraft();
+  });
+
+  /* ---------- 갈래 탭과 칸 더하기·지우기 ---------- */
+
+  $('recKindTabs').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-kind]');
+    if (!btn || !currentStudent) return;
+
+    const want = btn.dataset.kind;
+    if (want === currentKind) return;
+
+    // 옮기기 전에 지금 적던 것을 초안으로 남긴다. 돌아오면 그대로 있다.
+    saveRecordDraft();
+    currentKind = want;
+    loadKind();
+    $('recordStatus').textContent = '';
+  });
+
+  $('examFields').addEventListener('click', function (e) {
+    const add = e.target.closest('[data-exam-add]');
+    if (add) {
+      const list = add.dataset.examAdd;
+      recordForm[list] = (recordForm[list] || []).concat([{ name: '', book: '', text: '' }]);
+      saveRecordDraft();
+      renderExamList(list);
+
+      // 새로 만든 줄의 이름 칸으로 바로 커서를 옮긴다. 더하고 나서 다시
+      // 눌러야 적을 수 있으면 칸을 여러 개 만들 때마다 손이 두 번 간다.
+      const rows = $(list).querySelectorAll('[data-key="name"]');
+      if (rows.length) rows[rows.length - 1].focus();
+      return;
+    }
+
+    const del = e.target.closest('[data-exam-del]');
+    if (!del) return;
+
+    const list = del.dataset.examDel;
+    const at = Number(del.dataset.at);
+    recordForm[list] = (recordForm[list] || []).filter(function (row, i) { return i !== at; });
+    saveRecordDraft();
+    renderExamList(list);
   });
 
   function saveRecord() {
@@ -504,6 +643,7 @@
     const st = currentStudent;
     const cid = currentClassId;
     const dt = currentDate;
+    const kd = currentKind;
     // 날짜만 바꿔도 화면은 다른 기록이 된다. 학생과 날짜가 모두 그대로일 때만
     // 이 저장의 결과를 화면에 반영한다.
     const stillOpen = function () { return currentStudent === st && currentDate === dt; };
@@ -530,7 +670,7 @@
       clientRequestId: 'b' + Date.now() + Math.random().toString(36).slice(2, 8),
       records: [record],
     }).then(function () {
-      clearRecordDraft(cid, dt, st.studentId);
+      clearRecordDraft(cid, dt, st.studentId, kd);
       if (stillOpen()) $('recordStatus').textContent = '저장했습니다.';
     }).catch(function (err) {
       if (stillOpen()) $('recordStatus').textContent = '';

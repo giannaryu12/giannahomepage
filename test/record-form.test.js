@@ -43,6 +43,7 @@ describe('findRecordFor', () => {
 describe('toFormValues', () => {
   it('record가 null이면 전부 빈 문자열', () => {
     expect(toFormValues(null)).toEqual({
+      kind: 'regular', examItems: [], examNext: [],
       sessionNo: '',
       progress: '', attendance: '', homeworkStatus: '', homeworkLevel: '',
       testName: '', testScore: '', testMax: '', nextHomework: '', comment: '',
@@ -57,6 +58,7 @@ describe('toFormValues', () => {
       testName: '중간고사', testScore: 85, testMax: 100, nextHomework: 'Unit 8', comment: '잘함',
     };
     expect(toFormValues(record)).toEqual({
+      kind: 'regular', examItems: [], examNext: [],
       sessionNo: '12',
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', nextHomework: 'Unit 8', comment: '잘함',
@@ -90,7 +92,9 @@ describe('buildRecord', () => {
     };
     const rec = buildRecord('s1', '2026-08-30', form);
     expect(rec).toEqual({
-      studentId: 's1', date: '2026-08-30', sessionNo: '12',
+      studentId: 's1', date: '2026-08-30',
+      kind: 'regular', examItems: '', examNext: '',
+      sessionNo: '12',
       progress: 'Unit 7', nextHomework: 'Unit 8',
       attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', comment: '잘함',
@@ -243,5 +247,41 @@ describe('withSessionDefault', () => {
     const values = { sessionNo: '' };
     withSessionDefault(values, 3);
     expect(values.sessionNo).toBe('');
+  });
+});
+
+describe('갈래(정기수업 · 시험대비)', () => {
+  const regular = { studentId: 'S1', date: '2026-11-24', sessionNo: 14 };
+  const exam = {
+    studentId: 'S1', date: '2026-11-24', kind: 'exam',
+    examItems: '[{"name":"모의고사","book":"9월 모평","text":"3회분"}]',
+  };
+
+  it('같은 날 두 기록 중 갈래에 맞는 것을 찾는다', () => {
+    const rows = [regular, exam];
+    expect(findRecordFor(rows, 'S1', 'regular')).toBe(regular);
+    expect(findRecordFor(rows, 'S1', 'exam')).toBe(exam);
+  });
+
+  it('갈래를 안 주면 정기수업이다 — 이 칸이 생기기 전 기록이 전부 그렇다', () => {
+    expect(findRecordFor([exam, regular], 'S1')).toBe(regular);
+  });
+
+  it('시험대비 칸을 배열로 읽어 온다', () => {
+    const v = toFormValues(exam);
+    expect(v.kind).toBe('exam');
+    expect(v.examItems).toEqual([{ name: '모의고사', book: '9월 모평', text: '3회분' }]);
+    expect(v.examNext).toEqual([]);
+  });
+
+  it('보낼 때는 다시 JSON 한 줄이 된다. 빈 줄은 버린다', () => {
+    const rec = buildRecord('S1', '2026-11-24', {
+      kind: 'exam',
+      examItems: [{ name: '어법', book: '', text: '1~40번' }, { name: '', book: '', text: '' }],
+      examNext: [],
+    });
+    expect(rec.kind).toBe('exam');
+    expect(JSON.parse(rec.examItems)).toEqual([{ name: '어법', book: '', text: '1~40번' }]);
+    expect(rec.examNext).toBe('');
   });
 });

@@ -36,7 +36,18 @@ const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
 const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
 
 /** 영역 필드는 아니지만 시트에 없으면 만들어야 하는 칸. */
-const RECORD_EXTRA_FIELDS = ['sessionNo'];
+const RECORD_EXTRA_FIELDS = ['sessionNo', 'kind', 'examItems', 'examNext'];
+
+/**
+ * 기록의 갈래. 'regular' 정기수업 · 'exam' 시험대비.
+ *
+ * 빈 값은 정기수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다.
+ * 모르는 값도 정기수업으로 둔다. 시트를 손으로 고치다 오타가 나면 그
+ * 기록이 어느 쪽에도 안 뜨고 사라지는 쪽이 더 나쁘다.
+ */
+function recordKind_(kind) {
+  return String(kind || '') === 'exam' ? 'exam' : 'regular';
+}
 
 /** 직전 수업 값으로 미리 채우는 교재 칸들. */
 const BOOK_FIELDS =
@@ -91,11 +102,18 @@ function isNumericColumn_(key) {
   return /TestScore$/.test(name) || /TestMax$/.test(name);
 }
 
-/** rows 중 studentId·date가 모두 일치하는 첫 행. 없으면 null. */
-function findRecordMatch(rows, studentId, date) {
+/**
+ * rows 중 studentId·date·갈래가 모두 일치하는 첫 행. 없으면 null.
+ *
+ * 갈래까지 보는 까닭: 같은 날 정기수업도 하고 시험대비도 할 수 있다.
+ * 날짜만 보면 둘 중 나중에 저장한 것이 앞의 것을 덮어쓴다.
+ */
+function findRecordMatch(rows, studentId, date, kind) {
+  const want = recordKind_(kind);
   const match = (rows || []).filter(function (r) {
     return String(r.studentId) === String(studentId)
-      && String(r.date) === String(date);
+      && String(r.date) === String(date)
+      && recordKind_(r.kind) === want;
   })[0];
   return match || null;
 }
@@ -111,6 +129,11 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     studentId: rec.studentId,
     classId: classId,
     date: rec.date,
+    kind: recordKind_(rec.kind),
+    // 시험대비의 진도·숙제 칸. 목록 하나가 한 칸에 JSON으로 들어간다
+    // (gas/lib/exam-items.js).
+    examItems: rec.examItems || '',
+    examNext: rec.examNext || '',
     // 영역 구분이 생기기 전에 쌓인 진도. 새 기록에는 쓰지 않지만, 화면이
     // 돌려준 값을 그대로 다시 적어 옛 기록이 지워지지 않게 한다.
     progress: rec.progress || '',
@@ -186,6 +209,8 @@ function lastSessionNoOf(records, beforeDate) {
     // 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를 이어받으면 안 온 날이
     // 한 회차를 먹는다.
     if (isAbsent_(r && r.attendance)) return false;
+    // 시험대비는 회차를 세지 않는다. 정기수업 묶음과 다른 일이다.
+    if (recordKind_(r && r.kind) === 'exam') return false;
     return !limit || String(r.date || '') < limit;
   }).sort(function (a, b) {
     return String(b.date || '').localeCompare(String(a.date || ''));
@@ -202,6 +227,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     PROGRESS_AREA_KEYS,
     RECORD_EXTRA_FIELDS,
+    recordKind_,
     lastSessionNoOf,
     TEST_AREA_KEYS,
     PROGRESS_FIELDS,

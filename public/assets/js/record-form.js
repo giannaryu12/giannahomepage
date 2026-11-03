@@ -9,6 +9,10 @@
   const PA = typeof module !== 'undefined'
     ? require('./progress-areas.js')
     : global.GI_PROGRESS_AREAS;
+  // 시험대비 칸은 서버와 같은 규칙으로 읽고 쓴다 (gas/lib/exam-items.js).
+  const EI = typeof module !== 'undefined'
+    ? require('./exam-items.js')
+    : global.GI_EXAM_ITEMS;
   const AREA_FIELDS = PA.RECORD_AREA_FIELDS;
   const BOOK_FIELDS = PA.BOOK_FIELDS;
 
@@ -16,11 +20,23 @@
     return v === null || v === undefined ? '' : String(v);
   }
 
-  function findRecordFor(existingRecords, studentId) {
+  /** 빈 값은 정기수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다. */
+  function kindOf(kind) {
+    return String(kind || '') === 'exam' ? 'exam' : 'regular';
+  }
+
+  /**
+   * 그 학생의 그날 기록. 갈래까지 맞춰 찾는다 — 같은 날 정기수업과
+   * 시험대비가 따로 쌓이므로, 학생만 보면 둘 중 먼저 나온 것이 걸린다.
+   */
+  function findRecordFor(existingRecords, studentId, kind) {
     if (!studentId) return null;
     if (!existingRecords || !existingRecords.length) return null;
+
+    const want = kindOf(kind);
     for (let i = 0; i < existingRecords.length; i++) {
-      if (existingRecords[i].studentId === studentId) return existingRecords[i];
+      const r = existingRecords[i];
+      if (r.studentId === studentId && kindOf(r.kind) === want) return r;
     }
     return null;
   }
@@ -28,6 +44,11 @@
   function toFormValues(record) {
     const r = record || {};
     const out = {
+      kind: kindOf(r.kind),
+      // 시험대비의 진도·숙제 칸 목록. 화면에서는 배열로 다루고, 보낼 때만
+      // 다시 JSON 한 줄로 만든다.
+      examItems: EI.parseItems(r.examItems),
+      examNext: EI.parseItems(r.examNext),
       sessionNo: str(r.sessionNo),
       // 영역 구분이 생기기 전에 쌓인 진도. 화면에 입력칸은 없지만 그대로
       // 실어 보내야 저장할 때 서버가 빈 값으로 덮어쓰지 않는다.
@@ -82,6 +103,9 @@
     const out = {
       studentId: str(studentId),
       date: str(date),
+      kind: kindOf(f.kind),
+      examItems: EI.stringifyItems(f.examItems),
+      examNext: EI.stringifyItems(f.examNext),
       sessionNo: str(f.sessionNo),
       progress: str(f.progress),
       nextHomework: str(f.nextHomework),
@@ -100,6 +124,7 @@
   }
 
   const api = {
+    kindOf,
     findRecordFor, toFormValues, buildRecord,
     withBookDefaults, withSessionDefault,
   };

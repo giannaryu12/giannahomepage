@@ -40,7 +40,8 @@ describe('진도 영역 필드 목록', () => {
 
   it('학부모 응답 allowlist에 영역 필드 아닌 값이 섞여 들어오지 않았다', () => {
     const known = [
-      'date', 'sessionNo', 'progress', 'homeworkStatus', 'homeworkLevel',
+      'date', 'kind', 'examItems', 'examNext',
+      'sessionNo', 'progress', 'homeworkStatus', 'homeworkLevel',
       'testName', 'testScore', 'testMax', 'attendance', 'nextHomework', 'comment',
     ].concat(GAS_FIELDS);
 
@@ -61,5 +62,30 @@ describe('시험 통계 묶음', () => {
     const members = UI_SUMMARY.reduce((acc, g) => acc.concat(g.memberKeys), []);
     expect(new Set(members).size).toBe(members.length);
     expect(members.slice().sort()).toEqual(TEST_AREAS.map((a) => a.key).slice().sort());
+  });
+});
+
+/**
+ * 시험대비 칸(JSON 한 줄)을 읽고 쓰는 규칙은 서버와 화면이 똑같아야 한다.
+ * 한쪽만 고치면 선생님이 적은 칸이 학부모 화면에서 사라지거나, 저장할 때
+ * 조용히 버려진다. 두 파일의 본문을 글자 그대로 견준다.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+
+describe('시험대비 칸 규칙', () => {
+  const core = (file) => {
+    const src = fs.readFileSync(path.resolve(__dirname, '..', file), 'utf8');
+    const start = src.indexOf('/** 칸 하나의 자리.');
+    const end = src.indexOf('const api = {') > -1 && src.indexOf('const api = {') > start
+      ? src.indexOf('const api = {')
+      : src.indexOf('if (typeof module');
+    expect(start).toBeGreaterThan(-1);
+    return src.slice(start, end)
+      .split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
+  };
+
+  it('gas/lib와 public/assets/js의 본문이 같다', () => {
+    expect(core('public/assets/js/exam-items.js')).toBe(core('gas/lib/exam-items.js'));
   });
 });

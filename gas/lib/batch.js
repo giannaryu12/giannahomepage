@@ -15,7 +15,7 @@ function planRecordBatch(input) {
   let saved = 0;
 
   records.forEach(function (rec) {
-    const match = findRecordMatch(existing, rec.studentId, rec.date);
+    const match = findRecordMatch(existing, rec.studentId, rec.date, rec.kind);
     const payload = buildRecordPayload(rec, opts.classId, opts.clientRequestId, opts.now);
 
     if (match) {

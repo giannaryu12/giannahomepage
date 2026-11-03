@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103p">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261103p">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103q">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261103q">
 </head>
 <body class="gi">
 
@@ -67,13 +67,22 @@
         <input class="gi-input" type="date" id="recordDateInput">
       </div>
 
+      <div id="recordError" class="gi-error" hidden></div>
+
+      <!-- 정기수업과 시험대비는 같은 날에 따로 쌓인다. 탭을 옮기면 그 날의
+           그 갈래 기록을 연다 — 서버에 다시 묻지 않는다. -->
+      <div class="gi-choices gi-kind-tabs" id="recKindTabs">
+        <button class="gi-choice" type="button" data-kind="regular" aria-pressed="true">정기수업</button>
+        <button class="gi-choice" type="button" data-kind="exam" aria-pressed="false">시험대비</button>
+      </div>
+
+      <div id="regularFields">
       <div class="gi-field">
         <label class="gi-label" for="recSessionNo">회차</label>
         <input class="gi-input" type="number" inputmode="numeric" min="1"
                id="recSessionNo" data-field="sessionNo" placeholder="예: 12">
       </div>
 
-      <div id="recordError" class="gi-error" hidden></div>
 
       <div class="gi-field">
         <span class="gi-label">진도</span>
@@ -112,6 +121,22 @@
         <label class="gi-label" for="recComment">코멘트</label>
         <textarea class="gi-textarea" id="recComment" data-field="comment"></textarea>
       </div>
+      </div>
+
+      <!-- 시험대비는 진도와 숙제뿐이다. 칸은 선생님이 만들고 지운다. -->
+      <div id="examFields" hidden>
+        <div class="gi-field">
+          <span class="gi-label">진도</span>
+          <div id="examItems"></div>
+          <button class="gi-choice gi-exam-add" type="button" data-exam-add="examItems">+ 칸 추가</button>
+        </div>
+
+        <div class="gi-field">
+          <span class="gi-label">숙제</span>
+          <div id="examNext"></div>
+          <button class="gi-choice gi-exam-add" type="button" data-exam-add="examNext">+ 칸 추가</button>
+        </div>
+      </div>
 
       <div class="gi-savebar">
         <span class="gi-note" id="recordStatus"></span>
@@ -124,14 +149,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261103p"></script>
-<script src="/assets/js/api.js?v=20261103p"></script>
-<script src="/assets/js/progress-areas.js?v=20261103p"></script>
-<script src="/assets/js/class-level.js?v=20261103p"></script>
-<script src="/assets/js/schedule.js?v=20261103p"></script>
-<script src="/assets/js/record-form.js?v=20261103p"></script>
-<script src="/assets/js/admin.js?v=20261103p"></script>
-<script src="/assets/js/admin-students.js?v=20261103p"></script>
-<script src="/assets/js/admin-schedule.js?v=20261103p"></script>
+<script src="/assets/js/config.js?v=20261103q"></script>
+<script src="/assets/js/api.js?v=20261103q"></script>
+<script src="/assets/js/progress-areas.js?v=20261103q"></script>
+<script src="/assets/js/exam-items.js?v=20261103q"></script>
+<script src="/assets/js/class-level.js?v=20261103q"></script>
+<script src="/assets/js/schedule.js?v=20261103q"></script>
+<script src="/assets/js/record-form.js?v=20261103q"></script>
+<script src="/assets/js/admin.js?v=20261103q"></script>
+<script src="/assets/js/admin-students.js?v=20261103q"></script>
+<script src="/assets/js/admin-schedule.js?v=20261103q"></script>
 </body>
 </html>
