@@ -432,8 +432,10 @@
         '<div class="gi-rec-body" id="rb' + index + '" hidden>' +
           '<dl style="margin:0">' +
             '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
-            progressRows(r) +
+            // 상태 · 시험 · 진도 · 숙제 차례다. 학부모가 먼저 찾는 것은
+            // 그날 본 시험 점수이고, 진도와 숙제는 그 뒤에 읽는다.
             testRows(r) +
+            progressRows(r) +
             nextRows(r) +
           '</dl>' + comment +
         '</div>' +
