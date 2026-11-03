@@ -805,3 +805,20 @@ body.gi .gi-h2{ color:var(--text); }
 /* 동그라미 풀이. 줄바꿈을 허용하되 동그라미와 글자는 붙여 둔다. */
 .gi-cal-legend{ margin-top:0.6rem; line-height:1.9; }
 .gi-cal-legend .gi-dot{ margin-left:0.5rem; }
+/* 설명 문장은 줄을 내린다. 동그라미 네 개 뒤에 이어 붙이면 화면 폭에
+   따라 '보강 · 동그라미가'에서 끊겨 꼬리표와 설명이 한 덩어리로 읽힌다. */
+.gi-cal-legend-note{ display:block; margin-top:0.25rem; }
+
+
+/* ---------- 학부모 화면 머리글 ---------- */
+/* 링크를 열면 가장 먼저 보여야 하는 것은 리포트인데, 초록 머리가 휴대폰
+   첫 화면의 1/4을 먹고 있었다. 높이를 절반으로, 제목을 2/3로 줄인다.
+   .gi-head를 직접 줄이지 않는 이유는 .gi-head-tight와 같다 — 선생님
+   화면이 같은 머리글을 쓴다. */
+.gi-head-parent{ padding:0.5rem 0 0.65rem; margin-bottom:0.9rem; }
+.gi-head-parent .gi-head-brand{ font-size:0.62rem; margin-bottom:0.3rem; }
+.gi-head-parent h1{ font-size:1.17rem; }
+.gi-head-parent .gi-head-sub{ margin-top:0.2rem; font-size:0.78rem; }
+@media (min-width:600px){
+  .gi-head-parent h1{ font-size:1.4rem; }
+}
