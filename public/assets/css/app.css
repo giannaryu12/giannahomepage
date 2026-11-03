@@ -687,7 +687,14 @@ body.gi .gi-h2{ color:var(--text); }
 /* 열 하나가 350px 남짓이라 등록 칸과 카드 버튼은 접힌다. 접히게 두되
    줄 사이를 좁혀 카드가 세로로 길어지지 않게 한다. */
 .gi-stu-new{ flex-wrap:wrap; }
-.gi-stu-cols .gi-stu-new .gi-btn{ flex:1 0 auto; }
+.gi-stu-cols .gi-stu-new .gi-btn{ flex:0 0 auto; }
+/* 등록 칸은 세 줄로 접는다: 이름 / 학교급·학년 / 반·등록.
+   다섯 칸을 한 줄에 두면 열 하나(347px)에서 칸마다 56px이 되어
+   '초등부'도 '5학년'도 글자가 잘린다. */
+.gi-stu-cols .gi-stu-new #newName{ flex:1 1 100%; }
+.gi-stu-cols .gi-stu-new #newLevel,
+.gi-stu-cols .gi-stu-new #newGrade{ flex:1 1 45%; }
+.gi-stu-cols .gi-stu-new #newClass{ flex:1 1 60%; }
 /* 좁은 화면에서는 한 줄로 되돌린다. 350px를 셋으로 또 나누면 이름 칸이
    글자 두 개 폭이 된다. */
 @media (max-width:900px){

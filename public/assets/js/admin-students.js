@@ -45,6 +45,46 @@
     return level.label + (num ? ' ' + num + '학년' : '');
   }
 
+  /** 학교급마다 있는 학년. 초등은 6학년까지, 중·고는 3학년까지다. */
+  const GRADE_MAX = { elem: 6, mid: 3, high: 3 };
+
+  /** 'elem' → '초'. 시트에는 '초5'처럼 짧게 적는다 (class-level.js의 규칙). */
+  function markOf(key) {
+    const level = CL.LEVELS.filter(function (l) { return l.key === key; })[0];
+    return level ? level.mark : '';
+  }
+
+  function levelOptionsHtml(key) {
+    return CL.LEVELS.map(function (l) {
+      return '<option value="' + l.key + '"' + (l.key === key ? ' selected' : '') +
+        '>' + l.label + '</option>';
+    }).join('');
+  }
+
+  /**
+   * 학년 보기. 그 학교급에 있는 학년만 넣는다 — 중2는 있지만 중5는 없다.
+   * 학교급을 바꾸면 이 보기를 다시 만든다.
+   *
+   * 맨 앞은 빈 칸으로 둔다. 1학년이 먼저 골라져 있으면 학년을 안 고른
+   * 학생이 1학년으로 저장된다.
+   */
+  function gradeOptionsHtml(key, num) {
+    const max = GRADE_MAX[key] || 6;
+    const out = ['<option value="">학년</option>'];
+    for (let i = 1; i <= max; i++) {
+      out.push('<option value="' + i + '"' +
+        (String(i) === String(num) ? ' selected' : '') + '>' + i + '학년</option>');
+    }
+    return out.join('');
+  }
+
+  /** 두 드롭박스를 시트의 한 칸으로 합친다. '초' + '5' → '초5'. */
+  function newGradeValue() {
+    const key = document.getElementById('newLevel').value;
+    const num = document.getElementById('newGrade').value;
+    return markOf(key) + num;
+  }
+
   function parentUrl(token) {
     return window.location.origin + '/p/' + token;
   }
@@ -215,7 +255,8 @@
   function newFormHtml() {
     return '<div class="gi-stu-new">' +
         '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
-        '<input class="gi-input" type="text" id="newGrade" placeholder="학년">' +
+        '<select class="gi-select" id="newLevel">' + levelOptionsHtml('elem') + '</select>' +
+        '<select class="gi-select" id="newGrade">' + gradeOptionsHtml('elem', '') + '</select>' +
         '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
         '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
       '</div>' +
@@ -294,6 +335,16 @@
 
     const add = document.getElementById('addBtn');
     if (add) add.addEventListener('click', addStudent);
+
+    // 학교급을 바꾸면 학년 보기를 다시 만든다. 고른 학년이 새 학교급에
+    // 없으면(초6 → 중등부) 아무것도 안 골라진 상태로 돌아간다.
+    const lv = document.getElementById('newLevel');
+    if (lv) {
+      lv.addEventListener('change', function () {
+        const box = document.getElementById('newGrade');
+        box.innerHTML = gradeOptionsHtml(lv.value, box.value);
+      });
+    }
   }
 
   function load() {
@@ -318,7 +369,7 @@
       sessionKey: A.getSessionKey(),
       student: {
         name: name,
-        grade: document.getElementById('newGrade').value.trim(),
+        grade: newGradeValue(),
         classId: document.getElementById('newClass').value,
         schedule: readSched(document.getElementById('newSched')),
       },
