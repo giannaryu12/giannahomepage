@@ -856,17 +856,10 @@ body.gi .gi-h2{ color:var(--text); }
 
 
 /* ---------- 학부모 요약: 한마디 · 도넛 둘 · 시험 막대 ---------- */
-/* 선생님이 적은 한 줄은 어떤 그래프보다 잘 읽힌다. 맨 위에 둔다. */
-.gi-say{
-  background:var(--surface-dim);
-  border-left:3px solid var(--gold);
-  border-radius:2px;
-  padding:0.6rem 0.75rem;
-  margin-bottom:0.7rem;
-}
+/* 선생님 한마디는 그날 수업 기록의 맨 밑에 붙는다. 이름표를 달아 둔다 —
+   달지 않으면 위의 진도·숙제와 같은 무게로 읽혀 그냥 한 줄이 된다. */
 .gi-say-who{ font-size:0.66rem; font-weight:700; letter-spacing:0.08em; color:var(--gold); margin:0; }
-.gi-say-text{ font-size:0.86rem; line-height:1.5; color:var(--text-mid); margin:0.2rem 0 0; white-space:pre-wrap; }
-.gi-say-when{ font-size:0.68rem; color:var(--text-soft); margin:0.25rem 0 0; }
+.gi-say-text{ font-size:0.88rem; line-height:1.5; color:var(--text-mid); margin:0.2rem 0 0; white-space:pre-wrap; }
 
 /* 도넛 둘이 나란히. 출석은 초록, 숙제는 금색 — 달력 동그라미와 같은 규칙이다. */
 .gi-rings{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.55rem; }

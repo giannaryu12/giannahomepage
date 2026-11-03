@@ -275,13 +275,8 @@ describe('toParentPayload — 지난달과 한마디', () => {
     expect(p.summary.prevTests.vocab).toBe(80);
   });
 
-  it('가장 최근 코멘트 한 건을 올린다', () => {
-    expect(p.summary.lastComment).toEqual({ date: '2026-11-20', text: '잘했습니다' });
-  });
-
-  it('적어 둔 코멘트가 없으면 null이다 — 화면이 칸째로 내린다', () => {
-    const empty = toParentPayload({ student: { studentId: 'S1' }, records: [{ studentId: 'S1', date: '2026-11-20', attendance: '출석' }], monthKey: '2026-11' });
-    expect(empty.summary.lastComment).toBe(null);
+  it('코멘트는 그날 기록에 그대로 실린다 — 요약으로 따로 빼지 않는다', () => {
+    expect(p.records[0].comment).toBe('잘했습니다');
   });
 
   it('1월의 지난달은 지난해 12월이다', () => {

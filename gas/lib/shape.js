@@ -148,10 +148,6 @@ function toParentPayload(input) {
   summary.monthTests = testAvgsOf_(month);
   summary.prevTests = testAvgsOf_(prev);
 
-  // 선생님이 적은 가장 최근 코멘트. 어떤 그래프보다 잘 읽히는데 지금까지는
-  // 수업 기록을 펼쳐야만 보였다. 적은 것이 없으면 null이고, 화면은 그 칸을
-  // 통째로 내린다 — '코멘트 없음'이라고 적힌 빈 칸은 둘 까닭이 없다.
-  summary.lastComment = lastCommentOf_(records);
 
   return {
     student: toParentStudent(opts.student, opts.className),
@@ -181,20 +177,6 @@ function testAvgsOf_(summary) {
     out[g.key] = summary[g.key + 'Avg'];
   });
   return out;
-}
-
-/**
- * 가장 최근에 적은 코멘트. 없으면 null.
- *
- * 날짜 내림차순으로 정렬된 기록을 받는다 — 앞에서부터 처음 만나는
- * 코멘트가 가장 최근 것이다.
- */
-function lastCommentOf_(records) {
-  const hit = (records || []).filter(function (r) {
-    return r && String(r.comment || '').trim();
-  })[0];
-
-  return hit ? { date: String(hit.date || ''), text: String(hit.comment).trim() } : null;
 }
 
 /**

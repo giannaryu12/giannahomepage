@@ -113,20 +113,6 @@
       '</div>';
   }
 
-  /** 선생님이 적은 가장 최근 한마디. 적은 것이 없으면 칸째로 없다. */
-  function renderSay(summary) {
-    const say = summary.lastComment;
-    const $say = document.getElementById('teacherSay');
-
-    if (!say || !say.text) { $say.innerHTML = ''; $say.hidden = true; return; }
-
-    $say.hidden = false;
-    $say.innerHTML = '' +
-      '<p class="gi-say-who">선생님 한마디</p>' +
-      '<p class="gi-say-text">' + esc(say.text) + '</p>' +
-      '<p class="gi-say-when">' + esc(FMT.dateLabel(say.date)) + ' 수업</p>';
-  }
-
   /** '2026-11' → '11월'. 달을 안 받았으면 '이달'. */
   function monthWord(monthKey) {
     const m = /^\d{4}-(\d{2})$/.exec(String(monthKey || ''));
@@ -134,8 +120,6 @@
   }
 
   function renderCards(summary) {
-    renderSay(summary);
-
     const when = monthWord(summary.monthKey);
 
     const rings =
@@ -420,8 +404,14 @@
       badge(r.homeworkStatus, HOMEWORK_TONE[r.homeworkStatus]) +
       (r.homeworkLevel ? badge('완성도 ' + r.homeworkLevel, 'is-none') : '');
 
+    // 선생님 한마디는 그날 기록의 맨 밑이다. 위로 따로 빼 두면 어느 날
+    // 수업을 두고 한 말인지가 끊긴다 — 그날의 시험·진도 바로 아래에
+    // 있어야 무엇을 보고 한 말인지 읽힌다.
     const comment = r.comment
-      ? '<div class="gi-rec-comment">' + esc(r.comment) + '</div>' : '';
+      ? '<div class="gi-rec-comment">' +
+          '<p class="gi-say-who">선생님 한마디</p>' +
+          '<p class="gi-say-text">' + esc(r.comment) + '</p>' +
+        '</div>' : '';
 
     return '' +
       '<article class="gi-rec">' +
