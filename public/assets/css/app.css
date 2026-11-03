@@ -769,3 +769,20 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.72rem;
   padding:0.18rem 0.2rem;
 }
+
+
+/* 목록 카드 머리 — 이름과 학년.
+   카드에서 가장 먼저 읽을 두 값이라 둘 다 굵게 두고, 350px 한 줄에 같이
+   서야 하므로 한 급씩 줄인다. .gi-rec-date와 .gi-note는 학부모 화면도
+   쓰는 class라 카드 머리 안으로만 한정한다. */
+.gi-stu-head .gi-rec-date{ font-size:0.82rem; font-weight:700; }
+.gi-stu-head .gi-note{ font-size:0.72rem; font-weight:700; color:var(--text-mid); }
+
+
+/* 8회차 — 한 묶음의 마지막 수업. 이름 칸을 붉고 두꺼운 테두리로 두른다.
+   점이나 글자로는 칸이 이름으로 찼을 때 묻힌다. 달력을 훑다 걸려야
+   다음 묶음을 제때 이야기한다. */
+.gi-cal-name.is-last{
+  border:2px solid var(--state-bad-dot);
+  font-weight:700;
+}

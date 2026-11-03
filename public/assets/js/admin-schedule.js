@@ -63,6 +63,10 @@
   // 두 곳의 순서가 다르면 손이 기억한 자리에 다른 것이 있다.
   const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
 
+  // 한 묶음의 마지막 회차. 이 날 수업이 끝나면 다음 묶음을 이야기해야
+  // 하므로 달력에서 미리 눈에 걸려야 한다.
+  const CYCLE_LAST = 8;
+
   // 그날 수업을 안 한 출결. 이름을 흐리게 하고 줄을 긋는다.
   const OFF_MARKS = ['결석', '변경'];
 
@@ -73,7 +77,7 @@
   /** 이름 앞 동그라미와 뒤 회차. 안 적은 수업에는 아무것도 붙지 않는다. */
   function markHtml(iso, studentId) {
     const m = markFor(iso, studentId);
-    if (!m) return { dot: '', no: '', off: false, word: '' };
+    if (!m) return { dot: '', no: '', off: false, last: false, word: '' };
 
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
@@ -85,6 +89,8 @@
       // 안 온 학생은 이름을 흐리게 하고 줄을 긋는다. 빨간 점 하나로는 칸이
       // 이름으로 가득 찼을 때 눈에 걸리지 않는다.
       off: OFF_MARKS.indexOf(m.attendance) !== -1,
+      // 묶음의 마지막 회차인가. 수업을 안 한 날은 회차가 없으므로 아니다.
+      last: Number(m.sessionNo) === CYCLE_LAST && OFF_MARKS.indexOf(m.attendance) === -1,
       // 꼬리표에 적을 말. 적어 둔 출결을 그대로 쓴다.
       word: m.attendance,
     };
@@ -111,7 +117,8 @@
         : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<button class="gi-choice gi-cal-name' +
-      (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') + '"' +
+      (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') +
+      (m.last ? ' is-last' : '') + '"' +
       ' type="button" data-student="' + A.esc(s.studentId) + '" data-date="' + A.esc(iso) + '"' +
       // 동그라미는 이름 안에 넣는다. 밖에 두면 좁은 칸에서 시간 줄 끝에
       // 혼자 남고 이름은 다음 줄로 넘어간다.
@@ -191,20 +198,13 @@
   }
 
   function dayRowHtml(e) {
-    const sid = A.esc(e.student.studentId);
     const m = markHtml(openDate, e.student.studentId);
     let tail;
 
     if (e.skip) {
-      // 빼 둔 까닭을 바꾸는 버튼을 남긴다. 결석으로 눌렀다가 알고 보니
-      // 날짜를 옮긴 것일 수 있다. 지웠다 다시 넣게 하면 두 걸음이고,
-      // 그 사이 무엇이 빠졌는지 화면에서 사라진다.
-      const other = e.skip.reason === 'absent' ? 'moved' : 'absent';
-
+      // 드롭박스가 생기기 전에 빼 둔 줄이다. 까닭을 바꾸는 일은 이제
+      // 드롭박스가 하므로 되돌리는 길만 남긴다.
       tail = '<span class="gi-badge is-bad">' + SKIP_LABEL[e.skip.reason] + '</span>' +
-        '<button class="gi-choice" type="button" data-skip="' + sid +
-          '" data-reason="' + other + '" data-time="' + A.esc(e.time) + '">' +
-          SKIP_LABEL[other] + '으로</button>' +
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.skip.overrideId) +
           '">되돌리기</button>';
     } else if (e.overrideId) {
@@ -215,12 +215,9 @@
       // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.
       tail = '<span class="gi-badge is-bad">' + A.esc(m.word) + '</span>';
     } else {
-      // 빼는 까닭을 여기서 고른다. 묻지 않고 빼면 달력에 왜 빠졌는지가
-      // 남지 않는다 — 결석과 날짜 변경은 나중에 전혀 다른 뜻이 된다.
-      tail = '<button class="gi-choice" type="button" data-skip="' + sid +
-          '" data-reason="absent" data-time="' + A.esc(e.time) + '">결석</button>' +
-        '<button class="gi-choice" type="button" data-skip="' + sid +
-          '" data-reason="moved" data-time="' + A.esc(e.time) + '">변경</button>';
+      // 빼는 일은 드롭박스에서 결석·변경을 고르는 것으로 한다. 같은 일을
+      // 하는 길이 둘이면 어느 쪽으로 뺐는지에 따라 화면이 달라진다.
+      tail = '';
     }
 
     return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
@@ -423,15 +420,6 @@
     const drop = e.target.closest('[data-drop]');
     if (drop) {
       dropOverride(drop.dataset.drop);
-      return;
-    }
-
-    const skip = e.target.closest('[data-skip]');
-    if (skip) {
-      saveOverride({
-        date: openDate, studentId: skip.dataset.skip, time: skip.dataset.time,
-        kind: 'skip', reason: skip.dataset.reason,
-      });
       return;
     }
 
