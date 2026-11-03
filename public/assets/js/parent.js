@@ -27,35 +27,55 @@
   // 고리 반지름. viewBox 64 안에서 stroke 7이 잘리지 않는 최대치.
   const GAUGE_R = 26;
 
-  function cardHtml(label, value, unit) {
-    const inner = value === null
-      ? '<span class="gi-card-value is-empty">기록 없음</span>'
-      : '<span class="gi-card-value">' + esc(value) + '<span class="gi-unit">' + unit + '</span></span>';
-    return '<div class="gi-card"><div class="gi-card-label">' + label + '</div>' + inner + '</div>';
+  /** 이달 숫자와 지난달 숫자의 차. 둘 중 하나라도 없으면 null이다. */
+  function deltaOf(now, before) {
+    if (now === null || now === undefined) return null;
+    if (before === null || before === undefined) return null;
+    return Math.round(Number(now) - Number(before));
   }
 
   /**
-   * 요약 카드는 두 줄이다 — 출결·과제 한 줄, 시험 평균 한 줄.
-   *
-   * 한 묶음으로 흘려 두면 화면 폭에 따라 두 갈래가 섞여 뜬다.
-   * 성격이 다른 수치라 줄이 갈려 있어야 한 눈에 읽힌다.
+   * 지난달과 견준 화살표. 92%가 잘한 것인지는 견줄 것이 있어야 안다.
+   * 지난달 기록이 없으면 '지난달 —'로 둔다 — 0에서 올랐다고 적으면
+   * 안 다니던 달이 바닥 점수가 된다.
    */
+  function deltaHtml(d) {
+    if (d === null) return '<span class="gi-delta is-flat">지난달 —</span>';
+    if (d === 0) return '<span class="gi-delta is-flat">지난달과 같음</span>';
+
+    const up = d > 0;
+    return '<span class="gi-delta ' + (up ? 'is-up' : 'is-down') + '">지난달 ' +
+      (up ? '▲' : '▼') + Math.abs(d) + '</span>';
+  }
+
   /**
-   * 비율 카드. 숫자 대신 고리로 채워 한 눈에 보이게 한다.
+   * 도넛 카드. 가운데 숫자는 이달, 아래 작은 글씨는 누적과 화살표다.
    *
-   * 기록이 없으면 고리를 그리지 않는다 — 빈 고리는 0%와 구별되지 않는다.
+   * 이달 기록이 없으면 고리를 그리지 않는다 — 빈 고리는 0%와 구별되지
+   * 않는다. 달이 막 바뀐 1일에는 늘 그런 상태가 된다.
    */
-  function gaugeCard(label, pct, color) {
-    if (pct === null || pct === undefined) return cardHtml(label, null, '%');
+  function ringCard(label, pct, total, prev, color) {
+    if (pct === null || pct === undefined) {
+      return '<div class="gi-ring-card">' +
+        '<div class="gi-ring-label">' + esc(label) + '</div>' +
+        '<p class="gi-note gi-ring-empty">이달 기록이 아직 없습니다.</p>' +
+        (total === null || total === undefined ? '' :
+          '<div class="gi-ring-sub">누적 ' + esc(total) + '%</div>') +
+      '</div>';
+    }
 
     const value = Math.max(0, Math.min(100, Number(pct)));
     const circumference = 2 * Math.PI * GAUGE_R;
     const filled = (circumference * value) / 100;
 
+    const sub = (total === null || total === undefined)
+      ? deltaHtml(deltaOf(pct, prev))
+      : '누적 ' + esc(total) + '% · ' + deltaHtml(deltaOf(pct, prev));
+
     return '' +
-      '<div class="gi-card">' +
-        '<div class="gi-card-label">' + label + '</div>' +
-        '<svg class="gi-gauge" viewBox="0 0 64 64" role="img" ' +
+      '<div class="gi-ring-card">' +
+        '<div class="gi-ring-label">' + esc(label) + '</div>' +
+        '<svg class="gi-gauge gi-ring" viewBox="0 0 64 64" role="img" ' +
           'aria-label="' + esc(label) + ' ' + value + '퍼센트">' +
           '<circle cx="32" cy="32" r="' + GAUGE_R + '" fill="none" ' +
             'stroke="var(--border)" stroke-width="7"/>' +
@@ -67,35 +87,83 @@
             'dominant-baseline="central">' + value +
             '<tspan class="gi-gauge-unit">%</tspan></text>' +
         '</svg>' +
+        '<div class="gi-ring-sub">' + sub + '</div>' +
       '</div>';
   }
 
-  function renderCards(summary) {
-    const rates =
-      gaugeCard('누적 출석률', summary.attendanceRate, 'var(--chart-3)') +
-      gaugeCard('이달 출석률', summary.monthAttendanceRate, 'var(--chart-3)') +
-      gaugeCard('누적 숙제 제출률', summary.homeworkRate, 'var(--chart-2)') +
-      gaugeCard('이달 숙제 제출률', summary.monthHomeworkRate, 'var(--chart-2)');
+  /**
+   * 시험 한 줄. 막대는 누적 평균이고, 화살표는 이달과 지난달을 견준다.
+   *
+   * 점수가 없는 영역은 줄을 만들지 않는다. '기록 없음' 칸이 셋 서 있으면
+   * 아직 아무것도 안 한 것처럼 보인다.
+   */
+  function testBarHtml(label, avg, month, prev) {
+    const value = Math.max(0, Math.min(100, Number(avg)));
 
-    let tests = '';
+    return '' +
+      '<div class="gi-bar">' +
+        '<div class="gi-bar-head">' +
+          '<span class="gi-bar-name">' + esc(label) + '</span>' +
+          '<span class="gi-bar-num">' + esc(Math.round(Number(avg))) + '점</span>' +
+          deltaHtml(deltaOf(month, prev)) +
+        '</div>' +
+        '<div class="gi-track">' +
+          '<span class="gi-fill" style="width:' + value + '%"></span>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /** 선생님이 적은 가장 최근 한마디. 적은 것이 없으면 칸째로 없다. */
+  function renderSay(summary) {
+    const say = summary.lastComment;
+    const $say = document.getElementById('teacherSay');
+
+    if (!say || !say.text) { $say.innerHTML = ''; $say.hidden = true; return; }
+
+    $say.hidden = false;
+    $say.innerHTML = '' +
+      '<p class="gi-say-who">선생님 한마디</p>' +
+      '<p class="gi-say-text">' + esc(say.text) + '</p>' +
+      '<p class="gi-say-when">' + esc(FMT.dateLabel(say.date)) + ' 수업</p>';
+  }
+
+  /** '2026-11' → '11월'. 달을 안 받았으면 '이달'. */
+  function monthWord(monthKey) {
+    const m = /^\d{4}-(\d{2})$/.exec(String(monthKey || ''));
+    return m ? Number(m[1]) + '월' : '이달';
+  }
+
+  function renderCards(summary) {
+    renderSay(summary);
+
+    const when = monthWord(summary.monthKey);
+
+    const rings =
+      ringCard(when + ' 출석', summary.monthAttendanceRate, summary.attendanceRate,
+        summary.prevAttendanceRate, 'var(--state-good-dot)') +
+      ringCard(when + ' 숙제', summary.monthHomeworkRate, summary.homeworkRate,
+        summary.prevHomeworkRate, 'var(--gold)');
+
+    // 묶음이 바뀐 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
+    const monthTests = summary.monthTests || {};
+    const prevTests = summary.prevTests || {};
+
+    let bars = '';
     PA.TEST_SUMMARY_AREAS.forEach(function (a) {
-      // 묶음이 바뀐 뒤 아직 갱신되지 않은 응답에는 그 칸이 없다.
-      // undefined를 그대로 넘기면 '기록 없음' 대신 undefined가 찍힌다.
       const avg = summary[a.key + 'Avg'];
-      tests += cardHtml(a.label, avg === undefined ? null : avg, '점');
+      if (avg === null || avg === undefined) return;
+      bars += testBarHtml(a.label, avg, monthTests[a.key], prevTests[a.key]);
     });
 
     // 시험이 영역별로 나뉘기 전에 쌓인 점수. 있을 때만 덧붙인다.
-    // 늘 띄우면 옛 기록이 없는 학생에게 뜻 없는 칸이 하나 남는다.
     if (summary.avgScore !== null && summary.avgScore !== undefined) {
-      tests += cardHtml('이전 시험', summary.avgScore, '점');
+      bars += testBarHtml('이전 시험', summary.avgScore, null, null);
     }
 
     document.getElementById('cards').innerHTML =
-      '<div class="gi-cards gi-cards-rates">' + rates + '</div>' +
-      '<div class="gi-cards gi-cards-tests">' + tests + '</div>';
+      '<div class="gi-rings">' + rings + '</div>' +
+      (bars ? '<div class="gi-bars">' + bars + '</div>' : '');
   }
-
   /* ---------- 성적 추이 ---------- */
 
 

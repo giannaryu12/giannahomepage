@@ -253,3 +253,43 @@ describe('toParentCalendar — 학부모 달력', () => {
     expect(cal.marks).toEqual({ '2026-11-03': { attendance: '출석', sessionNo: '7' } });
   });
 });
+
+
+describe('toParentPayload — 지난달과 한마디', () => {
+  const recs = [
+    { studentId: 'S1', date: '2026-11-20', attendance: '출석', homeworkStatus: '제출', comment: '잘했습니다', vocabTestScore: 9, vocabTestMax: 10 },
+    { studentId: 'S1', date: '2026-11-18', attendance: '출석', homeworkStatus: '미제출' },
+    { studentId: 'S1', date: '2026-10-20', attendance: '결석', homeworkStatus: '제출', comment: '지난달 한마디', vocabTestScore: 8, vocabTestMax: 10 },
+  ];
+  const p = toParentPayload({ student: { studentId: 'S1', name: '최지우' }, records: recs, monthKey: '2026-11' });
+
+  it('지난달 출결·숙제 비율을 함께 낸다', () => {
+    expect(p.summary.monthAttendanceRate).toBe(100);
+    expect(p.summary.prevAttendanceRate).toBe(0);
+    expect(p.summary.monthHomeworkRate).toBe(50);
+    expect(p.summary.prevHomeworkRate).toBe(100);
+  });
+
+  it('시험 묶음 평균도 이달·지난달로 낸다', () => {
+    expect(p.summary.monthTests.vocab).toBe(90);
+    expect(p.summary.prevTests.vocab).toBe(80);
+  });
+
+  it('가장 최근 코멘트 한 건을 올린다', () => {
+    expect(p.summary.lastComment).toEqual({ date: '2026-11-20', text: '잘했습니다' });
+  });
+
+  it('적어 둔 코멘트가 없으면 null이다 — 화면이 칸째로 내린다', () => {
+    const empty = toParentPayload({ student: { studentId: 'S1' }, records: [{ studentId: 'S1', date: '2026-11-20', attendance: '출석' }], monthKey: '2026-11' });
+    expect(empty.summary.lastComment).toBe(null);
+  });
+
+  it('1월의 지난달은 지난해 12월이다', () => {
+    const jan = toParentPayload({
+      student: { studentId: 'S1' },
+      records: [{ studentId: 'S1', date: '2026-12-10', attendance: '출석' }],
+      monthKey: '2027-01',
+    });
+    expect(jan.summary.prevAttendanceRate).toBe(100);
+  });
+});

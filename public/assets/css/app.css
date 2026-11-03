@@ -853,3 +853,59 @@ body.gi .gi-h2{ color:var(--text); }
   font-size:0.84rem;
   padding:0.5rem;
 }
+
+
+/* ---------- 학부모 요약: 한마디 · 도넛 둘 · 시험 막대 ---------- */
+/* 선생님이 적은 한 줄은 어떤 그래프보다 잘 읽힌다. 맨 위에 둔다. */
+.gi-say{
+  background:var(--surface-dim);
+  border-left:3px solid var(--gold);
+  border-radius:2px;
+  padding:0.6rem 0.75rem;
+  margin-bottom:0.7rem;
+}
+.gi-say-who{ font-size:0.66rem; font-weight:700; letter-spacing:0.08em; color:var(--gold); margin:0; }
+.gi-say-text{ font-size:0.86rem; line-height:1.5; color:var(--text-mid); margin:0.2rem 0 0; white-space:pre-wrap; }
+.gi-say-when{ font-size:0.68rem; color:var(--text-soft); margin:0.25rem 0 0; }
+
+/* 도넛 둘이 나란히. 출석은 초록, 숙제는 금색 — 달력 동그라미와 같은 규칙이다. */
+.gi-rings{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.55rem; }
+.gi-ring-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:0.7rem 0.5rem 0.75rem;
+  text-align:center;
+}
+.gi-ring-label{ font-size:0.76rem; color:var(--text-soft); }
+.gi-ring{ display:block; width:78px; height:78px; margin:0.3rem auto 0; }
+.gi-ring-sub{ font-size:0.72rem; color:var(--text-soft); margin-top:0.4rem; }
+.gi-ring-empty{ margin:0.9rem 0; font-size:0.76rem; }
+
+.gi-delta{ font-size:0.7rem; font-weight:700; white-space:nowrap; }
+.gi-delta.is-up{ color:var(--state-good-dot); }
+.gi-delta.is-down{ color:var(--state-bad-dot); }
+.gi-delta.is-flat{ color:var(--text-soft); font-weight:400; }
+
+/* 시험은 가로 막대로. 같은 축에 나란히 서야 영역끼리 비교가 된다 —
+   고리 셋으로는 어느 쪽이 긴지 눈으로 잡히지 않는다. */
+.gi-bars{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:0.7rem 0.9rem 0.8rem;
+}
+.gi-bar + .gi-bar{ margin-top:0.62rem; }
+.gi-bar-head{ display:flex; align-items:baseline; gap:0.4rem; font-size:0.78rem; }
+.gi-bar-name{ flex:none; width:3.6rem; font-weight:700; color:var(--text-mid); }
+.gi-bar-num{ font-weight:700; color:var(--heading); }
+.gi-bar-head .gi-delta{ margin-left:auto; }
+.gi-track{
+  position:relative;
+  height:7px;
+  border-radius:4px;
+  background:var(--border);
+  margin-top:0.28rem;
+  overflow:hidden;
+}
+.gi-fill{ position:absolute; inset:0 auto 0 0; border-radius:4px; background:var(--chart-3); }
