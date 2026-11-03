@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103q">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261103q">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103r">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261103r">
 </head>
 <body class="gi">
 
@@ -117,10 +117,6 @@
         <p class="gi-note" id="recLegacyNext" hidden></p>
       </div>
 
-      <div class="gi-field">
-        <label class="gi-label" for="recComment">코멘트</label>
-        <textarea class="gi-textarea" id="recComment" data-field="comment"></textarea>
-      </div>
       </div>
 
       <!-- 시험대비는 진도와 숙제뿐이다. 칸은 선생님이 만들고 지운다. -->
@@ -138,6 +134,13 @@
         </div>
       </div>
 
+      <!-- 코멘트는 두 갈래가 함께 쓴다. 적는 칸은 하나지만 값은 갈래마다
+           따로다 — 정기수업에 적은 한마디가 시험대비에 묻어 나오지 않는다. -->
+      <div class="gi-field">
+        <label class="gi-label" for="recComment">코멘트</label>
+        <textarea class="gi-textarea" id="recComment" data-field="comment"></textarea>
+      </div>
+
       <div class="gi-savebar">
         <span class="gi-note" id="recordStatus"></span>
         <button class="gi-btn gi-btn-primary" id="recordSaveBtn" type="button">저장</button>
@@ -149,15 +152,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261103q"></script>
-<script src="/assets/js/api.js?v=20261103q"></script>
-<script src="/assets/js/progress-areas.js?v=20261103q"></script>
-<script src="/assets/js/exam-items.js?v=20261103q"></script>
-<script src="/assets/js/class-level.js?v=20261103q"></script>
-<script src="/assets/js/schedule.js?v=20261103q"></script>
-<script src="/assets/js/record-form.js?v=20261103q"></script>
-<script src="/assets/js/admin.js?v=20261103q"></script>
-<script src="/assets/js/admin-students.js?v=20261103q"></script>
-<script src="/assets/js/admin-schedule.js?v=20261103q"></script>
+<script src="/assets/js/config.js?v=20261103r"></script>
+<script src="/assets/js/api.js?v=20261103r"></script>
+<script src="/assets/js/progress-areas.js?v=20261103r"></script>
+<script src="/assets/js/exam-items.js?v=20261103r"></script>
+<script src="/assets/js/class-level.js?v=20261103r"></script>
+<script src="/assets/js/schedule.js?v=20261103r"></script>
+<script src="/assets/js/record-form.js?v=20261103r"></script>
+<script src="/assets/js/admin.js?v=20261103r"></script>
+<script src="/assets/js/admin-students.js?v=20261103r"></script>
+<script src="/assets/js/admin-schedule.js?v=20261103r"></script>
 </body>
 </html>

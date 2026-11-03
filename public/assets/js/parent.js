@@ -430,7 +430,7 @@
     // 있어야 무엇을 보고 한 말인지 읽힌다.
     const comment = r.comment
       ? '<div class="gi-rec-comment">' +
-          '<p class="gi-say-who">선생님 한마디</p>' +
+          '<p class="gi-say-who">Today\'s comment</p>' +
           '<p class="gi-say-text">' + esc(r.comment) + '</p>' +
         '</div>' : '';
 

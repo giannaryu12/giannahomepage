@@ -230,12 +230,15 @@ body.gi .gi-h2{ color:var(--text); }
   color:var(--text-soft);
   font-size:0.76rem;
 }
+/* 네 면을 두른 칸. 바탕은 비운다 — 색을 깔면 위의 진도·숙제 줄보다
+   무거워져서, 읽는 쪽이 코멘트부터 읽고 숫자를 지나친다. */
 .gi-rec-comment{
-  margin-top:0.7rem;
-  padding-inline-start:0.8rem;
-  border-inline-start:3px solid var(--garnet);
+  margin-top:0.8rem;
+  padding:0.55rem 0.7rem;
+  border:1px solid var(--border);
+  border-radius:3px;
+  background:none;
   font-size:0.9rem;
-  white-space:pre-wrap;
 }
 
 /* ---------- 뱃지 ---------- */
