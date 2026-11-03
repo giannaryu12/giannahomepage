@@ -391,6 +391,33 @@
     });
   }
 
+  /* ---------- 탭 ---------- */
+
+  /**
+   * 탭은 둘 다 그려 두고 하나만 보여 준다.
+   *
+   * 누를 때마다 다시 그리면 접어 둔 수업 기록이 펴지고, 달력은 보던 달이
+   * 이번 달로 돌아간다 — 탭을 옮겼다가 돌아온 사람은 자기가 뭘 잘못
+   * 눌렀는지 알 수 없다.
+   */
+  function initTabs() {
+    const $tabs = document.getElementById('parentTabs');
+
+    $tabs.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-tab]');
+      if (!btn) return;
+
+      const want = btn.dataset.tab;
+
+      $tabs.querySelectorAll('[data-tab]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.tab === want));
+      });
+
+      document.getElementById('reportTab').hidden = want !== 'report';
+      document.getElementById('planTab').hidden = want !== 'plan';
+    });
+  }
+
   /* ---------- 진입 ---------- */
 
   function tokenFromUrl() {
@@ -427,6 +454,8 @@
       renderCards(data.summary);
       renderChart(data.records);
       renderRecords(data.records);
+      initTabs();
+      window.GI_PARENT_CAL.init(data);
 
       $state.hidden = true;
       $content.hidden = false;

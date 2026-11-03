@@ -120,12 +120,25 @@ function handleParentLoad(body) {
   const monthKey = body.monthKey ||
     Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM');
 
-  return ok(toParentPayload({
+  const records = recordsOfStudent_(student.studentId);
+
+  const payload = toParentPayload({
     student: student,
     className: classNameOf_(student.classId),
-    records: recordsOfStudent_(student.studentId),
+    records: records,
     monthKey: monthKey,
-  }));
+  });
+
+  // 달력은 평소 일정 + 하루치 조각 + 출결로 그린다. 한 달을 넘길 때마다
+  // 다시 묻지 않도록 한 번에 내려보낸다 — 학부모 쪽에는 새로 고치기밖에
+  // 없어서, 묻는 길이 늘면 그만큼 기다리는 화면이 늘어난다.
+  payload.calendar = toParentCalendar({
+    student: student,
+    records: records,
+    overrides: listOverrides_('', ''),
+  });
+
+  return ok(payload);
 }
 
 /**

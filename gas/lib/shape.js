@@ -145,6 +145,53 @@ function toParentPayload(input) {
   };
 }
 
+/**
+ * 학부모 달력이 쓰는 것만 추려 낸다 — 평소 일정 한 줄, 그 학생의 하루치
+ * 조각, 날짜별 출결이다.
+ *
+ * 기록 전체를 다시 쓰지 않는다. 달력 칸에 적는 것은 그날 왔는지와 몇
+ * 회차인지뿐이고, 코멘트·진도는 아래 수업 기록 탭이 이미 담고 있다.
+ *
+ * 거르기 전 기록을 받는다. 결석한 날은 진도도 코멘트도 없어 학부모 목록에서
+ * 빠지는데, 달력에서는 빠진 그날이야말로 보여야 하는 칸이다.
+ */
+function toParentCalendar(input) {
+  const opts = input || {};
+  const student = opts.student || {};
+  const sid = String(student.studentId == null ? '' : student.studentId);
+
+  const marks = {};
+  (opts.records || []).forEach(function (r) {
+    const date = String((r && r.date) || '');
+    const attendance = String((r && r.attendance) || '');
+    if (!date || !attendance) return;
+
+    marks[date] = {
+      attendance: attendance,
+      sessionNo: r.sessionNo === null || r.sessionNo === undefined ? '' : String(r.sessionNo),
+    };
+  });
+
+  return {
+    schedule: String(student.schedule == null ? '' : student.schedule),
+    // 하루치 조각은 그 학생 것만 내려보낸다. 다른 학생의 보강·결석이
+    // 학부모 쪽으로 새어 나갈 길을 아예 두지 않는다.
+    overrides: (opts.overrides || [])
+      .filter(function (o) { return o && String(o.studentId) === sid; })
+      .map(function (o) {
+        return {
+          overrideId: String(o.overrideId),
+          date: String(o.date),
+          studentId: sid,
+          time: String(o.time || ''),
+          kind: String(o.kind),
+          reason: String(o.reason || ''),
+        };
+      }),
+    marks: marks,
+  };
+}
+
 if (typeof module !== 'undefined') {
   /* eslint-disable no-var */
   var computeSummary = require('./summary.js').computeSummary;
@@ -155,6 +202,7 @@ if (typeof module !== 'undefined') {
     toParentRecord,
     toParentStudent,
     toParentPayload,
+    toParentCalendar,
     hasParentContent_,
   };
 }

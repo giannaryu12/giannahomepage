@@ -793,3 +793,15 @@ body.gi .gi-h2{ color:var(--text); }
   border:2px solid var(--state-bad-dot);
   font-weight:700;
 }
+
+
+/* ---------- 학부모 화면의 달력 ---------- */
+/* 읽는 달력이다. 누를 것이 없으므로 손가락 모양도 뜨지 않는다 — 뜨면
+   눌러 보고 나서야 아무 일이 없음을 안다. */
+.gi-cal-read .gi-cal-cell{ cursor:default; }
+.gi-cal-read .gi-cal-name{ cursor:default; }
+/* 탭 둘은 머리글 바로 아래 선다. */
+.gi-tabs{ margin-bottom:1.1rem; }
+/* 동그라미 풀이. 줄바꿈을 허용하되 동그라미와 글자는 붙여 둔다. */
+.gi-cal-legend{ margin-top:0.6rem; line-height:1.9; }
+.gi-cal-legend .gi-dot{ margin-left:0.5rem; }

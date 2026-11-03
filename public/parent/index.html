@@ -9,8 +9,8 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>학습 리포트 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103d">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261103d">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261103e">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261103e">
 </head>
 <body class="gi">
 
@@ -25,18 +25,47 @@
 <main class="gi-wrap">
   <div id="state" class="gi-state">불러오는 중…</div>
   <div id="content" hidden>
-    <section id="cards"></section>
-    <h2 class="gi-h2">성적 추이</h2>
-    <div class="gi-chart" id="chart"></div>
-    <h2 class="gi-h2">수업 기록</h2>
-    <div id="records"></div>
+    <!-- 탭 둘. 요약·추이·기록은 지난 수업을 읽는 곳이고, 일정은 이번 달에
+         오는 날을 보는 곳이다. 한 화면에 이어 두면 달력이 기록 수십 개
+         아래 묻혀 스크롤 끝까지 내려가야 나온다. -->
+    <nav class="gi-choices gi-tabs" id="parentTabs">
+      <button class="gi-choice" type="button" data-tab="report" aria-pressed="true">학습 기록</button>
+      <button class="gi-choice" type="button" data-tab="plan" aria-pressed="false">수업 일정</button>
+    </nav>
+
+    <div id="reportTab">
+      <section id="cards"></section>
+      <h2 class="gi-h2">성적 추이</h2>
+      <div class="gi-chart" id="chart"></div>
+      <h2 class="gi-h2">수업 기록</h2>
+      <div id="records"></div>
+    </div>
+
+    <div id="planTab" hidden>
+      <div class="gi-week" id="calNav">
+        <button class="gi-choice" type="button" data-mon="-1">← 지난달</button>
+        <span class="gi-week-label" id="calLabel"></span>
+        <button class="gi-choice" type="button" data-mon="1">다음달 →</button>
+        <button class="gi-choice" type="button" data-mon="0">이번 달</button>
+      </div>
+      <div id="parentCal"></div>
+      <p class="gi-note gi-cal-legend">
+        <span class="gi-dot is-good"></span> 출석
+        <span class="gi-dot is-warn"></span> 지각
+        <span class="gi-dot is-bad"></span> 결석·변경
+        <span class="gi-dot is-extra"></span> 보강
+        · 동그라미가 없는 날은 아직 기록하지 않은 수업입니다.
+      </p>
+    </div>
   </div>
 </main>
 
-<script src="/assets/js/config.js?v=20261103d"></script>
-<script src="/assets/js/api.js?v=20261103d"></script>
-<script src="/assets/js/progress-areas.js?v=20261103d"></script>
-<script src="/assets/js/format.js?v=20261103d"></script>
-<script src="/assets/js/parent.js?v=20261103d"></script>
+<script src="/assets/js/config.js?v=20261103e"></script>
+<script src="/assets/js/api.js?v=20261103e"></script>
+<script src="/assets/js/progress-areas.js?v=20261103e"></script>
+<script src="/assets/js/schedule.js?v=20261103e"></script>
+<script src="/assets/js/format.js?v=20261103e"></script>
+<script src="/assets/js/parent-schedule.js?v=20261103e"></script>
+<script src="/assets/js/parent.js?v=20261103e"></script>
 </body>
 </html>
