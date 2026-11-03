@@ -22,6 +22,11 @@
   // 그날 수업을 안 한 출결. 회차를 세지 않으므로 달력에도 적지 않는다.
   const OFF_MARKS = ['결석', '변경'];
 
+  // 학부모 달력이 보여 주는 첫 달. 이 앱으로 일정을 적기 시작한 달이다.
+  // 그 앞은 요일·시간만으로 그려져서, 다니지도 않던 때의 수업이 달력에
+  // 가득 찬 것처럼 보인다.
+  const FIRST_MONTH = '2026-11';
+
   let student = null;
   let overrides = [];
   let marks = {};
@@ -59,6 +64,12 @@
       off: off,
       word: m.attendance,
     };
+  }
+
+  /** 이번 달. 첫 달 앞이면 첫 달을 연다. */
+  function thisMonth() {
+    const now = S.monthOf(todayIso());
+    return now < FIRST_MONTH ? FIRST_MONTH : now;
   }
 
   function entriesOn(iso) {
@@ -99,6 +110,10 @@
   function render() {
     document.getElementById('calLabel').textContent = monthLabel(month);
 
+    // 첫 달에서는 더 뒤로 갈 곳이 없다. 눌러도 그대로인 버튼을 살려 두면
+    // 몇 번을 눌러 보고 나서야 끝인 줄 안다.
+    document.querySelector('#calNav [data-mon="-1"]').disabled = month <= FIRST_MONTH;
+
     const today = todayIso();
 
     const head = '<tr>' + S.WEEKDAYS.map(function (w) {
@@ -127,7 +142,7 @@
     };
     overrides = cal.overrides || [];
     marks = cal.marks || {};
-    month = S.monthOf(todayIso());
+    month = thisMonth();
 
     if (!S.parseSchedule(student.schedule).length && !overrides.length) {
       document.getElementById('planTab').innerHTML =
@@ -140,7 +155,8 @@
       if (!btn) return;
 
       const step = Number(btn.dataset.mon);
-      month = step === 0 ? S.monthOf(todayIso()) : S.addMonths(month, step);
+      const want = step === 0 ? thisMonth() : S.addMonths(month, step);
+      month = want < FIRST_MONTH ? FIRST_MONTH : want;
       render();
     });
 
