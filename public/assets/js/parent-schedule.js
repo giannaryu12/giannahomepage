@@ -22,15 +22,16 @@
   // 그날 수업을 안 한 출결. 회차를 세지 않으므로 달력에도 적지 않는다.
   const OFF_MARKS = ['결석', '변경'];
 
-  // 학부모 달력이 보여 주는 첫 달. 이 앱으로 일정을 적기 시작한 달이다.
-  // 그 앞은 요일·시간만으로 그려져서, 다니지도 않던 때의 수업이 달력에
-  // 가득 찬 것처럼 보인다.
-  const FIRST_MONTH = '2026-11';
 
   let student = null;
   let overrides = [];
   let marks = {};
   let month = '';
+  // 이 학생의 첫 수업이 있는 달. 서버가 기록에서 찾아 보낸다. 그 앞은
+  // 요일·시간만으로 그려져서, 다니지도 않던 때의 수업이 달력에 가득 찬
+  // 것처럼 보인다. 학생마다 다르다 — 올해 온 학생에게 작년 달력을 열어
+  // 줄 까닭이 없다.
+  let firstMonth = '';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -69,7 +70,7 @@
   /** 이번 달. 첫 달 앞이면 첫 달을 연다. */
   function thisMonth() {
     const now = S.monthOf(todayIso());
-    return now < FIRST_MONTH ? FIRST_MONTH : now;
+    return now < firstMonth ? firstMonth : now;
   }
 
   function entriesOn(iso) {
@@ -112,7 +113,7 @@
 
     // 첫 달에서는 더 뒤로 갈 곳이 없다. 눌러도 그대로인 버튼을 살려 두면
     // 몇 번을 눌러 보고 나서야 끝인 줄 안다.
-    document.querySelector('#calNav [data-mon="-1"]').disabled = month <= FIRST_MONTH;
+    document.querySelector('#calNav [data-mon="-1"]').disabled = month <= firstMonth;
 
     const today = todayIso();
 
@@ -142,6 +143,9 @@
     };
     overrides = cal.overrides || [];
     marks = cal.marks || {};
+    // 기록도 등록일도 없으면 이번 달이 첫 달이다. 빈 값을 그대로 두면
+    // 모든 달이 '첫 달보다 앞'이 아니게 되어 한없이 뒤로 갈 수 있다.
+    firstMonth = cal.firstMonth || S.monthOf(todayIso());
     month = thisMonth();
 
     if (!S.parseSchedule(student.schedule).length && !overrides.length) {
@@ -156,7 +160,7 @@
 
       const step = Number(btn.dataset.mon);
       const want = step === 0 ? thisMonth() : S.addMonths(month, step);
-      month = want < FIRST_MONTH ? FIRST_MONTH : want;
+      month = want < firstMonth ? firstMonth : want;
       render();
     });
 

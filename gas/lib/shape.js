@@ -146,6 +146,30 @@ function toParentPayload(input) {
 }
 
 /**
+ * 그 학생의 달력이 시작하는 달 'yyyy-MM'.
+ *
+ * 첫 수업 기록이 있는 달이다. 그 앞 달은 요일·시간만으로 그려지므로,
+ * 다니지도 않던 때의 수업이 달력에 가득 찬 것처럼 보인다.
+ *
+ * 기록이 아직 없으면 등록한 달로, 그것도 없으면 빈 값으로 둔다 —
+ * 화면이 이번 달을 쓴다.
+ */
+function parentFirstMonth_(student, records) {
+  let first = '';
+
+  (records || []).forEach(function (r) {
+    const d = String((r && r.date) || '');
+    if (!/^\d{4}-\d{2}/.test(d)) return;
+    const key = d.slice(0, 7);
+    if (!first || key < first) first = key;
+  });
+  if (first) return first;
+
+  const made = String((student && student.createdAt) || '');
+  return /^\d{4}-\d{2}/.test(made) ? made.slice(0, 7) : '';
+}
+
+/**
  * 학부모 달력이 쓰는 것만 추려 낸다 — 평소 일정 한 줄, 그 학생의 하루치
  * 조각, 날짜별 출결이다.
  *
@@ -174,6 +198,7 @@ function toParentCalendar(input) {
 
   return {
     schedule: String(student.schedule == null ? '' : student.schedule),
+    firstMonth: parentFirstMonth_(student, opts.records),
     // 하루치 조각은 그 학생 것만 내려보낸다. 다른 학생의 보강·결석이
     // 학부모 쪽으로 새어 나갈 길을 아예 두지 않는다.
     overrides: (opts.overrides || [])
@@ -203,6 +228,7 @@ if (typeof module !== 'undefined') {
     toParentStudent,
     toParentPayload,
     toParentCalendar,
+    parentFirstMonth_,
     hasParentContent_,
   };
 }

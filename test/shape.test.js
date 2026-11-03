@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   toParentRecord, toParentStudent, toParentPayload,
-  hasParentContent_, PARENT_RECORD_FIELDS,
+  hasParentContent_, PARENT_RECORD_FIELDS, toParentCalendar,
 } from '../gas/lib/shape.js';
 
 describe('toParentRecord', () => {
@@ -209,5 +209,47 @@ describe('toParentPayload — 누적과 이달', () => {
     expect(out.summary.monthKey).toBe('');
     expect(out.summary.monthAttendanceRate).toBeNull();
     expect(out.summary.attendanceRate).toBe(33);
+  });
+});
+
+
+describe('toParentCalendar — 학부모 달력', () => {
+  const student = { studentId: 'S1', schedule: '화 17:00', createdAt: '2026-11-03T01:00:00Z' };
+
+  it('첫 수업 기록이 있는 달부터 보여 준다', () => {
+    const cal = toParentCalendar({
+      student: student,
+      records: [{ date: '2027-01-05', attendance: '출석' }, { date: '2026-12-08', attendance: '출석' }],
+    });
+    expect(cal.firstMonth).toBe('2026-12');
+  });
+
+  it('기록이 없으면 등록한 달부터다', () => {
+    expect(toParentCalendar({ student: student, records: [] }).firstMonth).toBe('2026-11');
+  });
+
+  it('기록도 등록일도 없으면 비워 둔다 — 화면이 이번 달을 쓴다', () => {
+    expect(toParentCalendar({ student: { studentId: 'S1' }, records: [] }).firstMonth).toBe('');
+  });
+
+  it('그 학생의 하루치 조각만 내려보낸다', () => {
+    const cal = toParentCalendar({
+      student: student,
+      records: [],
+      overrides: [
+        { overrideId: 'O1', date: '2026-11-10', studentId: 'S1', kind: 'skip', reason: 'moved' },
+        { overrideId: 'O2', date: '2026-11-10', studentId: 'S9', kind: 'add', time: '16:00' },
+      ],
+    });
+    expect(cal.overrides).toHaveLength(1);
+    expect(cal.overrides[0].overrideId).toBe('O1');
+  });
+
+  it('날짜별 출결과 회차를 모은다', () => {
+    const cal = toParentCalendar({
+      student: student,
+      records: [{ date: '2026-11-03', attendance: '출석', sessionNo: 7 }, { date: '2026-11-05' }],
+    });
+    expect(cal.marks).toEqual({ '2026-11-03': { attendance: '출석', sessionNo: '7' } });
   });
 });
