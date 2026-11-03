@@ -821,7 +821,13 @@ body.gi .gi-h2{ color:var(--text); }
    이미 1.17rem이라 더 줄이면 머리글로 읽히지 않는다.
    학년·반은 아래 줄로 내린다(flex-basis 100%). */
 .gi-head-parent .gi-wrap{ display:flex; flex-wrap:wrap; align-items:baseline; gap:0 0.5rem; }
-.gi-head-parent .gi-head-sub{ flex:1 0 100%; }
+.gi-head-parent .gi-head-sub{ order:3; flex:1 0 100%; }
+/* 제목이 먼저다. 학부모가 링크를 열고 확인하는 것은 "누구의 리포트인가"이고,
+   학원 이름은 이미 아는 것이다. 브랜드는 같은 줄 오른쪽 끝으로 민다 —
+   DOM 차례는 그대로 두고 order로만 옮긴다. 읽어 주는 기계에는 브랜드
+   먼저가 맞다. */
+.gi-head-parent h1{ order:1; }
+.gi-head-parent .gi-head-brand{ order:2; margin-left:auto; margin-bottom:0; }
 .gi-head-parent .gi-head-brand{ font-size:0.62rem; margin-bottom:0.3rem; }
 .gi-head-parent h1{ font-size:1.17rem; line-height:1.15; }
 .gi-head-parent .gi-head-sub{ margin-top:0.1rem; font-size:0.74rem; line-height:1.3; }
