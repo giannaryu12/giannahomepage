@@ -371,11 +371,40 @@
       '</article>';
   }
 
+  // 처음에 펴 두는 기록 수와 '더보기' 한 번에 늘어나는 수.
+  //
+  // 한 해를 다니면 기록이 백 건을 넘는다. 다 그려 두면 학부모가 보려는
+  // 지난주 수업이 스크롤 막대 맨 위 몇 픽셀이 된다.
+  const FIRST_SHOWN = 5;
+  const MORE_STEP = 8;
+
+  let shown = FIRST_SHOWN;
+
+  /**
+   * 넘치는 기록은 숨기기만 한다. 지웠다 다시 그리면 펴 둔 기록이 접히고
+   * 읽던 자리가 사라진다 — '더보기'를 누른 사람이 잃는 것이 얻는 것보다
+   * 많아진다.
+   */
+  function applyLimit(total) {
+    const $records = document.getElementById('records');
+
+    $records.querySelectorAll('.gi-rec').forEach(function (card, i) {
+      card.hidden = i >= shown;
+    });
+
+    const $more = document.getElementById('moreRecords');
+    const left = total - shown;
+
+    $more.hidden = left <= 0;
+    if (left > 0) $more.textContent = '더보기 (' + left + '개 남음)';
+  }
+
   function renderRecords(records) {
     const $records = document.getElementById('records');
 
     if (!records.length) {
       $records.innerHTML = '<p class="gi-note">아직 등록된 수업 기록이 없습니다.</p>';
+      document.getElementById('moreRecords').hidden = true;
       return;
     }
 
@@ -389,6 +418,13 @@
         body.hidden = open;
       });
     });
+
+    document.getElementById('moreRecords').addEventListener('click', function () {
+      shown += MORE_STEP;
+      applyLimit(records.length);
+    });
+
+    applyLimit(records.length);
   }
 
   /* ---------- 탭 ---------- */
