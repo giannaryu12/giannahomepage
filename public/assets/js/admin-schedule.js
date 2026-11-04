@@ -113,14 +113,49 @@
    * 출결을 적을 때 그날의 시각을 함께 적어 두므로, 적어 둔 날은 그것을
    * 쓴다. 요일표 고치기는 앞날에만 미친다.
    */
+  /**
+   * 그날 세울 줄.
+   *
+   * 셋을 합친다: 요일표에서 온 줄, 하루치 조각(보충·휴강), 그리고
+   * 둘 다에 없는데 출결만 적힌 날.
+   *
+   * 셋째가 빠져 있었다. 학생 관리에서 날짜만 바꿔 기록을 적으면 그날은
+   * 요일표에도 조각에도 없다 — 선생님 달력에서 통째로 안 보이고, 그래서
+   * 시간을 적어 넣을 길도 없었다. 학부모 화면에는 출결이 있으니 줄은
+   * 서는데 시간 자리만 비어 있었다(parent-schedule.js의 markOnly_).
+   *
+   * 출결을 적어 둔 날은 그날의 시각을 쓴다. 요일표를 고쳐도 지나간
+   * 수업은 그 시각 그대로다.
+   */
   function entriesOn(iso) {
-    return S.applyOverrides(
+    const rows = S.applyOverrides(
       S.studentsOnDate(students, iso, vacations), overrides, iso, students)
       .map(function (e) {
         const m = markFor(iso, e.student.studentId);
         const kept = m && m.classTime;
         return kept ? Object.assign({}, e, { time: String(kept) }) : e;
       });
+
+    const seen = {};
+    rows.forEach(function (e) { seen[String(e.student.studentId)] = true; });
+
+    students.forEach(function (s) {
+      const sid = String(s.studentId);
+      if (seen[sid]) return;
+
+      const m = markFor(iso, sid);
+      if (!m) return;
+      rows.push({ time: String(m.classTime || ''), student: s, fromMark: true });
+    });
+
+    // 시간이 이른 쪽부터. 시각을 모르는 줄은 맨 앞에 서서 눈에 걸린다 —
+    // 적어 넣어야 할 줄이다.
+    return rows.sort(function (a, b) {
+      if (a.time !== b.time) return a.time < b.time ? -1 : 1;
+      const an = String(a.student && a.student.name);
+      const bn = String(b.student && b.student.name);
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
   }
 
   /* ---------- 달력 ---------- */
@@ -569,12 +604,17 @@
    *
    * 적어 둔 출결은 날짜와 학생으로 붙어 있어 시간이 바뀌어도 그대로다.
    */
-  function moveDayClass(studentId, time, overrideId) {
+  function moveDayClass(studentId, time, overrideId, fromMark) {
     if (!time) return Promise.resolve();
 
+    // 요일표에서 온 줄만 그 하루를 비운다. 출결만 적힌 줄은 비울 요일
+    // 수업이 애초에 없어서, 휴강 조각을 얹어 봐야 아무것도 가리지 않는
+    // 줄 하나가 시트에 남을 뿐이다.
     const first = overrideId
       ? dropOverride(overrideId)
-      : saveOverride({ date: openDate, studentId: studentId, kind: 'skip', reason: 'off' });
+      : fromMark
+        ? Promise.resolve()
+        : saveOverride({ date: openDate, studentId: studentId, kind: 'skip', reason: 'off' });
 
     return first.then(function () {
       return saveOverride({
@@ -699,7 +739,7 @@
       })[0];
 
       editTime = '';
-      moveDayClass(sid, box ? box.value : '', row && row.overrideId);
+      moveDayClass(sid, box ? box.value : '', row && row.overrideId, row && row.fromMark);
       return;
     }
 
