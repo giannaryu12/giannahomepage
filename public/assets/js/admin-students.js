@@ -96,14 +96,8 @@
    * 하나를 붙인다. 꺼진 요일의 칸은 아예 그리지 않는다 — 일곱 칸이 늘
    * 떠 있으면 어느 요일에 수업이 있는지가 한눈에 안 들어온다.
    */
-  /**
-   * 요일·시간 고르는 칸.
-   *
-   * withSave면 요일 줄 맨 끝에 저장 버튼이 붙는다. 수정 칸에서는 고칠
-   * 것이 이 줄까지이므로, 버튼을 따로 떼어 두면 눈이 아래로 한 번 더
-   * 내려갔다 와야 한다.
-   */
-  function schedHtml(raw, withSave) {
+  /** 요일·시간 고르는 칸. 끝내는 단추는 위 네 칸 줄 끝에 있다. */
+  function schedHtml(raw) {
     const entries = S.parseSchedule(raw);
     const on = {};
     entries.forEach(function (e) { on[e.day] = e.time; });
@@ -114,9 +108,7 @@
             return '<button class="gi-choice" type="button" data-day="' + w + '"' +
               ' aria-pressed="' + (on[w] ? 'true' : 'false') + '">' + w + '</button>';
           }).join('') +
-          (withSave
-            ? '<button class="gi-choice gi-sched-save" type="button" data-act="save">저장</button>'
-            : '') +
+
         '</div>' +
         '<div class="gi-sched-times" data-times>' + timesHtml(entries) + '</div>' +
       '</div>';
@@ -240,6 +232,10 @@
         '<select class="gi-select" data-field="level">' + levelOptionsHtml(key) + '</select>' +
         '<select class="gi-select" data-field="gradeNum">' + gradeOptionsHtml(key, gradeNum(s)) + '</select>' +
         '<input class="gi-input" type="text" data-field="school" placeholder="학교 이름" value="' + A.esc(s.school || '') + '">' +
+        // 등록 단추와 같은 자리, 같은 모양. 두 칸이 같은 줄을 쓰는데
+        // 끝내는 단추만 다른 데 있으면, 고치고 나서 그 단추를 다시
+        // 찾아야 한다.
+        '<button class="gi-btn gi-btn-primary" type="button" data-act="save">수정</button>' +
       '</div>' +
       '<div class="gi-stu-row">' +
         '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
@@ -277,7 +273,7 @@
               '<button class="gi-choice" type="button" data-act="toggle">' +
                 (s.active ? '비활성화' : '다시 활성화') + '</button>' +
             '</div>') +
-          (editable ? schedHtml(s.schedule, true) : '') +
+          (editable ? schedHtml(s.schedule) : '') +
           '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
         '</div>' +
       '</article>';
@@ -321,8 +317,10 @@
     const mine = students.filter(function (s) { return levelOf(s) === editLevel; })
       .sort(function (x, y) { return String(x.name).localeCompare(String(y.name), 'ko'); });
 
+    // 차례는 아래 칸과 같다 — 이름이 첫 칸, 학교급이 둘째 칸. 고르는
+    // 칸과 고치는 칸이 세로로 맞아떨어져야, 고른 학생이 그 아래 칸에
+    // 그대로 이어진다는 것이 눈으로 읽힌다.
     return '<div class="gi-stu-pick">' +
-        '<select class="gi-select" id="editLevel">' + levelOptionsHtml(editLevel) + '</select>' +
         '<select class="gi-select" id="editWho">' +
           (mine.length
             ? mine.map(function (s) {
@@ -332,6 +330,11 @@
               }).join('')
             : '<option value="">이 학교급에는 학생이 없습니다</option>') +
         '</select>' +
+        '<select class="gi-select" id="editLevel">' + levelOptionsHtml(editLevel) + '</select>' +
+        // 보이지 않는 자리지기. 아래 줄 끝에는 '수정' 단추가 서 있어서,
+        // 이 줄에 같은 자리를 비워 두지 않으면 남는 폭이 네 칸에 나뉘어
+        // 두 줄의 칸이 조금씩 어긋난다.
+        '<span class="gi-btn gi-btn-primary" aria-hidden="true">수정</span>' +
       '</div>' +
       studentHtml(cur, true);
   }
