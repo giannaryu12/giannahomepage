@@ -1174,3 +1174,28 @@ body.gi .gi-h2{ color:var(--text); }
   color:var(--state-bad);
 }
 .gi-rec-kind.is-regular{ color:var(--state-extra); }
+
+
+/* ---------- 기록 입력 칸 전체를 한 단계 줄인다 ---------- */
+/* 한 수업을 적으려면 칸 스무 개를 지나야 한다. 칸 하나가 기본 크기면
+   화면이 세 번 넘게 넘어가고, 시험을 적다가 진도를 적으려면 위로
+   되감아야 한다. 글자와 높이를 함께 줄여야 줄 수가 준다 — 글자만
+   줄이면 빈 여백만 남는다.
+
+   줄이는 자리는 기록 화면 안쪽뿐이다. 학생 등록·일정 고치기는 한 번에
+   몇 칸만 쓰므로 그대로 둔다. */
+#recordView .gi-input,
+#recordView .gi-select,
+#recordView .gi-textarea{
+  font-size:0.8rem;
+  padding:0.3rem 0.45rem;
+}
+#recordView .gi-textarea{ min-height:2.6rem; }
+#recordView .gi-choice{ font-size:0.74rem; padding:0.26rem 0.42rem; }
+/* 이름표와 칸 사이, 칸과 다음 묶음 사이도 함께 좁힌다. 칸만 줄이고
+   사이를 그대로 두면 줄어든 만큼 빈자리가 늘어날 뿐이다. */
+#recordView .gi-field{ margin-bottom:0.6rem; }
+#recordView .gi-label{ font-size:0.7rem; margin-bottom:0.2rem; }
+#recordView .gi-area{ margin-bottom:0.3rem; }
+#recordView .gi-field-pair{ margin-bottom:0.6rem; }
+#recordView .gi-kind-tabs .gi-choice{ font-size:0.74rem; padding:0.3rem 0.42rem; }
