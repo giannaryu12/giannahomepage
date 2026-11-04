@@ -110,8 +110,14 @@ function hasParentContent_(record) {
   // 출석률에서도 이미 빼고 센다(summary.js의 RATE_EXCLUDED).
   if (rec.attendance === '변경') return false;
 
-  // 결석은 그 자체가 전할 내용이다. 다른 칸이 비어 있어도 보인다.
-  if (rec.attendance === '결석') return true;
+  // 출결을 누른 쪽이 그날 실제로 한 수업이다. 다른 칸이 비어 있어도
+  // 보인다 — 왔다는 사실만으로도 학부모가 읽을 것이 있다.
+  //
+  // 같은 날 정규수업과 시험대비가 따로 쌓일 때, 선생님이 출결을 누른
+  // 쪽만 그날 한 수업이다. 나머지 한 쪽은 회차와 교재가 자동으로 채워진
+  // 채 저장되었을 뿐이라 아래 검사에서 걸러진다 — 둘 다 근거로 치지
+  // 않으므로. 손으로 적은 것이 있으면 그 쪽도 함께 보인다.
+  if (filled_(rec.attendance)) return true;
 
   // 시험대비는 적어 둔 칸이 전부다. 출결도 시험 점수도 없다.
   if (filled_(rec.examTests)) return true;

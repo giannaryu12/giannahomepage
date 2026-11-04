@@ -86,9 +86,27 @@
     return !!(m && String(m.attendance) === '변경');
   }
 
+  /**
+   * 요일에도 하루치 조각에도 없지만 출결이 적힌 날.
+   *
+   * 보강이 그렇다 — 평소 요일이 아닌 날에 한 번 더 하고, 선생님이 그날
+   * 기록에 '보강'을 눌러 둔다. 달력이 요일과 조각만 보면 그 수업은 아예
+   * 없던 일이 되고, 학부모는 분명히 다녀온 날이 빈 칸인 것을 본다.
+   *
+   * 시간은 모른다 — 적어 둔 곳이 출결뿐이다. 시간 자리를 비우고 꼬리표로
+   * 무슨 날이었는지 말한다.
+   */
+  function markOnly_(iso) {
+    const m = marks[String(iso)];
+    if (!m || OFF_MARKS.indexOf(m.attendance) !== -1) return [];
+    return [{ time: '', student: student, fromMark: true }];
+  }
+
   function entriesOn(iso) {
-    return S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student])
+    const list = S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student])
       .filter(function (e) { return !movedOut_(e, iso); });
+
+    return list.length ? list : markOnly_(iso);
   }
 
   /**
@@ -102,12 +120,16 @@
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
         ? '<span class="gi-cal-tag is-off">' + esc(m.word) + '</span>'
-        : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+        // 요일에 없던 날에 적힌 출결은 그 말을 그대로 단다 — '보강'이라고
+        // 적혀 있어야 왜 이 날에 수업이 서 있는지 읽힌다.
+        : entry.fromMark
+          ? '<span class="gi-cal-tag is-extra">' + esc(m.word) + '</span>'
+          : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<span class="gi-choice gi-cal-name' +
-      (entry.overrideId ? ' is-extra' : '') +
+      (entry.overrideId || entry.fromMark ? ' is-extra' : '') +
       (entry.skip || m.off ? ' is-off' : '') + '">' +
-      '<span class="gi-cal-at">' + esc(entry.time) + '</span>' +
+      (entry.time ? '<span class="gi-cal-at">' + esc(entry.time) + '</span>' : '') +
       '<span class="gi-cal-who">' + m.dot + '수업</span>' + m.no + tag + '</span>';
   }
 
