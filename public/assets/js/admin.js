@@ -25,6 +25,9 @@
   const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
   const HOMEWORK = ['제출', '부분제출', '미제출', '해당없음'];
   const LEVELS = ['상', '중', '하'];
+  // 시험대비의 시험 결과. 점수가 아니라 통과 여부다 — 기준 점수는 학교마다
+  // 다르고 시험마다 달라서, 숫자만 받아 두면 견줄 수가 없다.
+  const EXAM_RESULTS = ['통과', '미통과', '미응시'];
 
   let sessionKey = sessionStorage.getItem(SESSION_STORE) || '';
 
@@ -44,7 +47,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261103r';
+  const BUILD = 'v20261104a';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -265,9 +268,12 @@
   /* ---------- 시험대비 칸 ---------- */
 
   /**
-   * 칸 한 줄 — 이름 · 교재 · 내용 · 지우기.
+   * 칸 한 줄 — 내용 · 지우기.
    *
-   * 줄마다 자리 번호를 붙인다. 지울 때 그 번호로 빼므로, 같은 이름의 칸이
+   * 적는 칸은 하나다. 이름·교재로 셋으로 나누면 '모의고사 3회분 1~20번'을
+   * 어디에 적을지부터 망설이게 된다.
+   *
+   * 줄마다 자리 번호를 붙인다. 지울 때 그 번호로 빼므로, 같은 내용의 칸이
    * 둘 있어도 누른 줄만 사라진다.
    */
   function examRowHtml(list, at, row) {
@@ -278,7 +284,7 @@
     };
 
     return '<div class="gi-area gi-exam-row">' +
-      cell('name', '이름') + cell('book', '교재') + cell('text', '내용') +
+      cell('text', '내용') +
       '<button class="gi-choice gi-exam-del" type="button"' +
       ' data-exam-del="' + list + '" data-at="' + at + '"' +
       ' aria-label="이 칸 지우기">✕</button>' +
@@ -301,6 +307,8 @@
   }
 
   function renderExamFields() {
+    renderChoiceGroup('recExamResult', EXAM_RESULTS, 'examResult');
+    renderExamList('examTests');
     renderExamList('examItems');
     renderExamList('examNext');
   }
@@ -429,10 +437,11 @@
       values = RF.withSessionDefault(values, student.lastSessionNo);
     }
 
-    // 시험대비는 칸 이름만 지난번 구성에서 물려받는다. 적어 둔 것도
+    // 시험대비는 칸 개수만 지난번 구성에서 물려받는다. 적어 둔 것도
     // 초안도 없을 때만이다 — 있으면 그것이 선생님이 만든 구성이다.
     if (!rec && !saved && currentKind === 'exam') {
       const last = (student.lastExam || {});
+      values.examTests = (last.tests || []).slice();
       values.examItems = (last.items || []).slice();
       values.examNext = (last.next || []).slice();
     }
@@ -612,13 +621,13 @@
     const add = e.target.closest('[data-exam-add]');
     if (add) {
       const list = add.dataset.examAdd;
-      recordForm[list] = (recordForm[list] || []).concat([{ name: '', book: '', text: '' }]);
+      recordForm[list] = (recordForm[list] || []).concat([{ text: '' }]);
       saveRecordDraft();
       renderExamList(list);
 
-      // 새로 만든 줄의 이름 칸으로 바로 커서를 옮긴다. 더하고 나서 다시
-      // 눌러야 적을 수 있으면 칸을 여러 개 만들 때마다 손이 두 번 간다.
-      const rows = $(list).querySelectorAll('[data-key="name"]');
+      // 새로 만든 줄로 바로 커서를 옮긴다. 더하고 나서 다시 눌러야 적을 수
+      // 있으면 칸을 여러 개 만들 때마다 손이 두 번 간다.
+      const rows = $(list).querySelectorAll('[data-key="text"]');
       if (rows.length) rows[rows.length - 1].focus();
       return;
     }

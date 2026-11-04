@@ -9,19 +9,37 @@
  * 컬럼을 늘리지 않는 까닭: 칸 이름이 자유로우면 컬럼 이름도 자유로워야 하는데,
  * 그러면 학생마다 다른 컬럼이 시트 오른쪽으로 끝없이 늘어난다.
  *
- * 칸 하나는 {name, book, text}다 — 이름·교재·내용.
+ * 칸 하나는 {text}다 — 내용 한 줄. 이름과 교재를 따로 받던 때가 있었지만,
+ * 시험대비에 적는 것은 '모의고사 3회분 1~20번'처럼 이미 한 문장이다. 칸을
+ * 셋으로 나누면 어디에 무엇을 적을지부터 망설이게 된다.
  */
+
 (function (global) {
   /** 칸 하나의 자리. 순서가 화면의 칸 순서다. */
-  const EXAM_ITEM_KEYS = ['name', 'book', 'text'];
+  const EXAM_ITEM_KEYS = ['text'];
 
   function str_(v) {
     return v === null || v === undefined ? '' : String(v);
   }
 
-  /** 세 칸이 모두 비었는가. 빈 줄은 저장하지 않는다. */
+  /** 칸이 비었는가. 빈 줄은 저장하지 않는다. */
   function isEmptyItem(item) {
     return EXAM_ITEM_KEYS.every(function (k) { return !str_(item && item[k]).trim(); });
+  }
+
+  /**
+   * 칸 하나를 내용 한 줄로 읽는다.
+   *
+   * 이름·교재·내용 셋으로 나뉘어 저장된 옛 줄은 하나로 합친다. 버리면
+   * 선생님이 적어 둔 것이 조용히 사라지고, 학부모 화면에서도 빈 줄이 된다.
+   */
+  function itemText_(it) {
+    const own = str_(it && it.text).trim();
+    const old = [str_(it && it.name).trim(), str_(it && it.book).trim()]
+      .filter(function (v) { return v; }).join(' · ');
+
+    if (!old) return own;
+    return own ? old + ' · ' + own : old;
   }
 
   /**
@@ -43,11 +61,7 @@
     if (!Array.isArray(parsed)) return [];
 
     return parsed.map(function (it) {
-      return {
-        name: str_(it && it.name),
-        book: str_(it && it.book),
-        text: str_(it && it.text),
-      };
+      return { text: itemText_(it) };
     }).filter(function (it) { return !isEmptyItem(it); });
   }
 
@@ -59,23 +73,21 @@
    */
   function stringifyItems(list) {
     const kept = (list || []).map(function (it) {
-      return { name: str_(it && it.name).trim(), book: str_(it && it.book).trim(), text: str_(it && it.text).trim() };
+      return { text: str_(it && it.text).trim() };
     }).filter(function (it) { return !isEmptyItem(it); });
 
     return kept.length ? JSON.stringify(kept) : '';
   }
 
   /**
-   * 다음 기록을 열 때 미리 깔아 둘 칸. 이름만 남기고 교재·내용은 비운다.
+   * 다음 기록을 열 때 미리 깔아 둘 칸. 개수만 물려받고 내용은 비운다.
    *
-   * 교재까지 물려주면 지난주에 푼 3회분이 이번 주 칸에 그대로 앉아 있다가,
-   * 선생님이 못 보고 저장하면 하지 않은 수업이 기록에 남는다. 칸 이름은
-   * 그 학생에게 무엇을 시키는지라 잘 바뀌지 않으므로 물려준다.
+   * 내용까지 물려주면 지난주에 푼 3회분이 이번 주 칸에 그대로 앉아 있다가,
+   * 선생님이 못 보고 저장하면 하지 않은 수업이 기록에 남는다. 몇 칸을 쓰는지는
+   * 그 학생의 시험 대비 틀이라 잘 바뀌지 않으므로 그것만 물려준다.
    */
   function itemTemplate(list) {
-    return (list || [])
-      .filter(function (it) { return str_(it && it.name).trim(); })
-      .map(function (it) { return { name: str_(it.name).trim(), book: '', text: '' }; });
+    return (list || []).map(function () { return { text: '' }; });
   }
 
   const api = { EXAM_ITEM_KEYS, isEmptyItem, parseItems, stringifyItems, itemTemplate };

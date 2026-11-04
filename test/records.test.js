@@ -74,6 +74,8 @@ describe('buildRecordPayload', () => {
       classId: 'C01',
       date: '2026-08-30',
       kind: 'regular',
+      examResult: '',
+      examTests: '',
       examItems: '',
       examNext: '',
       sessionNo: '',

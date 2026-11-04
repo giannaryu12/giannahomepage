@@ -11,8 +11,10 @@
 const PARENT_RECORD_FIELDS = [
   'date',
   // 'regular' 정기수업 · 'exam' 시험대비. 화면이 꼬리표를 달고, 시험대비는
-  // 진도·숙제 두 줄만 그린다.
+  // 시험·진도·숙제 세 줄만 그린다.
   'kind',
+  'examResult',
+  'examTests',
   'examItems',
   'examNext',
   'sessionNo',
@@ -105,6 +107,7 @@ function hasParentContent_(record) {
   if (rec.attendance === '결석' || rec.attendance === '변경') return true;
 
   // 시험대비는 적어 둔 칸이 전부다. 출결도 시험 점수도 없다.
+  if (filled_(rec.examResult) || filled_(rec.examTests)) return true;
   if (filled_(rec.examItems) || filled_(rec.examNext)) return true;
   if (filled_(rec.comment)) return true;
 

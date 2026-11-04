@@ -43,7 +43,7 @@ describe('findRecordFor', () => {
 describe('toFormValues', () => {
   it('record가 null이면 전부 빈 문자열', () => {
     expect(toFormValues(null)).toEqual({
-      kind: 'regular', examItems: [], examNext: [],
+      kind: 'regular', examResult: '', examTests: [], examItems: [], examNext: [],
       sessionNo: '',
       progress: '', attendance: '', homeworkStatus: '', homeworkLevel: '',
       testName: '', testScore: '', testMax: '', nextHomework: '', comment: '',
@@ -58,7 +58,7 @@ describe('toFormValues', () => {
       testName: '중간고사', testScore: 85, testMax: 100, nextHomework: 'Unit 8', comment: '잘함',
     };
     expect(toFormValues(record)).toEqual({
-      kind: 'regular', examItems: [], examNext: [],
+      kind: 'regular', examResult: '', examTests: [], examItems: [], examNext: [],
       sessionNo: '12',
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', nextHomework: 'Unit 8', comment: '잘함',
@@ -93,7 +93,7 @@ describe('buildRecord', () => {
     const rec = buildRecord('s1', '2026-08-30', form);
     expect(rec).toEqual({
       studentId: 's1', date: '2026-08-30',
-      kind: 'regular', examItems: '', examNext: '',
+      kind: 'regular', examResult: '', examTests: '', examItems: '', examNext: '',
       sessionNo: '12',
       progress: 'Unit 7', nextHomework: 'Unit 8',
       attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
@@ -267,21 +267,29 @@ describe('갈래(정기수업 · 시험대비)', () => {
     expect(findRecordFor([exam, regular], 'S1')).toBe(regular);
   });
 
-  it('시험대비 칸을 배열로 읽어 온다', () => {
+  it('시험대비 칸을 내용 한 줄짜리 배열로 읽어 온다', () => {
     const v = toFormValues(exam);
     expect(v.kind).toBe('exam');
-    expect(v.examItems).toEqual([{ name: '모의고사', book: '9월 모평', text: '3회분' }]);
+    // 이름·교재·내용 셋으로 저장됐던 옛 줄은 한 줄로 합쳐 읽는다.
+    expect(v.examItems).toEqual([{ text: '모의고사 · 9월 모평 · 3회분' }]);
     expect(v.examNext).toEqual([]);
+  });
+
+  it('시험 칸도 함께 읽는다', () => {
+    const v = toFormValues({ kind: 'exam', examTests: JSON.stringify([{ text: '1차 지필 범위' }]) });
+    expect(v.examTests).toEqual([{ text: '1차 지필 범위' }]);
   });
 
   it('보낼 때는 다시 JSON 한 줄이 된다. 빈 줄은 버린다', () => {
     const rec = buildRecord('S1', '2026-11-24', {
       kind: 'exam',
-      examItems: [{ name: '어법', book: '', text: '1~40번' }, { name: '', book: '', text: '' }],
+      examTests: [{ text: '중간 1차' }],
+      examItems: [{ text: '어법 1~40번' }, { text: '' }],
       examNext: [],
     });
     expect(rec.kind).toBe('exam');
-    expect(JSON.parse(rec.examItems)).toEqual([{ name: '어법', book: '', text: '1~40번' }]);
+    expect(JSON.parse(rec.examTests)).toEqual([{ text: '중간 1차' }]);
+    expect(JSON.parse(rec.examItems)).toEqual([{ text: '어법 1~40번' }]);
     expect(rec.examNext).toBe('');
   });
 });

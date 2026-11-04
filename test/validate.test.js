@@ -41,6 +41,16 @@ describe('validateRecord', () => {
     expect(validateRecord(valid({ attendance: '' }))).toEqual([]);
   });
 
+  it('examResult가 허용값이 아니면 오류다', () => {
+    expect(validateRecord(valid({ examResult: '합격' }))).toContain('examResult 값 오류');
+  });
+
+  it('examResult 세 낱말과 빈 값은 통과한다', () => {
+    ['통과', '미통과', '미응시', ''].forEach((v) => {
+      expect(validateRecord(valid({ examResult: v }))).toEqual([]);
+    });
+  });
+
   it('homeworkStatus가 허용값이 아니면 오류다', () => {
     expect(validateRecord(valid({ homeworkStatus: '했음' }))).toContain('homeworkStatus 값 오류');
   });

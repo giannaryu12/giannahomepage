@@ -32,6 +32,7 @@ function lastExamTemplateOf_(records) {
 
   const last = exams[0];
   return {
+    tests: itemTemplate(parseItems(last && last.examTests)),
     items: itemTemplate(parseItems(last && last.examItems)),
     next: itemTemplate(parseItems(last && last.examNext)),
   };

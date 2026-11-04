@@ -8,7 +8,10 @@ const HOMEWORK_LEVEL = ['상', '중', '하', ''];
 // 결석은 수업이 사라지고, 변경은 옮긴 날에 그 수업이 있다.
 const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
 const RECORD_KINDS = ['regular', 'exam'];
-const EXAM_ITEM_FIELDS = ['examItems', 'examNext'];
+// 시험대비의 시험 결과. 점수가 아니라 통과 여부다 — 기준은 학교마다,
+// 시험마다 다르므로 숫자를 받아 봐도 견줄 수가 없다.
+const EXAM_RESULTS = ['통과', '미통과', '미응시'];
+const EXAM_ITEM_FIELDS = ['examTests', 'examItems', 'examNext'];
 
 function isBlank(v) {
   return v === '' || v === null || v === undefined;
@@ -37,6 +40,9 @@ function validateRecord(rec) {
 
   if (!isBlank(rec.attendance) && ATTENDANCE.indexOf(rec.attendance) === -1) {
     errors.push('attendance 값 오류');
+  }
+  if (!isBlank(rec.examResult) && EXAM_RESULTS.indexOf(rec.examResult) === -1) {
+    errors.push('examResult 값 오류');
   }
   if (!isBlank(rec.homeworkStatus) && HOMEWORK_STATUS.indexOf(rec.homeworkStatus) === -1) {
     errors.push('homeworkStatus 값 오류');

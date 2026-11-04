@@ -289,6 +289,9 @@
 
   const ATTENDANCE_TONE = { '출석': 'is-good', '보강': 'is-good', '지각': 'is-warn', '결석': 'is-bad' };
   const HOMEWORK_TONE = { '제출': 'is-good', '부분제출': 'is-warn', '미제출': 'is-bad', '해당없음': 'is-none' };
+  // 미통과는 빨강으로 두지 않는다. 시험 대비 기간에 기준에 못 미친 것은
+  // 더 하자는 뜻이고, 결석처럼 수업이 비어 버린 일과는 다르다.
+  const EXAM_RESULT_TONE = { '통과': 'is-good', '미통과': 'is-warn', '미응시': 'is-none' };
 
   function badge(text, tone) {
     if (!text) return '';
@@ -340,8 +343,13 @@
       const below = (it.book && it.bookBelow)
         ? '<span class="gi-rec-subline">' + esc(it.book) + '</span>' : '';
 
+      // 꼬리표가 없는 묶음도 있다 — 시험대비 칸은 내용 한 줄이 전부다.
+      // 빈 <span>을 그려 두면 그 자리만큼 글이 오른쪽으로 밀린다.
+      const tag = it.label
+        ? '<span class="gi-area-book">' + esc(it.label) + '</span> ' : '';
+
       return '<div class="gi-rec-groupline">' +
-        '<span class="gi-area-book">' + esc(it.label) + '</span> ' + inline + text + below +
+        tag + inline + text + below +
         '</div>';
     }).join('');
     return '<div class="gi-rec-row"><dt>' + label + '</dt>' +
@@ -410,8 +418,34 @@
     if (!items.length) return '';
 
     return groupRow(label, items.map(function (it) {
-      return { label: it.name || '—', book: it.book, bookBelow: true, text: it.text };
+      return { label: '', text: it.text };
     }));
+  }
+
+  /**
+   * 시험대비의 시험 줄 — 통과 여부가 맨 위, 그 아래 적어 둔 칸들.
+   *
+   * 칸이 하나도 없어도 통과 여부만으로 줄을 낸다. 학부모가 가장 먼저 찾는
+   * 것이 그 한 낱말이고, 무엇을 봤는지는 그다음이다.
+   */
+  function examTestRows(r) {
+    const items = EI.parseItems(r && r.examTests);
+    const status = String((r && r.examResult) || '');
+    if (!items.length && !status) return '';
+
+    // 통과 여부는 첫 줄 앞에 붙인다. 따로 한 줄을 쓰면 바로 위 접힌 줄의
+    // 꼬리표와 같은 말이 두 줄로 겹쳐 보인다.
+    const lines = items.map(function (it) { return esc(it.text); });
+    const first = status
+      ? badge(status, EXAM_RESULT_TONE[status]) + (lines.length ? ' ' + lines.shift() : '')
+      : lines.shift() || '';
+
+    const body = [first].concat(lines).map(function (line) {
+      return '<div class="gi-rec-groupline">' + line + '</div>';
+    }).join('');
+
+    return '<div class="gi-rec-row"><dt>시험</dt>' +
+      '<dd class="gi-rec-group">' + body + '</dd></div>';
   }
 
   /** 시험대비 기록인가. 빈 값은 정기수업이다. */
@@ -436,7 +470,7 @@
 
     // 시험대비에는 출결도 시험 점수도 없다. 적어 둔 칸만 그린다.
     const inner = isExam(r)
-      ? examRows('진도', r.examItems) + examRows('숙제', r.examNext)
+      ? examTestRows(r) + examRows('진도', r.examItems) + examRows('숙제', r.examNext)
       : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
         // 상태 · 시험 · 진도 · 숙제 차례다. 학부모가 먼저 찾는 것은
         // 그날 본 시험 점수이고, 진도와 숙제는 그 뒤에 읽는다.
@@ -445,7 +479,8 @@
     // 접힌 줄에서도 어느 쪽 수업인지 보여야 한다. 같은 날 두 줄이 서면
     // 날짜만으로는 구별되지 않는다.
     const tail = isExam(r)
-      ? '<span class="gi-rec-kind">시험대비</span>'
+      ? '<span class="gi-rec-kind">시험대비</span>' +
+        badge(r.examResult, EXAM_RESULT_TONE[r.examResult])
       : '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>';
 
     return '' +
