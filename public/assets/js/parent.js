@@ -287,8 +287,13 @@
 
   /* ---------- 타임라인 ---------- */
 
-  const ATTENDANCE_TONE = { '출석': 'is-good', '보강': 'is-good', '지각': 'is-warn', '결석': 'is-bad' };
-  const HOMEWORK_TONE = { '제출': 'is-good', '부분제출': 'is-warn', '미제출': 'is-bad', '해당없음': 'is-none' };
+  // 파랑은 된 것, 주황은 반쯤, 빨강은 안 된 것. 세 줄이 같은 색 차례를
+  // 쓰므로 학부모는 낱말을 읽기 전에 색으로 먼저 안다.
+  //
+  // 보강은 출석과 같은 파랑이다 — 날이 옮겨졌을 뿐 그날 수업을 했다.
+  const ATTENDANCE_TONE = { '출석': 'is-info', '보강': 'is-info', '지각': 'is-bad', '결석': 'is-bad' };
+  const HOMEWORK_TONE = { '제출': 'is-info', '부분제출': 'is-mid', '미제출': 'is-bad', '해당없음': 'is-none' };
+  const LEVEL_TONE = { '상': 'is-info', '중': 'is-mid', '하': 'is-bad' };
   // 미통과는 빨강으로 두지 않는다. 시험 대비 기간에 기준에 못 미친 것은
   // 더 하자는 뜻이고, 결석처럼 수업이 비어 버린 일과는 다르다.
   const EXAM_RESULT_TONE = { '통과': 'is-good', '미통과': 'is-warn', '미응시': 'is-none' };
@@ -434,7 +439,8 @@
     const badges =
       badge(r.attendance, ATTENDANCE_TONE[r.attendance]) +
       badge(r.homeworkStatus, HOMEWORK_TONE[r.homeworkStatus]) +
-      (r.homeworkLevel ? badge('완성도 ' + r.homeworkLevel, 'is-none') : '');
+      (r.homeworkLevel
+        ? badge('완성도 ' + r.homeworkLevel, LEVEL_TONE[r.homeworkLevel]) : '');
 
     // 선생님 한마디는 그날 기록의 맨 밑이다. 위로 따로 빼 두면 어느 날
     // 수업을 두고 한 말인지가 끊긴다 — 그날의 시험·진도 바로 아래에

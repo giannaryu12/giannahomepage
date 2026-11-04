@@ -258,6 +258,14 @@ body.gi .gi-h2{ color:var(--text); }
 /* 보충은 점이든 글자든 한 가지 파랑이다. 짙고 옅은 파랑이 섞이면 둘이
    다른 뜻으로 읽힌다. */
 .gi-badge.is-extra{ color:var(--state-extra-dot); }
+/* 학부모 화면의 상태 세 칸(출결·과제·완성도)은 한 가지 말을 한다 —
+   파랑은 된 것, 주황은 반쯤, 빨강은 안 된 것. 세 줄이 같은 색 차례를
+   쓰면 어느 줄을 보든 색만으로 읽힌다.
+
+   초록을 '된 것'에 쓰지 않는 까닭: 머리글과 눌린 단추가 이미 숲색이라
+   초록 꼬리표는 화면 바탕에 묻힌다. */
+.gi-badge.is-info{ color:var(--state-extra); }
+.gi-badge.is-mid{ color:var(--state-mid); }
 
 /* ---------- 폼 ---------- */
 .gi-field{ margin-bottom:1rem; }

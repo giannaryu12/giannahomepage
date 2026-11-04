@@ -45,6 +45,9 @@
   --state-extra-dot: #1f8fd6;
   /* 보충 — 빠진 수업(붉은색)과 한눈에 갈려야 한다. 팔레트 안의 차분한 청색 */
   --state-extra: #2f5d7c;
+  /* 가운데 상태 — 부분제출·완성도 중. 금색(--state-warn)은 크림색 바탕에
+     노랗게 가라앉아 '반쯤'으로 읽히지 않는다. 파랑과 빨강 사이의 주황 */
+  --state-mid: #c2600f;
 
   --font-display: 'Fraunces', 'Noto Serif KR', ui-serif, Georgia, serif;
   --font-body: 'Rosario', 'Noto Sans KR', ui-sans-serif, system-ui, sans-serif;
@@ -71,6 +74,7 @@
   --state-bad-dot: #ff8d8d;
   --state-extra-dot: #8fb9d6;
   --state-extra: #8fb9d6;
+  --state-mid: #e8a765;
     --chart-1: #e08585;
     --chart-2: #d8ab68;
     --chart-3: #7fc898;
@@ -95,6 +99,7 @@
   --state-bad-dot: #ff8d8d;
   --state-extra-dot: #8fb9d6;
   --state-extra: #8fb9d6;
+  --state-mid: #e8a765;
   --chart-1: #e08585;
   --chart-2: #d8ab68;
   --chart-3: #7fc898;
