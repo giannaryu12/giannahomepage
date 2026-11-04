@@ -14,6 +14,15 @@
 
   const SKIP_LABEL = { absent: '결석', moved: '휴강' };
 
+  // 화면에 적을 말. '변경'은 휴강의 옛 이름이다 — 선생님 달력과 같은
+  // 말이 서야 한다(admin-schedule.js의 SHOWN_WORD).
+  const SHOWN_WORD = { '변경': '휴강' };
+
+  function shownWord_(attendance) {
+    const a = String(attendance == null ? '' : attendance);
+    return SHOWN_WORD[a] || a;
+  }
+
   const MARK_CLASS = {
     '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '휴강': 'is-bad',
     '보강': 'is-extra',
@@ -63,11 +72,11 @@
     const off = OFF_MARKS.indexOf(m.attendance) !== -1;
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
-        ' title="' + esc(m.attendance) + '"></span>',
+        ' title="' + esc(shownWord_(m.attendance)) + '"></span>',
       no: (m.sessionNo && !off)
         ? '<span class="gi-cal-no">' + esc(m.sessionNo) + '회</span>' : '',
       off: off,
-      word: m.attendance,
+      word: shownWord_(m.attendance),
     };
   }
 
@@ -96,20 +105,18 @@
   }
 
   /**
-   * 하지 않은 수업인가 — 휴강한 날, 또는 다른 날로 옮긴 날.
+   * 다른 날로 옮긴 수업인가.
    *
-   * 학부모 달력에서는 뺀다. 휴강한 날에는 보강 날짜를 따로 알리고,
-   * 옮긴 날에는 옮겨 간 날에 그 수업이 그대로 선다 — 원래 날에도
-   * 남겨 두면 한 수업이 달력에 두 번 보인다.
+   * 옮긴 날에 그 수업이 그대로 서므로, 원래 날에도 남겨 두면 한 수업이
+   * 달력에 두 번 보인다. 지금 화면에서는 만들지 않는 조각이고, 이 규칙이
+   * 생기기 전에 쌓인 줄에만 남아 있다.
    *
-   * 선생님 달력에는 이름에 줄을 긋고 '휴강'을 붙여 남긴다. 어느 날을
-   * 쉬었는지는 선생님이 알아야 한다.
+   * 휴강한 날은 빼지 않는다 — 줄을 긋고 '휴강'을 붙여 남긴다. 빼 버리면
+   * 그 칸이 빈칸이 되어, 쉰 날과 아직 안 적은 날이 똑같아 보인다.
+   * 학부모는 수업이 있었는지조차 알 수 없다.
    */
-  function restDay_(entry, iso) {
-    if (entry.skip) return String(entry.skip.reason) === 'moved';
-    const m = marks[String(iso)];
-    const a = m && String(m.attendance);
-    return a === '휴강' || a === '변경';
+  function movedOut_(entry) {
+    return !!entry.skip && String(entry.skip.reason) === 'moved';
   }
 
   /**
@@ -152,7 +159,7 @@
 
     const list = S.applyOverrides(
       S.studentsOnDate([student], iso, vacations), overrides, iso, [student])
-      .filter(function (e) { return !restDay_(e, iso); })
+      .filter(function (e) { return !movedOut_(e); })
       // 적어 둔 시각이 있으면 그것을 쓴다. 요일표를 고쳐도 지나간
       // 수업은 그날 그 시각 그대로 서야 한다.
       .map(function (e) { return kept ? Object.assign({}, e, { time: kept }) : e; });
