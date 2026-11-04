@@ -37,6 +37,22 @@ describe('validateRecord', () => {
     expect(validateRecord(valid({ attendance: '조퇴' }))).toContain('attendance 값 오류');
   });
 
+  it('휴강을 받는다', () => {
+    expect(validateRecord(valid({ attendance: '휴강' }))).toEqual([]);
+  });
+
+  it("'변경'도 받는다 — 휴강의 옛 이름으로 쌓인 행을 다시 저장할 수 있다", () => {
+    expect(validateRecord(valid({ attendance: '변경' }))).toEqual([]);
+  });
+
+  it('휴강을 받는다', () => {
+    expect(validateRecord(valid({ attendance: '휴강' }))).toEqual([]);
+  });
+
+  it("'변경'도 받는다 — 휴강의 옛 이름으로 쌓인 행을 다시 저장할 수 있다", () => {
+    expect(validateRecord(valid({ attendance: '변경' }))).toEqual([]);
+  });
+
   it('attendance가 비어 있으면 통과한다', () => {
     expect(validateRecord(valid({ attendance: '' }))).toEqual([]);
   });

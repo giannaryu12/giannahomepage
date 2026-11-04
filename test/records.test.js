@@ -123,7 +123,16 @@ describe('buildRecordPayload', () => {
     expect(payload.attendance).toBe('결석');
   });
 
-  it('변경한 날도 회차를 비운다 — 옮긴 날에 가서 센다', () => {
+  it('휴강한 날도 회차를 비운다 — 하지 않은 수업은 세지 않는다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', attendance: '휴강', sessionNo: 12 },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    expect(payload.sessionNo).toBe('');
+    expect(payload.attendance).toBe('휴강');
+  });
+
+  it("'변경'으로 쌓인 날도 회차를 비운다 — 휴강의 옛 이름이다", () => {
     const payload = buildRecordPayload(
       { studentId: 'S001', date: '2026-08-30', attendance: '변경', sessionNo: 12 },
       'C01', 'req-1', '2026-08-30T01:00:00.000Z'
@@ -132,7 +141,7 @@ describe('buildRecordPayload', () => {
     expect(payload.attendance).toBe('변경');
   });
 
-  it('결석·변경이 아니면 회차를 그대로 둔다', () => {
+  it('결석·휴강이 아니면 회차를 그대로 둔다', () => {
     ['출석', '지각', '보강', ''].forEach((att) => {
       const payload = buildRecordPayload(
         { studentId: 'S001', date: '2026-08-30', attendance: att, sessionNo: 12 },

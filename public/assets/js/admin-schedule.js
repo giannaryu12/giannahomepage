@@ -53,25 +53,40 @@
   }
 
   // 빼기의 까닭. 시트에는 영어로 쌓고 화면에는 한글로 보인다.
-  const SKIP_LABEL = { absent: '결석', moved: '변경' };
+  const SKIP_LABEL = { absent: '결석', moved: '휴강' };
+
+  // 화면에 적을 말. '변경'은 휴강의 옛 이름이다 — 한 가지 일이 달력에서
+  // 두 말로 보이면 둘을 가려 둔 적이 있었나 되짚게 된다.
+  const SHOWN_WORD = { '변경': '휴강' };
+
+  function shownWord_(attendance) {
+    const a = String(attendance == null ? '' : attendance);
+    return SHOWN_WORD[a] || a;
+  }
 
   // 출결 색. 출석이 초록이고 나머지는 저마다 다르다 — 한 가지만 칠하면
   // 지각·결석을 적어 둔 수업이 아직 안 적은 수업과 똑같아 보인다.
   const MARK_CLASS = {
-    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '변경': 'is-bad',
+    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '휴강': 'is-bad',
     '보강': 'is-extra',
+    // 옛 이름.
+    '변경': 'is-bad',
   };
 
   // 하루 칸에서 바로 고르는 출결. 기록 화면의 차례와 같아야 한다 —
   // 두 곳의 순서가 다르면 손이 기억한 자리에 다른 것이 있다.
-  const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
+  const ATTENDANCE = ['출석', '지각', '결석', '휴강', '보강'];
 
   // 한 묶음의 마지막 회차. 이 날 수업이 끝나면 다음 묶음을 이야기해야
   // 하므로 달력에서 미리 눈에 걸려야 한다.
   const CYCLE_LAST = 8;
 
-  // 그날 수업을 안 한 출결. 이름을 흐리게 하고 줄을 긋는다.
-  const OFF_MARKS = ['결석', '변경'];
+  // 그날 수업을 안 한 출결. 이름을 흐리게 하고 줄을 긋는다. 회차도
+  // 세지 않는다 — 하지 않은 수업이 묶음의 한 자리를 먹으면, 여덟 번을
+  // 채웠다는 말이 일곱 번 한 수업을 가리킨다.
+  //
+  // '변경'은 휴강의 옛 이름이다.
+  const OFF_MARKS = ['결석', '휴강', '변경'];
 
   // 시간을 고치는 중인 줄. 한 번에 하나다 — 여러 줄을 동시에 열어 두면
   // 어느 줄을 고치다 말았는지 알 수 없다.
@@ -88,7 +103,7 @@
 
     return {
       dot: '<span class="gi-dot ' + (MARK_CLASS[m.attendance] || 'is-none') + '"' +
-        ' title="' + A.esc(m.attendance) + '"></span>',
+        ' title="' + A.esc(shownWord_(m.attendance)) + '"></span>',
       // 결석한 날은 회차를 안 센다. 서버가 저장할 때 비우지만, 규칙이
       // 생기기 전에 쌓인 기록에는 숫자가 남아 있다 — 화면에서도 가린다.
       no: (m.sessionNo && OFF_MARKS.indexOf(m.attendance) === -1)
@@ -98,8 +113,8 @@
       off: OFF_MARKS.indexOf(m.attendance) !== -1,
       // 묶음의 마지막 회차인가. 수업을 안 한 날은 회차가 없으므로 아니다.
       last: Number(m.sessionNo) === CYCLE_LAST && OFF_MARKS.indexOf(m.attendance) === -1,
-      // 꼬리표에 적을 말. 적어 둔 출결을 그대로 쓴다.
-      word: m.attendance,
+      // 꼬리표에 적을 말.
+      word: shownWord_(m.attendance),
     };
   }
 
@@ -260,7 +275,7 @@
   /**
    * 하루 칸의 줄 하나.
    *
-   * 줄이 세 가지다. 평소 일정에서 온 줄은 뺄 수 있고(결석·변경), 이미 뺀
+   * 줄이 세 가지다. 평소 일정에서 온 줄은 뺄 수 있고(결석·휴강), 이미 뺀
    * 줄은 되돌릴 수 있고, 하루치로 더한 줄(보충)은 지울 수 있다. 하는 일이
    * 다르므로 버튼도 다르다.
    */
@@ -310,12 +325,12 @@
         A.esc(e.overrideId) + '" data-who="' + A.esc(e.student.studentId) +
         '" aria-label="이 수업 삭제">삭제</button>';
     } else if (m.off) {
-      // 꼬리표를 달지 않는다. 바로 옆 드롭박스에 '결석'·'변경'이 이미
+      // 꼬리표를 달지 않는다. 바로 옆 드롭박스에 '결석'·'휴강'이 이미
       // 골라져 있어서, 같은 말이 한 줄에 두 번 선다. 줄의 칸 수도
       // 달라져 다른 줄과 어긋난다.
       tail = delHtml(e);
     } else {
-      // 결석·변경은 드롭박스에서 고른다. 삭제는 다른 일이다 — 그날 그
+      // 결석·휴강은 드롭박스에서 고른다. 삭제는 다른 일이다 — 그날 그
       // 수업 자체가 없었던 것으로 목록에서 뺀다(휴강). 결석으로 적지
       // 않으므로 학부모 달력에도 결석으로 뜨지 않는다.
       tail = delHtml(e);

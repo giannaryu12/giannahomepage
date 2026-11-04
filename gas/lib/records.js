@@ -121,13 +121,15 @@ function findRecordMatch(rows, studentId, date, kind) {
 /**
  * 그날 수업을 안 한 출결인가. 회차를 세지 않는다.
  *
- * 결석은 수업이 사라진 날이고, 변경은 다른 날로 옮긴 날이다. 둘 다 그날은
- * 수업을 하지 않았으므로 회차를 먹지 않는다 — 변경은 옮겨 간 날에 가서
- * 세어진다. 화면(admin.js·parent-schedule.js)도 같은 규칙으로 둘을 묶는다.
+ * 결석은 학생이 오지 않은 날이고, 휴강은 수업 자체가 없던 날이다. 둘 다
+ * 그날은 수업을 하지 않았으므로 회차를 먹지 않는다. 화면(admin.js·
+ * admin-schedule.js)도 같은 규칙으로 둘을 묶는다.
+ *
+ * '변경'은 휴강의 옛 이름이다 — 그때 쌓인 기록도 같이 센다.
  */
 function isOffDay_(attendance) {
   const a = String(attendance || '');
-  return a === '결석' || a === '변경';
+  return a === '결석' || a === '휴강' || a === '변경';
 }
 
 /** 저장할 레코드 한 건의 시트 페이로드를 만든다. recordId·createdAt은 호출자가 신규 행일 때만 붙인다. */
@@ -213,7 +215,7 @@ function lastBooksOf(records) {
 function lastSessionNoOf(records, beforeDate) {
   const limit = String(beforeDate || '');
   const sorted = (records || []).filter(function (r) {
-    // 수업을 안 한 날(결석·변경)은 세지 않는다. 저장할 때 회차를 비우지만,
+    // 수업을 안 한 날(결석·휴강)은 세지 않는다. 저장할 때 회차를 비우지만,
     // 그 규칙이 생기기 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를
     // 이어받으면 수업하지 않은 날이 한 회차를 먹는다.
     if (isOffDay_(r && r.attendance)) return false;

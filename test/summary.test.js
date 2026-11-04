@@ -38,6 +38,20 @@ describe('computeSummary', () => {
     expect(r.attendanceRate).toBe(75);
   });
 
+  it('휴강은 출석률 분모에서 뺀다 — 학원이 쉰 날이다', () => {
+    const r = computeSummary([
+      rec({ attendance: '출석' }), rec({ attendance: '휴강' }),
+    ], '2026-08');
+    expect(r.attendanceRate).toBe(100);
+  });
+
+  it("'변경'도 분모에서 뺀다 — 휴강의 옛 이름이다", () => {
+    const r = computeSummary([
+      rec({ attendance: '출석' }), rec({ attendance: '변경' }),
+    ], '2026-08');
+    expect(r.attendanceRate).toBe(100);
+  });
+
   it('출결이 비어 있는 기록은 출석률 분모에서 뺀다', () => {
     const r = computeSummary([rec({ attendance: '출석' }), rec({ attendance: '' })], '2026-08');
     expect(r.attendanceRate).toBe(100);

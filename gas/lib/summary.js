@@ -9,9 +9,10 @@
  */
 
 const PRESENT_VALUES = ['출석', '지각', '보강'];
-// 변경은 출석률에서 아예 뺀다. 안 온 날로 세면 날짜를 옮겼을 뿐인데
-// 출석률이 떨어지고, 온 날로 세면 오지 않은 날이 출석이 된다.
-const RATE_EXCLUDED = ['변경'];
+// 휴강은 출석률에서 아예 뺀다. 안 온 날로 세면 학원이 수업을 쉰 탓에
+// 학생의 출석률이 떨어지고, 온 날로 세면 하지 않은 수업이 출석이 된다.
+// '변경'은 휴강의 옛 이름이다.
+const RATE_EXCLUDED = ['휴강', '변경'];
 const SUBMITTED_VALUES = ['제출', '부분제출'];
 
 function rate(numerator, denominator) {

@@ -2,7 +2,7 @@
  * 학부모 화면의 수업 일정 달력.
  *
  * 선생님 달력(admin-schedule.js)과 같은 셈을 쓴다 — 평소 요일·시간 위에
- * 그날 하루치 조각(보충·결석·변경)을 얹고, 적어 둔 출결을 동그라미로 찍는다.
+ * 그날 하루치 조각(보충·결석·휴강)을 얹고, 적어 둔 출결을 동그라미로 찍는다.
  * 두 화면의 달력이 다르게 보이면 "선생님 화면에는 보충이 있는데 우리 화면에는
  * 없다"는 전화가 온다.
  *
@@ -12,15 +12,17 @@
 (function () {
   const S = window.GI_SCHEDULE;
 
-  const SKIP_LABEL = { absent: '결석', moved: '변경' };
+  const SKIP_LABEL = { absent: '결석', moved: '휴강' };
 
   const MARK_CLASS = {
-    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '변경': 'is-bad',
+    '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '휴강': 'is-bad',
     '보강': 'is-extra',
+    // 옛 이름.
+    '변경': 'is-bad',
   };
 
   // 그날 수업을 안 한 출결. 회차를 세지 않으므로 달력에도 적지 않는다.
-  const OFF_MARKS = ['결석', '변경'];
+  const OFF_MARKS = ['결석', '휴강', '변경'];
 
 
   let student = null;
@@ -94,16 +96,20 @@
   }
 
   /**
-   * 다른 날로 옮긴 수업인가.
+   * 하지 않은 수업인가 — 휴강한 날, 또는 다른 날로 옮긴 날.
    *
-   * 옮긴 날에 그 수업이 그대로 서므로, 원래 날에도 남겨 두면 한 수업이
-   * 달력에 두 번 보인다. 선생님 달력에는 그대로 남는다 — 어느 날을
-   * 옮겼는지는 선생님이 알아야 한다.
+   * 학부모 달력에서는 뺀다. 휴강한 날에는 보강 날짜를 따로 알리고,
+   * 옮긴 날에는 옮겨 간 날에 그 수업이 그대로 선다 — 원래 날에도
+   * 남겨 두면 한 수업이 달력에 두 번 보인다.
+   *
+   * 선생님 달력에는 이름에 줄을 긋고 '휴강'을 붙여 남긴다. 어느 날을
+   * 쉬었는지는 선생님이 알아야 한다.
    */
-  function movedOut_(entry, iso) {
+  function restDay_(entry, iso) {
     if (entry.skip) return String(entry.skip.reason) === 'moved';
     const m = marks[String(iso)];
-    return !!(m && String(m.attendance) === '변경');
+    const a = m && String(m.attendance);
+    return a === '휴강' || a === '변경';
   }
 
   /**
@@ -146,7 +152,7 @@
 
     const list = S.applyOverrides(
       S.studentsOnDate([student], iso, vacations), overrides, iso, [student])
-      .filter(function (e) { return !movedOut_(e, iso); })
+      .filter(function (e) { return !restDay_(e, iso); })
       // 적어 둔 시각이 있으면 그것을 쓴다. 요일표를 고쳐도 지나간
       // 수업은 그날 그 시각 그대로 서야 한다.
       .map(function (e) { return kept ? Object.assign({}, e, { time: kept }) : e; });
