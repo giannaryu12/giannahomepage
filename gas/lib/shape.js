@@ -10,7 +10,7 @@
 // 어긋나지 않는지는 test/field-parity.test.js가 확인한다.
 const PARENT_RECORD_FIELDS = [
   'date',
-  // 'regular' 정기수업 · 'exam' 시험대비. 화면이 꼬리표를 달고, 시험대비는
+  // 'regular' 정규수업 · 'exam' 시험대비. 화면이 꼬리표를 달고, 시험대비는
   // 시험·진도·숙제 세 줄만 그린다.
   'kind',
   'examTests',
@@ -102,8 +102,16 @@ function filled_(v) {
 function hasParentContent_(record) {
   const rec = record || {};
 
-  // 결석과 변경은 그 자체가 전할 내용이다. 다른 칸이 비어 있어도 보인다.
-  if (rec.attendance === '결석' || rec.attendance === '변경') return true;
+  // 변경한 날은 학부모 쪽에 아예 내지 않는다. 그날 수업은 다른 날로
+  // 옮겨 갔으니 그 날짜에는 전할 것이 없고, 옮겨 간 날에 그 수업이
+  // 그대로 선다. 적어 둔 진도나 코멘트가 있어도 마찬가지다 — 두 날에
+  // 같은 수업이 두 번 서는 쪽이 더 헷갈린다.
+  //
+  // 출석률에서도 이미 빼고 센다(summary.js의 RATE_EXCLUDED).
+  if (rec.attendance === '변경') return false;
+
+  // 결석은 그 자체가 전할 내용이다. 다른 칸이 비어 있어도 보인다.
+  if (rec.attendance === '결석') return true;
 
   // 시험대비는 적어 둔 칸이 전부다. 출결도 시험 점수도 없다.
   if (filled_(rec.examTests)) return true;

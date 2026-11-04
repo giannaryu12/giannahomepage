@@ -39,10 +39,10 @@ const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
 const RECORD_EXTRA_FIELDS = ['sessionNo', 'kind', 'examTests', 'examItems', 'examNext'];
 
 /**
- * 기록의 갈래. 'regular' 정기수업 · 'exam' 시험대비.
+ * 기록의 갈래. 'regular' 정규수업 · 'exam' 시험대비.
  *
- * 빈 값은 정기수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다.
- * 모르는 값도 정기수업으로 둔다. 시트를 손으로 고치다 오타가 나면 그
+ * 빈 값은 정규수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다.
+ * 모르는 값도 정규수업으로 둔다. 시트를 손으로 고치다 오타가 나면 그
  * 기록이 어느 쪽에도 안 뜨고 사라지는 쪽이 더 나쁘다.
  */
 function recordKind_(kind) {
@@ -105,7 +105,7 @@ function isNumericColumn_(key) {
 /**
  * rows 중 studentId·date·갈래가 모두 일치하는 첫 행. 없으면 null.
  *
- * 갈래까지 보는 까닭: 같은 날 정기수업도 하고 시험대비도 할 수 있다.
+ * 갈래까지 보는 까닭: 같은 날 정규수업도 하고 시험대비도 할 수 있다.
  * 날짜만 보면 둘 중 나중에 저장한 것이 앞의 것을 덮어쓴다.
  */
 function findRecordMatch(rows, studentId, date, kind) {

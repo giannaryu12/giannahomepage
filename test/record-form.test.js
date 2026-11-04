@@ -250,7 +250,7 @@ describe('withSessionDefault', () => {
   });
 });
 
-describe('갈래(정기수업 · 시험대비)', () => {
+describe('갈래(정규수업 · 시험대비)', () => {
   const regular = { studentId: 'S1', date: '2026-11-24', sessionNo: 14 };
   const exam = {
     studentId: 'S1', date: '2026-11-24', kind: 'exam',
@@ -263,7 +263,7 @@ describe('갈래(정기수업 · 시험대비)', () => {
     expect(findRecordFor(rows, 'S1', 'exam')).toBe(exam);
   });
 
-  it('갈래를 안 주면 정기수업이다 — 이 칸이 생기기 전 기록이 전부 그렇다', () => {
+  it('갈래를 안 주면 정규수업이다 — 이 칸이 생기기 전 기록이 전부 그렇다', () => {
     expect(findRecordFor([exam, regular], 'S1')).toBe(regular);
   });
 

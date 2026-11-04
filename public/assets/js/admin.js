@@ -31,7 +31,7 @@
 
   // 기록 입력 화면 상태
   let currentStudent = null;
-  // 'regular' 정기수업 · 'exam' 시험대비. 같은 날에 둘이 따로 쌓인다.
+  // 'regular' 정규수업 · 'exam' 시험대비. 같은 날에 둘이 따로 쌓인다.
   let currentKind = 'regular';
   // 그 날짜에 이미 있는 기록들. 탭을 옮길 때 서버에 다시 묻지 않으려고 쥐고 있다.
   let openRecords = [];
@@ -45,7 +45,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261104f';
+  const BUILD = 'v20261104g';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -189,7 +189,7 @@
 
   /* ---------- 기록 입력 화면 ---------- */
 
-  // 갈래까지 키에 넣는다. 같은 날 정기수업과 시험대비를 번갈아 적을 때
+  // 갈래까지 키에 넣는다. 같은 날 정규수업과 시험대비를 번갈아 적을 때
   // 키가 같으면 한쪽 초안이 다른 쪽을 덮어쓴다.
   function recordDraftKey(classId, date, studentId, kind) {
     return DRAFT_PREFIX + classId + '.' + date + '.' + studentId +
@@ -444,7 +444,7 @@
     // 그날 기록이 아직 없을 때만 채운다. 지난 기록을 고치러 열었을 때
     // 채우면 그때 쓰지 않던 최신 교재가 옛 기록에 들어앉는다.
     if (!rec) {
-      // 교재는 정기수업만 물려받는다. 시험대비에는 영역 교재 칸이 없다.
+      // 교재는 정규수업만 물려받는다. 시험대비에는 영역 교재 칸이 없다.
       if (currentKind === 'regular') {
         values = RF.withBookDefaults(values, student.lastBooks);
       }

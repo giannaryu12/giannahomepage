@@ -460,7 +460,7 @@
     return tags ? '<span class="gi-rec-marks">' + tags + '</span>' : '';
   }
 
-  /** 시험대비 기록인가. 빈 값은 정기수업이다. */
+  /** 시험대비 기록인가. 빈 값은 정규수업이다. */
   function isExam(r) {
     return String((r && r.kind) || '') === 'exam';
   }
@@ -495,11 +495,16 @@
       : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
         testRows(r) + progressRows(r) + nextRows(r);
 
-    // 접힌 줄에서도 어느 쪽 수업인지 보여야 한다. 같은 날 두 줄이 서면
-    // 날짜만으로는 구별되지 않는다.
-    const tail = isExam(r)
-      ? '<span class="gi-rec-kind">시험대비</span>' + examTailBadges(r)
-      : '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>';
+    // 접힌 줄은 '12회차 정규수업'처럼 읽힌다. 갈래를 늘 적는다 — 시험대비
+    // 쪽에만 꼬리표가 붙어 있으면, 꼬리표 없는 줄이 무엇인지는 아는 사람만
+    // 안다. 같은 날 두 줄이 설 때도 이 낱말로 갈린다.
+    const no = topLine(r);
+    const tail =
+      (no ? '<span class="gi-rec-progress">' + esc(no) + '</span>' : '') +
+      '<span class="gi-rec-kind' + (isExam(r) ? '' : ' is-regular') + '">' +
+        (isExam(r) ? '시험대비' : '정규수업') +
+      '</span>' +
+      (isExam(r) ? examTailBadges(r) : '');
 
     return '' +
       '<article class="gi-rec">' +

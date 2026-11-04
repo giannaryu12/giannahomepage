@@ -20,13 +20,13 @@
     return v === null || v === undefined ? '' : String(v);
   }
 
-  /** 빈 값은 정기수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다. */
+  /** 빈 값은 정규수업이다 — 이 칸이 생기기 전에 쌓인 기록이 전부 그렇다. */
   function kindOf(kind) {
     return String(kind || '') === 'exam' ? 'exam' : 'regular';
   }
 
   /**
-   * 그 학생의 그날 기록. 갈래까지 맞춰 찾는다 — 같은 날 정기수업과
+   * 그 학생의 그날 기록. 갈래까지 맞춰 찾는다 — 같은 날 정규수업과
    * 시험대비가 따로 쌓이므로, 학생만 보면 둘 중 먼저 나온 것이 걸린다.
    */
   function findRecordFor(existingRecords, studentId, kind) {

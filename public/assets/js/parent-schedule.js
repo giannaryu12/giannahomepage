@@ -73,8 +73,22 @@
     return now < firstMonth ? firstMonth : now;
   }
 
+  /**
+   * 다른 날로 옮긴 수업인가.
+   *
+   * 옮긴 날에 그 수업이 그대로 서므로, 원래 날에도 남겨 두면 한 수업이
+   * 달력에 두 번 보인다. 선생님 달력에는 그대로 남는다 — 어느 날을
+   * 옮겼는지는 선생님이 알아야 한다.
+   */
+  function movedOut_(entry, iso) {
+    if (entry.skip) return String(entry.skip.reason) === 'moved';
+    const m = marks[String(iso)];
+    return !!(m && String(m.attendance) === '변경');
+  }
+
   function entriesOn(iso) {
-    return S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student]);
+    return S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student])
+      .filter(function (e) { return !movedOut_(e, iso); });
   }
 
   /**

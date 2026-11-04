@@ -23,7 +23,7 @@ function validateRecord(rec) {
 
   if (isBlank(rec.studentId)) errors.push('studentId 누락');
 
-  // 갈래. 빈 값은 정기수업이다 (gas/lib/records.js의 recordKind_).
+  // 갈래. 빈 값은 정규수업이다 (gas/lib/records.js의 recordKind_).
   if (!isBlank(rec.kind) && RECORD_KINDS.indexOf(String(rec.kind)) === -1) {
     errors.push('kind 값 오류');
   }

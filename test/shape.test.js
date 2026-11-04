@@ -94,6 +94,18 @@ describe('hasParentContent_ — 수업이 있었던 날만', () => {
     expect(hasParentContent_({ kind: 'exam' })).toBe(false);
   });
 
+  it('변경한 날은 적어 둔 것이 있어도 내지 않는다', () => {
+    // 그날 수업은 다른 날로 옮겨 갔다. 두 날에 같은 수업이 두 번 서면
+    // 학부모는 수업을 두 번 받은 줄 안다.
+    expect(hasParentContent_({ attendance: '변경' })).toBe(false);
+    expect(hasParentContent_({ attendance: '변경', vocabProgress: 'Day 12' })).toBe(false);
+    expect(hasParentContent_({ attendance: '변경', comment: '다음 주에 봅니다' })).toBe(false);
+  });
+
+  it('결석한 날은 그대로 낸다 — 안 온 것은 전할 일이다', () => {
+    expect(hasParentContent_({ attendance: '결석' })).toBe(true);
+  });
+
   it('영역이 나뉘기 전의 progress도 진도로 본다', () => {
     expect(hasParentContent_({ progress: 'Unit 7' })).toBe(true);
   });

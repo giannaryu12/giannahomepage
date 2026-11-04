@@ -922,7 +922,23 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-fill{ position:absolute; inset:0 auto 0 0; border-radius:4px; background:var(--chart-3); }
 
 
-/* ---------- 정기수업 · 시험대비 ---------- */
+/* 날짜와 회차처럼 짝지어 읽는 두 칸. 너비를 똑같이 나눠 가진다 —
+   한쪽이 넓으면 그쪽이 더 중요한 값처럼 보인다. */
+.gi-field-pair{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0.75rem;
+  align-items:end;
+  margin-bottom:1rem;
+}
+.gi-field-pair > .gi-field{ margin-bottom:0; min-width:0; }
+/* 날짜 칸은 평소 내용만큼만 넓다(.gi-input[type="date"]). 짝으로 세울
+   때는 제 자리를 다 쓰게 둔다 — 옆 칸과 끝이 어긋나면 눈에 먼저 띄는
+   것이 그 어긋남이다. */
+.gi-field-pair .gi-input{ width:100%; font-size:0.84rem; padding:0.4rem 0.5rem; }
+
+
+/* ---------- 정규수업 · 시험대비 ---------- */
 .gi-kind-tabs{ margin-bottom:1rem; }
 /* 시험대비 칸 한 줄: 내용 · 지우기. 진도 영역 줄(.gi-area)과
    같은 모양이라 두 탭을 오가도 눈이 다시 적응하지 않아도 된다. */
@@ -930,7 +946,7 @@ body.gi .gi-h2{ color:var(--text); }
    짧고, 긴 칸은 비어 있는 채로 자리만 차지한다. */
 .gi-exam-row{ grid-template-columns:minmax(0,50%) max-content; }
 /* 시험 칸은 적는 칸 · 통과 여부 · 지우기 세 자리다. 이름을 is-test로 두면
-   정기수업 시험 영역(.gi-area.is-test)의 규칙이 함께 걸린다 — 같은 줄이
+   정규수업 시험 영역(.gi-area.is-test)의 규칙이 함께 걸린다 — 같은 줄이
    .gi-area이기도 하다. */
 .gi-exam-row.is-exam-test{ grid-template-columns:minmax(0,50%) 1fr max-content; }
 /* 세 낱말이 적는 칸 옆 한 줄에 들어가야 한다. 좁은 폰에서 줄이 접히면
@@ -970,6 +986,9 @@ body.gi .gi-h2{ color:var(--text); }
 
 /* 접힌 줄의 '시험대비' 꼬리표. 같은 날 두 줄이 설 수 있어 날짜만으로는
    어느 쪽인지 알 수 없다. */
+/* 정규수업은 흔한 쪽이라 색을 주지 않는다. 둘 다 칠하면 어느 쪽이
+   특별한 날인지가 사라진다. */
+.gi-rec-kind.is-regular{ color:var(--text-soft); font-weight:600; }
 .gi-rec-kind{
   white-space:nowrap;
  font-size:0.74rem;
