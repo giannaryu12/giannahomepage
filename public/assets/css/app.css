@@ -671,6 +671,9 @@ body.gi .gi-h2{ color:var(--text); }
 /* 삭제는 되돌릴 수 있는 일이라 빨갛게 칠하지 않는다. 다만 옆의 되돌리기·
    지우기와 헷갈리지 않게 글자만 조금 흐리게 둔다. */
 .gi-day-del{ color:var(--text-soft); }
+/* 한 줄로 둔다. 두 줄로 접히면 하루 칸이 그만큼 길어지는데, 늘 같은
+   자리에 있는 안내문이라 선생님은 한 번 읽고 다시 읽지 않는다. */
+.gi-day-note{ font-size:0.66rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .gi-day-add{ display:flex; gap:0.4rem; align-items:center; margin-bottom:0.4rem; }
 .gi-day-add .gi-select{ flex:1 1 0; min-width:0; font-size:0.84rem; padding:0.4rem 0.5rem; }
 .gi-day-add .gi-input{ width:auto; font-size:0.84rem; padding:0.4rem 0.5rem; }
@@ -967,6 +970,26 @@ body.gi .gi-h2{ color:var(--text); }
 
 /* 시험은 가로 막대로. 같은 축에 나란히 서야 영역끼리 비교가 된다 —
    고리 셋으로는 어느 쪽이 긴지 눈으로 잡히지 않는다. */
+/* 묶음마다 제 칸. 위아래로 쌓이고 사이에 줄 하나를 둔다 — 선이 둘로
+   나뉘었다는 것이 줄 하나로 말해진다. */
+.gi-chart-one + .gi-chart-one{
+  margin-top:0.6rem;
+  padding-top:0.6rem;
+  border-top:1px solid var(--border);
+}
+.gi-chart-head{
+  display:flex;
+  align-items:baseline;
+  gap:0.35rem;
+  margin:0 0 0.1rem;
+  font-size:0.72rem;
+}
+.gi-chart-name{ font-weight:700; color:var(--text-mid); }
+.gi-chart-last{ font-weight:700; color:var(--heading); }
+/* 기간은 맨 오른쪽에. 읽을 값이 아니라 가늠하는 값이다. */
+.gi-chart-when{ margin-left:auto; color:var(--text-soft); font-size:0.66rem; }
+.gi-chart-one svg{ display:block; width:100%; height:auto; }
+
 .gi-bars{
   background:var(--surface);
   border:1px solid var(--border);
@@ -986,7 +1009,11 @@ body.gi .gi-h2{ color:var(--text); }
   margin-top:0.28rem;
   overflow:hidden;
 }
-.gi-fill{ position:absolute; inset:0 auto 0 0; border-radius:4px; background:var(--chart-3); }
+/* 막대는 연하게. 이 칸은 '요즘 어느 쪽이 낮은가'를 한눈에 보는 자리지
+   숫자를 읽는 자리가 아니다 — 숫자는 바로 위에 적혀 있다. 진한 띠가
+   네 줄 서면 그 띠가 화면에서 가장 센 것이 된다. */
+.gi-fill{ position:absolute; inset:0 auto 0 0; border-radius:4px;
+  background:var(--chart-3); opacity:0.45; }
 
 
 /* 날짜 · 회차 · 갈래를 한 줄에 세운다. 날짜가 가장 길고 회차는 두 자리면
@@ -1019,6 +1046,10 @@ body.gi .gi-h2{ color:var(--text); }
    같은 모양이라 두 탭을 오가도 눈이 다시 적응하지 않아도 된다. */
 /* 적는 칸은 줄의 절반이다. 시험대비에 적는 것은 '모의고사 3회분'처럼
    짧고, 긴 칸은 비어 있는 채로 자리만 차지한다. */
+/* 시험대비에 적는 것은 '모의고사 3회분'처럼 짧다. 칸이 정규수업 칸과
+   같은 키면 짧은 글 하나가 한 줄을 통째로 쓰고, 칸 셋이 화면 한 쪽을
+   다 먹는다. 글자와 높이를 한 단계씩 줄인다. */
+.gi-exam-row .gi-input{ font-size:0.8rem; padding:0.28rem 0.45rem; }
 .gi-exam-row{ grid-template-columns:minmax(0,50%) max-content; }
 /* 시험 칸은 적는 칸 · 통과 여부 · 지우기 세 자리다. 이름을 is-test로 두면
    정규수업 시험 영역(.gi-area.is-test)의 규칙이 함께 걸린다 — 같은 줄이

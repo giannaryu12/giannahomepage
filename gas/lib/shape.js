@@ -74,6 +74,8 @@ function toParentStudent(student, className) {
   return {
     name: s.name || '',
     grade: s.grade || '',
+    // 다니는 학교. 머리글에 '가온초 5'처럼 선다.
+    school: s.school || '',
     className: className || '',
   };
 }

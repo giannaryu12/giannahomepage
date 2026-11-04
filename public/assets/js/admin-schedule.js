@@ -303,7 +303,7 @@
         '<input class="gi-input" type="time" id="dayAddTime" value="17:00">' +
         '<button class="gi-choice" type="button" data-add>추가</button>' +
       '</div>' +
-      '<p class="gi-note">이 날 하루만 바뀝니다. 평소 요일·시간은 그대로입니다.</p>';
+      '<p class="gi-note gi-day-note">이 날 하루만 바뀝니다. 평소 요일·시간은 그대로입니다.</p>';
 
     // 달력 한 달이 화면을 다 쓰므로 고치는 칸은 접힌 아래에서 열린다.
     // 끌어오지 않으면 눌러도 아무 일이 없어 보인다.

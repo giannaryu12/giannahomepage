@@ -45,7 +45,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261105c';
+  const BUILD = 'v20261105d';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -398,8 +398,21 @@
     $('recordView').hidden = true;
   }
 
+  /**
+   * 기록 화면을 연다.
+   *
+   * 어느 탭에서 들어왔든 눌린 탭은 '학생 관리'다. 기록을 적는 일은
+   * 그 학생을 다루는 일이고, 달력에서 들어왔다고 '수업 일정'이 눌린
+   * 채로 두면 탭은 달력을 가리키는데 화면은 기록 칸이다 — 눌린 탭이
+   * 지금 보는 화면을 가리키지 않으면 탭을 믿지 못하게 된다.
+   *
+   * 돌아가기는 들어온 곳으로 되돌린다. 달력에서 들어왔으면 달력이다.
+   */
   function showRecordView() {
-    Object.keys(TABS).forEach(function (key) { $(TABS[key][1]).hidden = true; });
+    Object.keys(TABS).forEach(function (key) {
+      $(TABS[key][0]).setAttribute('aria-pressed', key === 'students' ? 'true' : 'false');
+      $(TABS[key][1]).hidden = true;
+    });
     $('recordView').hidden = false;
   }
 

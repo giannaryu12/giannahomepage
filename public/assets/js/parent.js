@@ -216,6 +216,70 @@
     return legacy.length ? [{ label: '시험', color: SERIES_COLORS[0], pts: legacy }] : [];
   }
 
+  /**
+   * 묶음 하나의 그림.
+   *
+   * 가로축은 그 묶음이 가진 날짜만 쓴다. 단어는 매주 보고 듣기는 한 달에
+   * 한 번 보는 식이라, 날짜를 하나로 합치면 듣기 선은 점 두 개가 양 끝에
+   * 멀찍이 떨어져 '떨어졌다'처럼 보인다.
+   */
+  function chartOneHtml(s) {
+    const W = 320, H = 72, PAD = 9;
+
+    const dates = s.pts.map(function (p) { return p.date; });
+    const stepX = dates.length > 1 ? (W - PAD * 2) / (dates.length - 1) : 0;
+
+    const coords = s.pts.map(function (p, i) {
+      return {
+        x: dates.length > 1 ? PAD + stepX * i : W / 2,
+        y: PAD + (1 - p.pct / 100) * (H - PAD * 2),
+        pct: Math.round(p.pct),
+        date: p.date,
+      };
+    });
+
+    // 점이 하나뿐인 선도 점은 찍는다. 선만 그리면 화면에서 사라진다.
+    const path = coords.length > 1
+      ? '<path d="' + coords.map(function (c, i) {
+          return (i ? 'L' : 'M') + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
+        }).join(' ') + '" fill="none" stroke="' + s.color + '" stroke-width="2" ' +
+        'stroke-linejoin="round" stroke-linecap="round"/>'
+      : '';
+
+    const dots = coords.map(function (c) {
+      return '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) +
+        '" r="3" fill="' + s.color + '"><title>' + esc(s.label) + ' · ' +
+        esc(c.date) + ' · ' + c.pct + '점</title></circle>';
+    }).join('');
+
+    const last = coords[coords.length - 1];
+
+    return '<div class="gi-chart-one">' +
+        '<p class="gi-chart-head">' +
+          '<span class="gi-legend-dot" style="background:' + s.color + '"></span>' +
+          '<span class="gi-chart-name">' + esc(s.label) + '</span>' +
+          '<span class="gi-chart-last">' + last.pct + '점</span>' +
+          '<span class="gi-chart-when">' + esc(dates[0]) + ' ~ ' + esc(dates[dates.length - 1]) + '</span>' +
+        '</p>' +
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+          esc(s.label) + ' 점수 추이, ' + coords.length + '회 기록">' +
+          '<line x1="' + PAD + '" y1="' + (H - PAD) + '" x2="' + (W - PAD) +
+          '" y2="' + (H - PAD) + '" stroke="var(--border)" stroke-width="1"/>' +
+          path + dots +
+        '</svg>' +
+      '</div>';
+  }
+
+  /**
+   * 성적 추이.
+   *
+   * 묶음마다 제 칸을 갖는다 — 단어가 위, 듣기가 아래. 한 그림에 겹쳐
+   * 그리면 선 둘이 가로지르며 만나는 자리마다 어느 쪽이 어느 쪽인지
+   * 범례를 다시 보게 되고, 100점 환산이라 두 선이 같은 높이에 몰린다.
+   *
+   * 기록이 있는 묶음만 칸을 받는다. 본 적 없는 시험이 빈 칸으로 서 있으면
+   * 안 본 것인지 못 본 것인지 알 수 없다.
+   */
   function renderChart(records) {
     const $chart = document.getElementById('chart');
     const series = chartSeries(records);
@@ -228,61 +292,8 @@
       return;
     }
 
-    // 두 시험의 날짜가 서로 달라도 같은 가로축 위에 놓여야 비교가 된다.
-    const dates = [];
-    series.forEach(function (s) {
-      s.pts.forEach(function (p) { if (dates.indexOf(p.date) === -1) dates.push(p.date); });
-    });
-    dates.sort();
-
-    const W = 320, H = 110, PAD = 10;
-    const stepX = dates.length > 1 ? (W - PAD * 2) / (dates.length - 1) : 0;
-    const xOf = function (date) {
-      return dates.length > 1 ? PAD + stepX * dates.indexOf(date) : W / 2;
-    };
-
-    let paths = '';
-    let dots = '';
-
-    series.forEach(function (s) {
-      const coords = s.pts.map(function (p) {
-        return {
-          x: xOf(p.date),
-          y: PAD + (1 - p.pct / 100) * (H - PAD * 2),
-          pct: Math.round(p.pct),
-          date: p.date,
-        };
-      });
-
-      // 점이 하나뿐인 선도 점은 찍는다. 선만 그리면 화면에서 사라진다.
-      if (coords.length > 1) {
-        const d = coords.map(function (c, i) {
-          return (i ? 'L' : 'M') + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
-        }).join(' ');
-        paths += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2" ' +
-          'stroke-linejoin="round" stroke-linecap="round"/>';
-      }
-
-      dots += coords.map(function (c) {
-        return '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) +
-          '" r="3" fill="' + s.color + '"><title>' + esc(s.label) + ' · ' +
-          esc(c.date) + ' · ' + c.pct + '점</title></circle>';
-      }).join('');
-    });
-
-    const legend = series.map(function (s) {
-      return '<span class="gi-legend-item"><span class="gi-legend-dot" style="background:' +
-        s.color + '"></span>' + esc(s.label) + '</span>';
-    }).join('');
-
-    $chart.innerHTML =
-      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
-      'aria-label="시험 점수 추이, ' + total + '회 기록">' +
-      '<line x1="' + PAD + '" y1="' + (H - PAD) + '" x2="' + (W - PAD) + '" y2="' + (H - PAD) +
-      '" stroke="var(--border)" stroke-width="1"/>' + paths + dots + '</svg>' +
-      '<p class="gi-note gi-legend" style="margin-top:.4rem">' + legend +
-      '<span>100점 환산 기준 · ' + esc(dates[0]) + ' ~ ' + esc(dates[dates.length - 1]) +
-      '</span></p>';
+    $chart.innerHTML = series.map(chartOneHtml).join('') +
+      '<p class="gi-note" style="margin-top:.4rem">100점 환산 기준</p>';
   }
 
   /* ---------- 타임라인 ---------- */
@@ -573,6 +584,25 @@
 
   /* ---------- 진입 ---------- */
 
+  /**
+   * 이름 아래 한 줄 — '가온초 5'.
+   *
+   * '학년'이라는 글자는 적지 않는다. 학교 이름 뒤의 숫자가 학년이라는
+   * 것은 학부모가 가장 잘 아는 사실이고, 머리글은 짧을수록 이름이
+   * 먼저 읽힌다.
+   *
+   * 학교를 아직 안 적은 학생은 예전처럼 '초등부 5학년'으로 둔다 —
+   * 숫자 하나만 덩그러니 서면 무엇의 5인지 알 수 없다. 반 이름은
+   * 어느 쪽에도 적지 않는다. 학부모에게 알려 준 적 없는 말이다.
+   */
+  function metaOf(student) {
+    const school = String((student && student.school) || '').trim();
+    if (!school) return CL.gradeLabel(student.grade, student.className);
+
+    const hit = /\d+/.exec(String((student && student.grade) || ''));
+    return hit ? school + ' ' + hit[0] : school;
+  }
+
   function tokenFromUrl() {
     const q = new URLSearchParams(window.location.search).get('t');
     if (q) return q;
@@ -600,10 +630,7 @@
 
     api.call('parent.load', { token: token }).then(function (data) {
       document.getElementById('studentName').textContent = data.student.name + ' 학습 리포트';
-      // '초5 · 초등부 A'가 아니라 '초등부 5학년'. 반 이름은 적지 않는다 —
-      // 초등부가 두 번 나오고, 학부모에게 반 이름은 알려 준 적 없는 말이다.
-      document.getElementById('studentMeta').textContent =
-        CL.gradeLabel(data.student.grade, data.student.className);
+      document.getElementById('studentMeta').textContent = metaOf(data.student);
       document.title = data.student.name + ' 학습 리포트 · 지아나영어';
 
       renderCards(data.summary);

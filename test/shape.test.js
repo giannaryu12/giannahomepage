@@ -37,12 +37,18 @@ describe('toParentRecord', () => {
 });
 
 describe('toParentStudent', () => {
-  it('이름·학년·반만 남긴다', () => {
+  it('이름·학년·학교·반만 남긴다', () => {
     const out = toParentStudent(
-      { name: '김민준', grade: '고1', parentToken: 'SECRET', note: '메모', active: true },
+      { name: '김민준', grade: '고1', school: '수원고', parentToken: 'SECRET', note: '메모', active: true },
       'Structure 화목 5시'
     );
-    expect(out).toEqual({ name: '김민준', grade: '고1', className: 'Structure 화목 5시' });
+    expect(out).toEqual({
+      name: '김민준', grade: '고1', school: '수원고', className: 'Structure 화목 5시',
+    });
+  });
+
+  it('학교를 안 적었으면 빈 문자열이다', () => {
+    expect(toParentStudent({ name: '김민준', grade: '고1' }, '').school).toBe('');
   });
 
   it('반이 없으면 빈 문자열이다', () => {
