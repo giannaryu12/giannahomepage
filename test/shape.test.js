@@ -90,7 +90,6 @@ describe('hasParentContent_ — 수업이 있었던 날만', () => {
   it('시험대비는 적어 둔 칸이나 통과 여부만으로도 낸다', () => {
     // 통과 여부 한 낱말이 그날의 기록 전부일 수 있다. 거르면 학부모 쪽에서
     // 그 시험이 아예 없던 일이 된다.
-    expect(hasParentContent_({ kind: 'exam', examResult: '통과' })).toBe(true);
     expect(hasParentContent_({ kind: 'exam', examTests: '[{"text":"중간 1차"}]' })).toBe(true);
     expect(hasParentContent_({ kind: 'exam' })).toBe(false);
   });

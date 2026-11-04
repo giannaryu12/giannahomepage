@@ -926,9 +926,17 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-kind-tabs{ margin-bottom:1rem; }
 /* 시험대비 칸 한 줄: 내용 · 지우기. 진도 영역 줄(.gi-area)과
    같은 모양이라 두 탭을 오가도 눈이 다시 적응하지 않아도 된다. */
-/* 적는 칸 하나와 지우기 단추. 내용은 남는 폭을 다 쓴다 — 시험대비에 적는
-   것은 '모의고사 3회분 1~20번'처럼 한 문장이라 짧지 않다. */
-.gi-exam-row{ grid-template-columns:minmax(0,1fr) auto; }
+/* 적는 칸은 줄의 절반이다. 시험대비에 적는 것은 '모의고사 3회분'처럼
+   짧고, 긴 칸은 비어 있는 채로 자리만 차지한다. */
+.gi-exam-row{ grid-template-columns:minmax(0,50%) auto; }
+/* 시험 칸은 적는 칸 · 통과 여부 · 지우기 세 자리다. 이름을 is-test로 두면
+   정기수업 시험 영역(.gi-area.is-test)의 규칙이 함께 걸린다 — 같은 줄이
+   .gi-area이기도 하다. */
+.gi-exam-row.is-exam-test{ grid-template-columns:minmax(0,50%) 1fr auto; }
+/* 세 낱말이 적는 칸 옆 한 줄에 들어가야 한다. 좁은 폰에서 줄이 접히면
+   칸 하나가 두 줄을 먹어 목록이 두 배로 길어진다. */
+.gi-exam-res{ gap:0.15rem; justify-content:flex-end; flex-wrap:nowrap; }
+.gi-exam-res .gi-choice{ font-size:0.68rem; padding:0.22rem 0.28rem; white-space:nowrap; }
 /* 지우기는 글자 하나짜리다. 폭을 나눠 가지면 입력칸이 그만큼 줄어든다. */
 .gi-exam-del{ padding:0.35rem 0.5rem; line-height:1; }
 /* 칸 추가와 통과 여부를 한 줄에 둔다. 좁으면 통과 여부가 아랫줄로 내려간다. */
@@ -944,9 +952,16 @@ body.gi .gi-h2{ color:var(--text); }
 .gi-exam-legend{ margin-top:0.4rem; line-height:1.5; }
 
 
+/* 꼬리표는 글자 안에서 접히지 않는다. 접히면 '시험대' / '비'처럼 끊겨
+   읽히고, 줄 높이가 낱말 수만큼 늘어난다. */
+.gi-rec-top{ flex-wrap:wrap; row-gap:0.3rem; }
+.gi-rec-top .gi-badge{ white-space:nowrap; margin-right:0; }
+.gi-rec-marks{ display:inline-flex; flex-wrap:wrap; gap:0.25rem; }
+
 /* 접힌 줄의 '시험대비' 꼬리표. 같은 날 두 줄이 설 수 있어 날짜만으로는
    어느 쪽인지 알 수 없다. */
 .gi-rec-kind{
+  white-space:nowrap;
  font-size:0.74rem;
  font-weight:700;
  color:var(--state-extra);

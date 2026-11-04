@@ -47,7 +47,6 @@
       kind: kindOf(r.kind),
       // 시험대비의 시험·진도·숙제 칸 목록. 화면에서는 배열로 다루고, 보낼 때만
       // 다시 JSON 한 줄로 만든다.
-      examResult: str(r.examResult),
       examTests: EI.parseItems(r.examTests),
       examItems: EI.parseItems(r.examItems),
       examNext: EI.parseItems(r.examNext),
@@ -106,7 +105,6 @@
       studentId: str(studentId),
       date: str(date),
       kind: kindOf(f.kind),
-      examResult: str(f.examResult),
       examTests: EI.stringifyItems(f.examTests),
       examItems: EI.stringifyItems(f.examItems),
       examNext: EI.stringifyItems(f.examNext),

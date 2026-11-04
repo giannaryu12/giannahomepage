@@ -40,7 +40,7 @@ describe('진도 영역 필드 목록', () => {
 
   it('학부모 응답 allowlist에 영역 필드 아닌 값이 섞여 들어오지 않았다', () => {
     const known = [
-      'date', 'kind', 'examResult', 'examTests', 'examItems', 'examNext',
+      'date', 'kind', 'examTests', 'examItems', 'examNext',
       'sessionNo', 'progress', 'homeworkStatus', 'homeworkLevel',
       'testName', 'testScore', 'testMax', 'attendance', 'nextHomework', 'comment',
     ].concat(GAS_FIELDS);

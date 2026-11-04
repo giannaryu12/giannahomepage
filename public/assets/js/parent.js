@@ -430,22 +430,34 @@
    */
   function examTestRows(r) {
     const items = EI.parseItems(r && r.examTests);
-    const status = String((r && r.examResult) || '');
-    if (!items.length && !status) return '';
+    if (!items.length) return '';
 
-    // 통과 여부는 첫 줄 앞에 붙인다. 따로 한 줄을 쓰면 바로 위 접힌 줄의
-    // 꼬리표와 같은 말이 두 줄로 겹쳐 보인다.
-    const lines = items.map(function (it) { return esc(it.text); });
-    const first = status
-      ? badge(status, EXAM_RESULT_TONE[status]) + (lines.length ? ' ' + lines.shift() : '')
-      : lines.shift() || '';
-
-    const body = [first].concat(lines).map(function (line) {
-      return '<div class="gi-rec-groupline">' + line + '</div>';
+    // 통과 여부는 그 칸 앞에 붙인다. 시험마다 다르다 — 모의고사는 통과했고
+    // 단어는 미통과일 수 있다.
+    const body = items.map(function (it) {
+      const tag = it.result
+        ? badge(it.result, EXAM_RESULT_TONE[it.result]) + ' ' : '';
+      return '<div class="gi-rec-groupline">' + tag + esc(it.text) + '</div>';
     }).join('');
 
     return '<div class="gi-rec-row"><dt>시험</dt>' +
       '<dd class="gi-rec-group">' + body + '</dd></div>';
+  }
+
+  /**
+   * 접힌 줄에 다는 통과 여부. 그날 시험 칸이 여럿이면 여럿 단다.
+   *
+   * 펼치지 않고도 통과했는지가 보여야 한다 — 학부모가 가장 먼저 찾는 것이
+   * 그 한 낱말이다.
+   */
+  function examTailBadges(r) {
+    const tags = EI.parseItems(r && r.examTests).map(function (it) {
+      return it.result ? badge(it.result, EXAM_RESULT_TONE[it.result]) : '';
+    }).join('');
+
+    // 한 덩어리로 묶는다. 낱개로 두면 줄의 넓은 사이 간격이 꼬리표마다
+    // 끼어들어 날짜가 밀려난다.
+    return tags ? '<span class="gi-rec-marks">' + tags + '</span>' : '';
   }
 
   /** 시험대비 기록인가. 빈 값은 정기수업이다. */
@@ -479,8 +491,7 @@
     // 접힌 줄에서도 어느 쪽 수업인지 보여야 한다. 같은 날 두 줄이 서면
     // 날짜만으로는 구별되지 않는다.
     const tail = isExam(r)
-      ? '<span class="gi-rec-kind">시험대비</span>' +
-        badge(r.examResult, EXAM_RESULT_TONE[r.examResult])
+      ? '<span class="gi-rec-kind">시험대비</span>' + examTailBadges(r)
       : '<span class="gi-rec-progress">' + esc(topLine(r)) + '</span>';
 
     return '' +

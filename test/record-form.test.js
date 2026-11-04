@@ -43,7 +43,7 @@ describe('findRecordFor', () => {
 describe('toFormValues', () => {
   it('record가 null이면 전부 빈 문자열', () => {
     expect(toFormValues(null)).toEqual({
-      kind: 'regular', examResult: '', examTests: [], examItems: [], examNext: [],
+      kind: 'regular', examTests: [], examItems: [], examNext: [],
       sessionNo: '',
       progress: '', attendance: '', homeworkStatus: '', homeworkLevel: '',
       testName: '', testScore: '', testMax: '', nextHomework: '', comment: '',
@@ -58,7 +58,7 @@ describe('toFormValues', () => {
       testName: '중간고사', testScore: 85, testMax: 100, nextHomework: 'Unit 8', comment: '잘함',
     };
     expect(toFormValues(record)).toEqual({
-      kind: 'regular', examResult: '', examTests: [], examItems: [], examNext: [],
+      kind: 'regular', examTests: [], examItems: [], examNext: [],
       sessionNo: '12',
       progress: 'Unit 7', attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
       testName: '중간고사', testScore: '85', testMax: '100', nextHomework: 'Unit 8', comment: '잘함',
@@ -93,7 +93,7 @@ describe('buildRecord', () => {
     const rec = buildRecord('s1', '2026-08-30', form);
     expect(rec).toEqual({
       studentId: 's1', date: '2026-08-30',
-      kind: 'regular', examResult: '', examTests: '', examItems: '', examNext: '',
+      kind: 'regular', examTests: '', examItems: '', examNext: '',
       sessionNo: '12',
       progress: 'Unit 7', nextHomework: 'Unit 8',
       attendance: '출석', homeworkStatus: '제출', homeworkLevel: '상',
@@ -271,13 +271,13 @@ describe('갈래(정기수업 · 시험대비)', () => {
     const v = toFormValues(exam);
     expect(v.kind).toBe('exam');
     // 이름·교재·내용 셋으로 저장됐던 옛 줄은 한 줄로 합쳐 읽는다.
-    expect(v.examItems).toEqual([{ text: '모의고사 · 9월 모평 · 3회분' }]);
+    expect(v.examItems).toEqual([{ text: '모의고사 · 9월 모평 · 3회분', result: '' }]);
     expect(v.examNext).toEqual([]);
   });
 
   it('시험 칸도 함께 읽는다', () => {
     const v = toFormValues({ kind: 'exam', examTests: JSON.stringify([{ text: '1차 지필 범위' }]) });
-    expect(v.examTests).toEqual([{ text: '1차 지필 범위' }]);
+    expect(v.examTests).toEqual([{ text: '1차 지필 범위', result: '' }]);
   });
 
   it('보낼 때는 다시 JSON 한 줄이 된다. 빈 줄은 버린다', () => {

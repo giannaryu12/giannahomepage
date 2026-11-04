@@ -9,7 +9,11 @@
  * 컬럼을 늘리지 않는 까닭: 칸 이름이 자유로우면 컬럼 이름도 자유로워야 하는데,
  * 그러면 학생마다 다른 컬럼이 시트 오른쪽으로 끝없이 늘어난다.
  *
- * 칸 하나는 {text}다 — 내용 한 줄. 이름과 교재를 따로 받던 때가 있었지만,
+ * 칸 하나는 {text, result}다 — 내용 한 줄과, 시험 칸에만 쓰는 통과 여부.
+ * 통과 여부를 기록 하나에 하나만 두면 '모의고사는 통과, 단어는 미통과'를
+ * 적을 수 없다. 시험은 칸마다 따로 본다.
+ *
+ * 이름과 교재를 따로 받던 때가 있었지만,
  * 시험대비에 적는 것은 '모의고사 3회분 1~20번'처럼 이미 한 문장이다. 칸을
  * 셋으로 나누면 어디에 무엇을 적을지부터 망설이게 된다.
  */
@@ -18,13 +22,27 @@
   /** 칸 하나의 자리. 순서가 화면의 칸 순서다. */
   const EXAM_ITEM_KEYS = ['text'];
 
+  /** 시험 칸의 통과 여부. 모르는 값은 비운다. */
+  const EXAM_RESULTS = ['통과', '미통과', '미응시'];
+
   function str_(v) {
     return v === null || v === undefined ? '' : String(v);
   }
 
-  /** 칸이 비었는가. 빈 줄은 저장하지 않는다. */
+  /**
+   * 칸이 비었는가. 빈 줄은 저장하지 않는다.
+   *
+   * 통과 여부만 누르고 내용을 안 적은 줄은 빈 줄이다 — '통과'만 있고 무엇을
+   * 통과했는지 없으면 학부모 쪽에서 읽을 것이 없다.
+   */
   function isEmptyItem(item) {
     return EXAM_ITEM_KEYS.every(function (k) { return !str_(item && item[k]).trim(); });
+  }
+
+  /** 아는 통과 여부만 남긴다. */
+  function itemResult_(v) {
+    const r = str_(v).trim();
+    return EXAM_RESULTS.indexOf(r) === -1 ? '' : r;
   }
 
   /**
@@ -61,7 +79,7 @@
     if (!Array.isArray(parsed)) return [];
 
     return parsed.map(function (it) {
-      return { text: itemText_(it) };
+      return { text: itemText_(it), result: itemResult_(it && it.result) };
     }).filter(function (it) { return !isEmptyItem(it); });
   }
 
@@ -73,7 +91,12 @@
    */
   function stringifyItems(list) {
     const kept = (list || []).map(function (it) {
-      return { text: str_(it && it.text).trim() };
+      const out = { text: str_(it && it.text).trim() };
+      // 누르지 않은 통과 여부는 아예 적지 않는다. 진도·숙제 칸에도 빈
+      // result가 따라붙으면 시트 한 칸이 두 배로 길어진다.
+      const r = itemResult_(it && it.result);
+      if (r) out.result = r;
+      return out;
     }).filter(function (it) { return !isEmptyItem(it); });
 
     return kept.length ? JSON.stringify(kept) : '';
@@ -87,10 +110,10 @@
    * 그 학생의 시험 대비 틀이라 잘 바뀌지 않으므로 그것만 물려준다.
    */
   function itemTemplate(list) {
-    return (list || []).map(function () { return { text: '' }; });
+    return (list || []).map(function () { return { text: '', result: '' }; });
   }
 
-  const api = { EXAM_ITEM_KEYS, isEmptyItem, parseItems, stringifyItems, itemTemplate };
+  const api = { EXAM_ITEM_KEYS, EXAM_RESULTS, isEmptyItem, parseItems, stringifyItems, itemTemplate };
 
   global.GI_EXAM_ITEMS = api;
 

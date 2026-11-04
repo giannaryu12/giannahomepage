@@ -36,7 +36,7 @@ const TEST_FIELDS = TEST_AREA_KEYS.reduce(function (acc, k) {
 const RECORD_AREA_FIELDS = PROGRESS_FIELDS.concat(NEXT_FIELDS, TEST_FIELDS);
 
 /** 영역 필드는 아니지만 시트에 없으면 만들어야 하는 칸. */
-const RECORD_EXTRA_FIELDS = ['sessionNo', 'kind', 'examResult', 'examTests', 'examItems', 'examNext'];
+const RECORD_EXTRA_FIELDS = ['sessionNo', 'kind', 'examTests', 'examItems', 'examNext'];
 
 /**
  * 기록의 갈래. 'regular' 정기수업 · 'exam' 시험대비.
@@ -139,7 +139,6 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     kind: recordKind_(rec.kind),
     // 시험대비의 진도·숙제 칸. 목록 하나가 한 칸에 JSON으로 들어간다
     // (gas/lib/exam-items.js).
-    examResult: rec.examResult || '',
     examTests: rec.examTests || '',
     examItems: rec.examItems || '',
     examNext: rec.examNext || '',

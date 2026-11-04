@@ -12,6 +12,7 @@
   const RF = window.GI_RECORD_FORM;
   const PA = window.GI_PROGRESS_AREAS;
   const CL = window.GI_CLASS_LEVEL;
+  const EI = window.GI_EXAM_ITEMS;
   const AREAS = PA.PROGRESS_AREAS;
   const TEST_AREAS = PA.TEST_AREAS;
 
@@ -25,9 +26,6 @@
   const ATTENDANCE = ['출석', '지각', '결석', '변경', '보강'];
   const HOMEWORK = ['제출', '부분제출', '미제출', '해당없음'];
   const LEVELS = ['상', '중', '하'];
-  // 시험대비의 시험 결과. 점수가 아니라 통과 여부다 — 기준 점수는 학교마다
-  // 다르고 시험마다 달라서, 숫자만 받아 두면 견줄 수가 없다.
-  const EXAM_RESULTS = ['통과', '미통과', '미응시'];
 
   let sessionKey = sessionStorage.getItem(SESSION_STORE) || '';
 
@@ -47,7 +45,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261104b';
+  const BUILD = 'v20261104c';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -276,6 +274,19 @@
    * 줄마다 자리 번호를 붙인다. 지울 때 그 번호로 빼므로, 같은 내용의 칸이
    * 둘 있어도 누른 줄만 사라진다.
    */
+  /** 시험 칸에만 붙는 통과 여부 세 단추. */
+  function examResultHtml(list, at, row) {
+    const cur = (row && row.result) || '';
+
+    return '<div class="gi-choices gi-exam-res">' +
+      EI.EXAM_RESULTS.map(function (v) {
+        return '<button class="gi-choice" type="button"' +
+          ' data-exam-res="' + list + '" data-at="' + at + '" data-value="' + esc(v) + '"' +
+          ' aria-pressed="' + (v === cur ? 'true' : 'false') + '">' + esc(v) + '</button>';
+      }).join('') +
+    '</div>';
+  }
+
   function examRowHtml(list, at, row) {
     const cell = function (key, placeholder) {
       return '<input class="gi-input" type="text"' +
@@ -283,8 +294,9 @@
         ' placeholder="' + placeholder + '" aria-label="' + placeholder + '">';
     };
 
-    return '<div class="gi-area gi-exam-row">' +
+    return '<div class="gi-area gi-exam-row' + (list === 'examTests' ? ' is-exam-test' : '') + '">' +
       cell('text', '내용') +
+      (list === 'examTests' ? examResultHtml(list, at, row) : '') +
       '<button class="gi-choice gi-exam-del" type="button"' +
       ' data-exam-del="' + list + '" data-at="' + at + '"' +
       ' aria-label="이 칸 지우기">✕</button>' +
@@ -307,7 +319,6 @@
   }
 
   function renderExamFields() {
-    renderChoiceGroup('recExamResult', EXAM_RESULTS, 'examResult');
     renderExamList('examTests');
     renderExamList('examItems');
     renderExamList('examNext');
@@ -624,7 +635,7 @@
     const add = e.target.closest('[data-exam-add]');
     if (add) {
       const list = add.dataset.examAdd;
-      recordForm[list] = (recordForm[list] || []).concat([{ text: '' }]);
+      recordForm[list] = (recordForm[list] || []).concat([{ text: '', result: '' }]);
       saveRecordDraft();
       renderExamList(list);
 
@@ -632,6 +643,20 @@
       // 있으면 칸을 여러 개 만들 때마다 손이 두 번 간다.
       const rows = $(list).querySelectorAll('[data-key="text"]');
       if (rows.length) rows[rows.length - 1].focus();
+      return;
+    }
+
+    const res = e.target.closest('[data-exam-res]');
+    if (res) {
+      const list = res.dataset.examRes;
+      const row = (recordForm[list] || [])[Number(res.dataset.at)];
+      if (!row) return;
+
+      // 누른 것을 다시 누르면 무른다. 잘못 눌렀을 때 되돌릴 길이 없으면
+      // 칸을 지웠다 다시 만들어야 한다.
+      row.result = row.result === res.dataset.value ? '' : res.dataset.value;
+      saveRecordDraft();
+      renderExamList(list);
       return;
     }
 
