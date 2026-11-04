@@ -140,17 +140,24 @@
   function entryHtml(entry, iso) {
     const m = markHtml(iso);
 
-    // 출결에만 적힌 날에는 꼬리표를 달지 않는다. 적힌 말이 '출석'이면
-    // 꼬리표가 '출석'이 되는데, 동그라미가 이미 그 말을 하고 있다 —
-    // 다른 날과 같은 꼴로 시간·수업·회차만 선다.
+    // 꼬리표는 선생님이 고른 말만 단다.
+    //
+    // 하루치로 더해 둔 줄이라고 '보충'을 자동으로 달지 않는다. 날짜를
+    // 하루 옮기거나 시간만 바꾸려고 더하는 날도 있어서, 더한 줄이 곧
+    // 보충인 것은 아니다. 보충이면 선생님이 출결에서 '보강'을 고른다.
+    //
+    // 출결에만 적힌 날도 마찬가지다 — 적힌 말이 '출석'이면 꼬리표가
+    // '출석'이 되는데, 동그라미가 이미 그 말을 하고 있다.
+    const extra = m.word === '보강';
+
     const tag = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
         ? '<span class="gi-cal-tag is-off">' + esc(m.word) + '</span>'
-        : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+        : (extra ? '<span class="gi-cal-tag is-extra">보강</span>' : '');
 
     return '<span class="gi-choice gi-cal-name' +
-      (entry.overrideId ? ' is-extra' : '') +
+      (extra ? ' is-extra' : '') +
       (entry.skip || m.off ? ' is-off' : '') + '">' +
       (entry.time ? '<span class="gi-cal-at">' + esc(entry.time) + '</span>' : '') +
       '<span class="gi-cal-who">' + m.dot + '수업</span>' + m.no + tag + '</span>';
