@@ -70,6 +70,10 @@
   // 그날 수업을 안 한 출결. 이름을 흐리게 하고 줄을 긋는다.
   const OFF_MARKS = ['결석', '변경'];
 
+  // 시간을 고치는 중인 줄. 한 번에 하나다 — 여러 줄을 동시에 열어 두면
+  // 어느 줄을 고치다 말았는지 알 수 없다.
+  let editTime = '';
+
   function markFor(iso, studentId) {
     return marks[String(iso) + '|' + String(studentId)];
   }
@@ -261,12 +265,32 @@
       tail = delHtml(e);
     }
 
+    const sid = String(e.student.studentId);
+    const editing = editTime === sid;
+
+    // 미리 뺀 줄에는 고칠 시간이 없다 — 그날 하지 않는 수업이다.
+    const canEdit = !e.skip;
+
+    const when = editing
+      ? '<input class="gi-input gi-day-time" type="time" data-time-in value="' +
+          A.esc(e.time) + '">'
+      : '<span class="gi-day-at">' + A.esc(e.time) + '</span>';
+
+    // 고치는 중에는 저장만 보인다. 옆에 출결·삭제가 그대로 있으면
+    // 시간을 적다 말고 누르게 된다.
+    const fix = !canEdit ? ''
+      : editing
+        ? '<button class="gi-choice" type="button" data-time-save="' + A.esc(sid) + '">저장</button>' +
+          '<button class="gi-choice" type="button" data-time-cancel>취소</button>'
+        : '<button class="gi-choice gi-day-fix" type="button" data-time-edit="' + A.esc(sid) +
+          '" aria-label="수업 시간 수정">수정</button>';
+
     return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
-      '<span class="gi-day-at">' + A.esc(e.time) + '</span>' +
+      when +
       '<span class="gi-day-who">' + m.dot + A.esc(e.student.name) + m.no + '</span>' +
+      fix +
       // 학생 관리 탭을 거치지 않고 여기서 바로 출결을 적는다.
-      attendHtml(e.student.studentId) +
-      tail +
+      (editing ? '' : attendHtml(sid) + tail) +
       '</li>';
   }
 
@@ -280,6 +304,7 @@
     }
 
     if (!openDate) {
+      editTime = '';
       $('dayEdit').hidden = true;
       $('dayEdit').innerHTML = '';
       shownDate = '';
@@ -429,6 +454,33 @@
     return first.then(function () { return dropOverride(id); });
   }
 
+  /**
+   * 그날 그 학생의 수업 시간을 옮긴다.
+   *
+   * 평소 요일에서 온 줄은 그 하루만 비우고(휴강 조각) 새 시간으로 한
+   * 줄을 더한다 — 요일표 자체는 건드리지 않는다. 하루를 고치려다
+   * 다음 주 수업까지 따라 움직이면 안 된다.
+   *
+   * 이미 더해 둔 줄은 그 조각을 지우고 새 시간으로 다시 더한다. 시트는
+   * 같은 날·같은 학생·같은 시간을 한 줄로 치므로, 시간이 바뀌면 새
+   * 줄이고 옛 줄은 남는다.
+   *
+   * 적어 둔 출결은 날짜와 학생으로 붙어 있어 시간이 바뀌어도 그대로다.
+   */
+  function moveDayClass(studentId, time, overrideId) {
+    if (!time) return Promise.resolve();
+
+    const first = overrideId
+      ? dropOverride(overrideId)
+      : saveOverride({ date: openDate, studentId: studentId, kind: 'skip', reason: 'off' });
+
+    return first.then(function () {
+      return saveOverride({
+        date: openDate, studentId: studentId, time: time, kind: 'add',
+      });
+    });
+  }
+
   function dropOverride(id) {
     A.showError($('scheduleError'), '');
     return A.api.call('admin.deleteOverride', { sessionKey: A.getSessionKey(), overrideId: id })
@@ -489,6 +541,34 @@
   });
 
   $('dayEdit').addEventListener('click', function (e) {
+    const fix = e.target.closest('[data-time-edit]');
+    if (fix) {
+      editTime = fix.dataset.timeEdit;
+      renderDayEdit();
+      const box = $('dayEdit').querySelector('[data-time-in]');
+      if (box) box.focus();
+      return;
+    }
+
+    if (e.target.closest('[data-time-cancel]')) {
+      editTime = '';
+      renderDayEdit();
+      return;
+    }
+
+    const save = e.target.closest('[data-time-save]');
+    if (save) {
+      const sid = save.dataset.timeSave;
+      const box = $('dayEdit').querySelector('[data-time-in]');
+      const row = entriesOn(openDate).filter(function (x) {
+        return String(x.student.studentId) === sid;
+      })[0];
+
+      editTime = '';
+      moveDayClass(sid, box ? box.value : '', row && row.overrideId);
+      return;
+    }
+
     const dropAdd = e.target.closest('[data-drop-add]');
     if (dropAdd) {
       removeAddedClass(dropAdd.dataset.dropAdd, dropAdd.dataset.who);

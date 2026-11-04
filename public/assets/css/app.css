@@ -671,6 +671,15 @@ body.gi .gi-h2{ color:var(--text); }
 /* 삭제는 되돌릴 수 있는 일이라 빨갛게 칠하지 않는다. 다만 옆의 되돌리기·
    지우기와 헷갈리지 않게 글자만 조금 흐리게 둔다. */
 .gi-day-del{ color:var(--text-soft); }
+.gi-day-fix{ color:var(--text-soft); }
+/* 고치는 중의 시간 칸. 자리를 넓히지 않는다 — 줄의 다른 칸이 밀리면
+   고치고 나서 같은 줄을 다시 눈으로 찾아야 한다. */
+.gi-day-time{
+  width:auto;
+  flex:none;
+  font-size:0.76rem;
+  padding:0.2rem 0.3rem;
+}
 /* 한 줄로 둔다. 두 줄로 접히면 하루 칸이 그만큼 길어지는데, 늘 같은
    자리에 있는 안내문이라 선생님은 한 번 읽고 다시 읽지 않는다. */
 .gi-day-note{ font-size:0.66rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
