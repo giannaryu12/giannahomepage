@@ -67,10 +67,28 @@
     };
   }
 
-  /** 이번 달. 첫 달 앞이면 첫 달을 연다. */
+  /**
+   * 갈 수 있는 마지막 달 — 다음 달.
+   *
+   * 그 뒤는 요일·시간만으로 그려진 빈 달이다. 끝없이 넘길 수 있으면
+   * 아직 잡지도 않은 수업이 1년 치 달력에 가득 찬 것처럼 보인다.
+   * 첫 달이 다음 달보다 뒤면(이제 등록한 학생) 첫 달이 끝이다.
+   */
+  function lastMonth() {
+    const next = S.addMonths(S.monthOf(todayIso()), 1);
+    return next < firstMonth ? firstMonth : next;
+  }
+
+  /** 갈 수 있는 범위 안으로 끌어당긴다. */
+  function clamp_(key) {
+    if (key < firstMonth) return firstMonth;
+    const last = lastMonth();
+    return key > last ? last : key;
+  }
+
+  /** 이번 달. 범위 밖이면 가장 가까운 끝을 연다. */
   function thisMonth() {
-    const now = S.monthOf(todayIso());
-    return now < firstMonth ? firstMonth : now;
+    return clamp_(S.monthOf(todayIso()));
   }
 
   /**
@@ -149,6 +167,7 @@
     // 첫 달에서는 더 뒤로 갈 곳이 없다. 눌러도 그대로인 버튼을 살려 두면
     // 몇 번을 눌러 보고 나서야 끝인 줄 안다.
     document.querySelector('#calNav [data-mon="-1"]').disabled = month <= firstMonth;
+    document.querySelector('#calNav [data-mon="1"]').disabled = month >= lastMonth();
 
     const today = todayIso();
 
@@ -195,7 +214,7 @@
 
       const step = Number(btn.dataset.mon);
       const want = step === 0 ? thisMonth() : S.addMonths(month, step);
-      month = want < firstMonth ? firstMonth : want;
+      month = clamp_(want);
       render();
     });
 
