@@ -989,6 +989,9 @@ body.gi .gi-h2{ color:var(--text); }
 /* 기간은 맨 오른쪽에. 읽을 값이 아니라 가늠하는 값이다. */
 .gi-chart-when{ margin-left:auto; color:var(--text-soft); font-size:0.66rem; }
 .gi-chart-one svg{ display:block; width:100%; height:auto; }
+/* 한 번 읽고 마는 단서다. 그림 바로 아래 왼쪽에 바짝 붙여 작게 둔다 —
+   띄워 놓으면 다음 칸의 제목처럼 보인다. */
+.gi-chart-base{ margin:0.1rem 0 0; font-size:0.62rem; text-align:left; }
 
 .gi-bars{
   background:var(--surface);

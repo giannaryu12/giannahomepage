@@ -224,7 +224,9 @@
    * 멀찍이 떨어져 '떨어졌다'처럼 보인다.
    */
   function chartOneHtml(s) {
-    const W = 320, H = 72, PAD = 9;
+    // 세로는 낮게. 점수는 0~100이지만 실제로 오가는 폭은 그보다 훨씬
+    // 좁아서, 키를 높이면 선이 가운데 띠에 몰리고 위아래가 빈다.
+    const W = 320, H = 54, PAD = 8;
 
     const dates = s.pts.map(function (p) { return p.date; });
     const stepX = dates.length > 1 ? (W - PAD * 2) / (dates.length - 1) : 0;
@@ -293,7 +295,7 @@
     }
 
     $chart.innerHTML = series.map(chartOneHtml).join('') +
-      '<p class="gi-note" style="margin-top:.4rem">100점 환산 기준</p>';
+      '<p class="gi-note gi-chart-base">100점 환산 기준</p>';
   }
 
   /* ---------- 타임라인 ---------- */
