@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   toParentRecord, toParentStudent, toParentPayload,
-  hasParentContent_, PARENT_RECORD_FIELDS, toParentCalendar,
+  hasParentContent_, PARENT_RECORD_FIELDS, toParentCalendar, mergeSameDay_,
 } from '../gas/lib/shape.js';
 
 describe('toParentRecord', () => {
@@ -204,14 +204,20 @@ describe('toParentPayload — 거르기와 요약', () => {
     expect(out.records.map((r) => r.kind)).toEqual(['exam']);
   });
 
-  it('출결을 누르지 않은 갈래도 손으로 적은 것이 있으면 함께 낸다', () => {
+  it('출결을 누르지 않은 갈래에 적힌 것은 누른 쪽에 담아 한 줄로 낸다', () => {
     const out = toParentPayload(Object.assign({}, base, {
       records: [
         { date: '2026-08-30', kind: 'exam', attendance: '출석' },
-        { date: '2026-08-30', kind: 'regular', sessionNo: 12, vocabProgress: 'Day 12' },
+        { date: '2026-08-30', kind: 'regular', sessionNo: 12, vocabBook: '능률보카', vocabProgress: 'Day 12' },
       ],
     }));
-    expect(out.records.map((r) => r.kind).sort()).toEqual(['exam', 'regular']);
+    expect(out.records.length).toBe(1);
+    expect(out.records[0].kind).toBe('exam');
+    expect(out.records[0].vocabProgress).toBe('Day 12');
+    // 교재는 진도와 함께 따라온다 — 'Day 12'만 있으면 무슨 책인지 모른다.
+    expect(out.records[0].vocabBook).toBe('능률보카');
+    // 옮겨 온 쪽의 회차는 가져오지 않는다. 회차는 출결을 누른 쪽의 것이다.
+    expect(out.records[0].sessionNo).toBe('');
   });
 
   it('걸러진 날도 출석률에는 그대로 들어간다', () => {
@@ -342,5 +348,94 @@ describe('toParentPayload — 지난달과 한마디', () => {
       monthKey: '2027-01',
     });
     expect(jan.summary.prevAttendanceRate).toBe(100);
+  });
+});
+
+describe('mergeSameDay_ — 출결을 누른 쪽에 담기', () => {
+  it('출결이 없고 자동으로 채워지기만 한 기록은 사라진다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', kind: 'exam', attendance: '출석', examTests: '[{"text":"모의고사"}]' },
+      { date: '2026-08-30', kind: 'regular', sessionNo: 12, vocabBook: '능률보카' },
+    ]);
+    expect(out.length).toBe(1);
+    expect(out[0].kind).toBe('exam');
+    // 자동으로 채워진 교재는 따라오지 않는다 — 함께 올 진도가 없다.
+    expect(out[0].vocabBook).toBeUndefined();
+  });
+
+  it('이미 찬 칸은 덮어쓰지 않는다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', attendance: '출석', vocabProgress: '적은 것' },
+      { date: '2026-08-30', vocabProgress: '옮겨 올 것', grammarProgress: '빈 칸으로 온다' },
+    ]);
+    expect(out[0].vocabProgress).toBe('적은 것');
+    expect(out[0].grammarProgress).toBe('빈 칸으로 온다');
+  });
+
+  it('코멘트는 둘 다 남긴다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', attendance: '출석', comment: '앞말' },
+      { date: '2026-08-30', comment: '뒷말' },
+    ]);
+    expect(out[0].comment).toBe('앞말\n뒷말');
+  });
+
+  it('점수는 만점과 함께 옮긴다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', attendance: '출석' },
+      { date: '2026-08-30', vocabTestBook: '단어장', vocabTestScore: 18, vocabTestMax: 20 },
+    ]);
+    expect(out[0].vocabTestScore).toBe(18);
+    expect(out[0].vocabTestMax).toBe(20);
+    expect(out[0].vocabTestBook).toBe('단어장');
+  });
+
+  it('만점이 없는 점수는 옮기지 않는다', () => {
+    // 18/0은 숫자가 아니다. 화면에 '18/0'이 그대로 찍힌다.
+    const out = mergeSameDay_([
+      { date: '2026-08-30', attendance: '출석' },
+      { date: '2026-08-30', vocabTestScore: 18, vocabTestMax: '' },
+    ]);
+    expect(out[0].vocabTestScore).toBeUndefined();
+  });
+
+  it('둘 다 출결을 누른 날은 두 줄 그대로다', () => {
+    // 정규수업도 하고 시험대비도 한 날이다. 둘 다 그날 한 수업이다.
+    const out = mergeSameDay_([
+      { date: '2026-08-30', kind: 'regular', attendance: '출석' },
+      { date: '2026-08-30', kind: 'exam', attendance: '출석' },
+    ]);
+    expect(out.length).toBe(2);
+  });
+
+  it('둘 다 출결이 없는 날도 건드리지 않는다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', kind: 'regular', vocabProgress: 'Day 12' },
+      { date: '2026-08-30', kind: 'exam', examTests: '[{"text":"모의고사"}]' },
+    ]);
+    expect(out.length).toBe(2);
+  });
+
+  it('출결을 누른 쪽이 뒤에 와도 그쪽이 주인이다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', kind: 'regular', vocabProgress: 'Day 12' },
+      { date: '2026-08-30', kind: 'exam', attendance: '출석' },
+    ]);
+    expect(out.length).toBe(1);
+    expect(out[0].kind).toBe('exam');
+    expect(out[0].vocabProgress).toBe('Day 12');
+  });
+
+  it('날이 다르면 합치지 않는다', () => {
+    const out = mergeSameDay_([
+      { date: '2026-08-30', attendance: '출석' },
+      { date: '2026-08-28', vocabProgress: 'Day 12' },
+    ]);
+    expect(out.length).toBe(2);
+  });
+
+  it('빈 목록과 없는 값에 흔들리지 않는다', () => {
+    expect(mergeSameDay_([])).toEqual([]);
+    expect(mergeSameDay_(null)).toEqual([]);
   });
 });

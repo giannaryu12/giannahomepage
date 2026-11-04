@@ -313,16 +313,6 @@
    * 영역별 진도 줄. 진도가 적힌 영역만 나온다.
    * 영역이 하나도 없는 옛 기록은 예전처럼 progress 한 줄로 보여준다.
    */
-  function progressRows(r) {
-    const lines = PA.areaLines(r);
-    if (!lines.length) return row('진도', progressText(r));
-
-    // 시험·숙제와 같은 꼴. 왼쪽 이름은 '진도' 하나뿐이고 영역은 그 옆에 들어간다.
-    return groupRow('진도', lines.map(function (l) {
-      return { label: l.label, book: l.book, bookBelow: true, text: l.progress };
-    }));
-  }
-
   /**
    * 왼쪽 이름 하나(진도·시험·숙제) 옆에 영역별 항목을 여러 개 담는다.
    * 영역 이름을 왼쪽 칸에 쓰면 항목 이름과 뒤섞여 무엇의 목록인지 흐려진다.
@@ -348,53 +338,31 @@
       const tag = it.label
         ? '<span class="gi-area-book">' + esc(it.label) + '</span> ' : '';
 
+      // 통과 여부는 그 칸 앞에 붙는다. 시험마다 다르다 — 모의고사는
+      // 통과했고 단어는 미통과일 수 있다.
+      const mark = it.result
+        ? badge(it.result, EXAM_RESULT_TONE[it.result]) + ' ' : '';
+
       return '<div class="gi-rec-groupline">' +
-        tag + inline + text + below +
+        mark + tag + inline + text + below +
         '</div>';
     }).join('');
     return '<div class="gi-rec-row"><dt>' + label + '</dt>' +
       '<dd class="gi-rec-group">' + body + '</dd></div>';
   }
 
-  function testRows(r) {
-    const lines = PA.testLines(r);
-    if (lines.length) {
-      return groupRow('시험', lines.map(function (l) {
-        // 점수는 굵게, 그리고 맨 앞에 — 학부모가 가장 먼저 찾는 값이다.
-        // 교재명은 아랫줄로 내린다.
-        return {
-          label: l.label,
-          book: l.book,
-          bookBelow: true,
-          text: l.score + '/' + l.max,
-          strong: true,
-        };
-      }));
-    }
-
-    // 시험이 영역별로 나뉘기 전에 쌓인 기록.
-    //
-    // 빈 값 검사에 undefined·null도 넣어야 한다. 서버 응답은 shape.js가
-    // 빠진 칸을 ''로 채워 주지만, 그 손질을 거치지 않은 레코드가 들어오면
-    // `undefined !== ''`가 참이라 학부모 화면에 '시험 undefined/undefined'가
-    // 그대로 찍힌다.
+  /**
+   * 시험이 영역별로 나뉘기 전에 쌓인 기록의 점수 한 줄.
+   *
+   * 빈 값 검사에 undefined·null도 넣어야 한다. 서버 응답은 shape.js가
+   * 빠진 칸을 ''로 채워 주지만, 그 손질을 거치지 않은 레코드가 들어오면
+   * `undefined !== ''`가 참이라 학부모 화면에 '시험 undefined/undefined'가
+   * 그대로 찍힌다.
+   */
+  function legacyTestText(r) {
     const blank = function (v) { return v === '' || v === null || v === undefined; };
-    const scoreText = (!blank(r.testScore) && !blank(r.testMax))
-      ? (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax
-      : '';
-    return row('시험', scoreText);
-  }
-
-  function nextRows(r) {
-    const lines = PA.nextLines(r);
-    if (lines.length) {
-      return groupRow('숙제', lines.map(function (l) {
-        // 시험과 같은 꼴. 범위가 앞줄, 교재명은 아랫줄이다 — 교재명이 길면
-        // 뒤에 붙은 범위가 화면 밖으로 밀려 정작 할 일이 안 보인다.
-        return { label: l.label, book: l.book, bookBelow: true, text: l.text };
-      }));
-    }
-    return row('숙제', r.nextHomework);
+    if (blank(r.testScore) || blank(r.testMax)) return '';
+    return (r.testName ? r.testName + ' ' : '') + r.testScore + '/' + r.testMax;
   }
 
   /**
@@ -407,41 +375,54 @@
     return r.attendance === '결석' ? '결석' : '';
   }
 
-  /**
-   * 시험대비 기록의 한 줄. 선생님이 만든 칸을 그대로 옮긴다.
-   *
-   * 칸 이름이 자유로우므로 정해진 영역 이름(단어·문법…)으로 바꾸지 않는다.
-   * 선생님이 '모의고사 3회분'이라고 적었으면 학부모도 그대로 읽는다.
-   */
-  function examRows(label, raw) {
-    const items = EI.parseItems(raw);
-    if (!items.length) return '';
-
-    return groupRow(label, items.map(function (it) {
-      return { label: '', text: it.text };
-    }));
+  /** 시험대비 칸을 묶음 한 줄의 항목으로. 꼬리표 자리는 비운다. */
+  function examItemsOf(raw, withResult) {
+    return EI.parseItems(raw).map(function (it) {
+      return { label: '', text: it.text, result: withResult ? it.result : '' };
+    });
   }
 
   /**
-   * 시험대비의 시험 줄 — 통과 여부가 맨 위, 그 아래 적어 둔 칸들.
+   * 시험 · 진도 · 숙제 세 줄.
    *
-   * 칸이 하나도 없어도 통과 여부만으로 줄을 낸다. 학부모가 가장 먼저 찾는
-   * 것이 그 한 낱말이고, 무엇을 봤는지는 그다음이다.
+   * 한 기록 안에 두 갈래의 내용이 함께 들어 있을 수 있다 — 선생님이
+   * 시험대비에 출결을 누른 날, 정규수업 쪽에 손으로 적어 둔 진도가 있으면
+   * 서버가 그것을 이 기록에 옮겨 담는다(shape.js의 mergeSameDay_).
+   *
+   * 그래서 갈래로 갈라 그리지 않고 뜻이 같은 것끼리 한 줄에 모은다.
+   * '진도' 줄이 두 개 서 있으면 학부모는 둘이 어떻게 다른지부터 묻는다.
    */
-  function examTestRows(r) {
-    const items = EI.parseItems(r && r.examTests);
-    if (!items.length) return '';
+  function contentRows(r) {
+    const exam = isExam(r);
 
-    // 통과 여부는 그 칸 앞에 붙인다. 시험마다 다르다 — 모의고사는 통과했고
-    // 단어는 미통과일 수 있다.
-    const body = items.map(function (it) {
-      const tag = it.result
-        ? badge(it.result, EXAM_RESULT_TONE[it.result]) + ' ' : '';
-      return '<div class="gi-rec-groupline">' + tag + esc(it.text) + '</div>';
-    }).join('');
+    const tests = examItemsOf(r.examTests, true).concat(
+      PA.testLines(r).map(function (l) {
+        // 점수는 굵게, 그리고 맨 앞에 — 학부모가 가장 먼저 찾는 값이다.
+        // 교재명은 아랫줄로 내린다.
+        return {
+          label: l.label, book: l.book, bookBelow: true,
+          text: l.score + '/' + l.max, strong: true,
+        };
+      }));
 
-    return '<div class="gi-rec-row"><dt>시험</dt>' +
-      '<dd class="gi-rec-group">' + body + '</dd></div>';
+    const prog = examItemsOf(r.examItems, false).concat(
+      PA.areaLines(r).map(function (l) {
+        return { label: l.label, book: l.book, bookBelow: true, text: l.progress };
+      }));
+
+    const next = examItemsOf(r.examNext, false).concat(
+      PA.nextLines(r).map(function (l) {
+        // 범위가 앞줄, 교재명은 아랫줄이다 — 교재명이 길면 뒤에 붙은
+        // 범위가 화면 밖으로 밀려 정작 할 일이 안 보인다.
+        return { label: l.label, book: l.book, bookBelow: true, text: l.text };
+      }));
+
+    return (tests.length ? groupRow('시험', tests) : row('시험', legacyTestText(r))) +
+      // 결석한 날 '진도: 결석'은 정규수업에서만 낸다. 시험대비는 적어 둔
+      // 칸이 전부라, 없는 날은 줄도 없는 것이 맞다.
+      (prog.length ? groupRow('진도', prog)
+        : row('진도', exam ? r.progress : progressText(r))) +
+      (next.length ? groupRow('숙제', next) : row('숙제', r.nextHomework));
   }
 
   /**
@@ -490,10 +471,10 @@
       ? '<div class="gi-rec-row"><dt>상태</dt><dd>' + badges + '</dd></div>'
       : '';
 
-    const inner = isExam(r)
-      ? state + examTestRows(r) + examRows('진도', r.examItems) + examRows('숙제', r.examNext)
-      : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
-        testRows(r) + progressRows(r) + nextRows(r);
+    const inner = (isExam(r)
+      ? state
+      : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>') +
+      contentRows(r);
 
     // 접힌 줄은 '12회차 정규수업'처럼 읽힌다. 갈래를 늘 적는다 — 시험대비
     // 쪽에만 꼬리표가 붙어 있으면, 꼬리표 없는 줄이 무엇인지는 아는 사람만
@@ -504,7 +485,9 @@
       '<span class="gi-rec-kind' + (isExam(r) ? '' : ' is-regular') + '">' +
         (isExam(r) ? '시험대비' : '정규수업') +
       '</span>' +
-      (isExam(r) ? examTailBadges(r) : '');
+      // 정규수업 쪽에 출결을 누른 날에도 시험대비 칸이 함께 담길 수 있다.
+      // 갈래를 보고 꼬리표를 가리면 그날 통과 여부가 접힌 채로 묻힌다.
+      examTailBadges(r);
 
     return '' +
       '<article class="gi-rec">' +

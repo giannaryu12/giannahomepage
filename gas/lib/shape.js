@@ -142,6 +142,96 @@ function hasParentContent_(record) {
   });
 }
 
+/**
+ * 함께 옮겨야 뜻이 통하는 칸 묶음.
+ *
+ * 교재만 옮기면 '능률보카'만 덩그러니 남고, 진도만 옮기면 무슨 책의
+ * Day 12인지 알 수 없다. 점수는 만점과 함께여야 숫자가 된다.
+ */
+function mergeGroups_() {
+  const groups = [
+    ['progress'], ['nextHomework'],
+    ['examTests'], ['examItems'], ['examNext'],
+    ['testName', 'testScore', 'testMax'],
+  ];
+
+  progressAreaKeys_().forEach(function (k) {
+    groups.push([k + 'Book', k + 'Progress']);
+    groups.push([k + 'NextBook', k + 'Next']);
+  });
+  testAreaKeys_().forEach(function (k) {
+    groups.push([k + 'TestBook', k + 'TestScore', k + 'TestMax']);
+  });
+  return groups;
+}
+
+/** 이 묶음에 손으로 적은 것이 있는가. 교재는 근거가 아니다. */
+function groupFilled_(rec, group) {
+  const score = group.filter(function (f) { return /[Tt]estScore$/.test(f); })[0];
+  if (score) {
+    const max = group.filter(function (f) { return /[Tt]estMax$/.test(f); })[0];
+    return filled_(rec[score]) && Number(rec[max]) > 0;
+  }
+  return group.some(function (f) {
+    return !/Book$/.test(f) && filled_(rec[f]);
+  });
+}
+
+/**
+ * 출결을 누르지 않은 기록의 내용을 누른 기록에 옮긴다.
+ *
+ * 같은 날 정규수업과 시험대비가 따로 쌓인다. 선생님이 출결을 누른 쪽이
+ * 그날 실제로 한 수업이고, 다른 쪽은 회차와 교재가 자동으로 채워진 채
+ * 저장되었을 뿐이다. 그런데 거기에 손으로 적은 진도나 숙제가 있으면
+ * 그것도 그날 한 것이다 — 줄을 따로 세우는 대신 한 줄 안에 담는다.
+ *
+ * 줄이 둘이면 학부모는 어느 쪽이 '진짜' 그날인지부터 가려야 한다.
+ *
+ * 이미 찬 칸은 덮어쓰지 않는다. 코멘트만은 둘 다 남긴다 — 한마디를
+ * 말없이 지우면 선생님은 적은 줄 알고 학부모는 읽지 못한다.
+ */
+function mergeSameDay_(records) {
+  const byDate = {};
+  const out = [];
+
+  (records || []).forEach(function (r) {
+    const date = String((r && r.date) || '');
+    const host = byDate[date];
+
+    // 출결을 누른 기록이 그날의 주인이다. 하루에 하나뿐이면 주인이 되고,
+    // 둘 다 눌렀으면 둘 다 그날 한 수업이라 합치지 않는다.
+    if (!host) {
+      byDate[date] = r;
+      out.push(r);
+      return;
+    }
+    const hostHas = filled_(host.attendance);
+    const mineHas = filled_(r.attendance);
+    if (hostHas === mineHas) {
+      out.push(r);
+      return;
+    }
+
+    const keep = hostHas ? host : r;
+    const drop = hostHas ? r : host;
+
+    mergeGroups_().forEach(function (g) {
+      if (!groupFilled_(drop, g) || groupFilled_(keep, g)) return;
+      g.forEach(function (f) { keep[f] = drop[f]; });
+    });
+    if (filled_(drop.comment)) {
+      keep.comment = filled_(keep.comment)
+        ? String(keep.comment) + '\n' + String(drop.comment)
+        : drop.comment;
+    }
+
+    byDate[date] = keep;
+    if (keep !== host) out[out.indexOf(host)] = keep;
+  });
+
+  return out;
+}
+
 function toParentPayload(input) {
   const opts = input || {};
   const records = (Array.isArray(opts.records) ? opts.records.slice() : [])
@@ -176,7 +266,9 @@ function toParentPayload(input) {
   return {
     student: toParentStudent(opts.student, opts.className),
     summary: summary,
-    records: records.filter(hasParentContent_),
+    // 합치기는 거른 뒤가 아니라 거르기 전에 한다. 먼저 거르면 출결 없는
+    // 기록이 사라지면서 거기 적힌 진도도 함께 사라진다.
+    records: mergeSameDay_(records).filter(hasParentContent_),
   };
 }
 
@@ -289,6 +381,7 @@ if (typeof module !== 'undefined') {
     toParentCalendar,
     parentFirstMonth_,
     hasParentContent_,
+    mergeSameDay_,
   };
 }
 
