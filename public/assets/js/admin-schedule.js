@@ -206,7 +206,7 @@
     return '<td class="' + cls + '" data-day="' + A.esc(cell.iso) + '">' +
       // 숫자는 버튼으로 남긴다 — 키보드로도 날을 열 수 있어야 한다.
       '<button class="gi-cal-day" type="button" data-day="' + A.esc(cell.iso) + '">' +
-        cell.day + '</button>' +
+        A.esc(S.dayLabel(cell)) + '</button>' +
       entriesOn(cell.iso).map(function (e) { return nameBtnHtml(e, cell.iso); }).join('') +
       '</td>';
   }
@@ -214,6 +214,7 @@
   function render() {
     const today = todayIso();
 
+    renderVacations();
     $('weekLabel').textContent = monthLabel(month);
 
     const head = '<tr>' + S.WEEKDAYS.map(function (w) {
@@ -434,15 +435,26 @@
     });
   }
 
+  /** 그 기간이 이 달에 걸치는가. 'yyyy-MM'끼리 견준다. */
+  function touchesMonth_(v, key) {
+    return String(v.from).slice(0, 7) <= key && String(v.to).slice(0, 7) >= key;
+  }
+
   /**
-   * 적어 둔 방학 기간들 + 하나 더 적는 빈 줄.
+   * 지금 보고 있는 달에 걸치는 방학 기간 + 하나 더 적는 빈 줄.
    *
-   * 지난 방학도 지우지 않고 남긴다. 지우면 그때 한 수업이 학기중
-   * 시간으로 되돌아간다 — 적어 둔 출결은 제 시각을 들고 있지만,
+   * 해가 쌓이면 방학은 예닐곱 줄이 된다. 다 펼쳐 두면 달력 위가 날짜
+   * 목록으로 차고, 정작 지금 보는 달과 상관있는 줄이 어느 것인지
+   * 찾아야 한다. 달을 넘기면 그 달의 줄만 선다.
+   *
+   * 안 보이는 줄도 그대로 남는다. 지난 방학을 지우면 그때 한 수업이
+   * 학기중 시간으로 되돌아간다 — 적어 둔 출결은 제 시각을 들고 있지만,
    * 아직 안 적은 날은 요일표를 따라 다시 그려진다.
    */
   function renderVacations() {
     const rows = vacations.map(function (v, i) {
+      if (!touchesMonth_(v, month)) return '';
+
       return '<div class="gi-vac-row">' +
         '<input class="gi-input" type="date" data-vac="from" data-at="' + i + '" value="' +
           A.esc(v.from) + '">' +
@@ -483,27 +495,43 @@
       sessionKey: A.getSessionKey(), vacations: next,
     }).then(function (data) {
       vacations = data.vacations || [];
-      renderVacations();
-      $('vacMsg').textContent = vacations.length ? '저장됨' : '방학 기간 없음';
+      // 달력을 먼저 다시 그린다 — render가 줄 목록까지 새로 그리므로,
+      // 알림 글은 그 뒤에 얹어야 지워지지 않는다.
       render();
+      $('vacMsg').textContent = vacations.length ? '저장됨' : '방학 기간 없음';
     }).catch(function (err) {
       if (!A.handleAuthLoss(err)) {
+        // 되돌린 뒤 까닭을 적는다. 고친 날짜는 화면에서 사라지고
+        // 적어 둔 목록이 그대로 선다.
         renderVacations();
         $('vacMsg').textContent = err.message;
       }
     });
   }
 
-  /** 화면의 칸을 그대로 읽는다. 맨 아래 빈 줄은 비어 있으면 버려진다. */
+  /**
+   * 보낼 목록을 짠다.
+   *
+   * 화면에는 이 달에 걸치는 줄만 서 있다. 보이는 것만 읽어 보내면
+   * 다른 달의 방학이 통째로 지워진다 — 적어 둔 목록을 바탕으로 두고,
+   * 화면에서 고친 줄만 제자리에 갈아 끼운다.
+   */
   function readVacations() {
-    return [].slice.call($('vacBox').querySelectorAll('.gi-vac-row'))
-      .map(function (row) {
-        return {
-          from: row.querySelector('[data-vac="from"]').value,
-          to: row.querySelector('[data-vac="to"]').value,
-        };
-      })
-      .filter(function (v) { return v.from || v.to; });
+    const next = vacations.slice();
+    const added = [];
+
+    [].slice.call($('vacBox').querySelectorAll('.gi-vac-row')).forEach(function (row) {
+      const box = row.querySelector('[data-vac="from"]');
+      const one = { from: box.value, to: row.querySelector('[data-vac="to"]').value };
+
+      if (box.dataset.at === 'new') {
+        if (one.from || one.to) added.push(one);
+        return;
+      }
+      next[Number(box.dataset.at)] = one;
+    });
+
+    return next.concat(added).filter(function (v) { return v.from || v.to; });
   }
 
   function saveOverride(o) {

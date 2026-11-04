@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   WEEKDAYS, parseSchedule, formatSchedule,
   weekdayIndex, mondayOf, addDays,
-  monthOf, addMonths, monthGrid, studentsOnDate, applyOverrides, activeOnly,
+  monthOf, addMonths, monthGrid, dayLabel, studentsOnDate, applyOverrides, activeOnly,
   inVacation, scheduleOf,
 } from '../public/assets/js/schedule.js';
 
@@ -457,5 +457,22 @@ describe('inVacation — 기간이 여럿일 때', () => {
   it('지난 방학도 그대로 방학이다', () => {
     // 다음 방학을 더해도 지난 방학 날들이 학기중으로 되돌아가지 않는다.
     expect(inVacation('2026-01-20', many)).toBe(true);
+  });
+});
+
+describe('dayLabel — 1일에는 달까지', () => {
+  it('1일은 달을 붙인다', () => {
+    expect(dayLabel({ day: 1, iso: '2026-10-01' })).toBe('10/1');
+    expect(dayLabel({ day: 1, iso: '2026-01-01' })).toBe('1/1');
+  });
+
+  it('나머지 날은 숫자만이다', () => {
+    expect(dayLabel({ day: 2, iso: '2026-10-02' })).toBe('2');
+    expect(dayLabel({ day: 31, iso: '2026-10-31' })).toBe('31');
+  });
+
+  it('날짜를 못 읽으면 숫자만 낸다', () => {
+    expect(dayLabel({ day: 1, iso: '' })).toBe('1');
+    expect(dayLabel(null)).toBe('undefined');
   });
 });

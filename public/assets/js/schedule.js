@@ -120,6 +120,21 @@
    * 앞뒤로 모자란 칸은 옆 달 날짜로 채우고 inMonth:false로 표시한다. 빈 칸으로
    * 두면 달의 첫 주와 마지막 주에서 요일과 칸이 어긋나 보인다.
    */
+  /**
+   * 칸에 적을 날짜. 1일에만 달을 붙인다 — '10/1'.
+   *
+   * 달력 한 장에는 앞뒤 달의 날이 함께 선다. 숫자만 있으면 맨 윗줄의
+   * '28·29·30'과 아랫줄의 '1·2·3'이 같은 달처럼 읽힌다. 달이 바뀌는
+   * 자리에만 달을 적으면, 그 한 칸이 경계를 말해 준다.
+   */
+  function dayLabel(cell) {
+    const c = cell || {};
+    if (Number(c.day) !== 1) return String(c.day);
+
+    const m = /^\d{4}-(\d{2})/.exec(String(c.iso || ''));
+    return m ? Number(m[1]) + '/1' : String(c.day);
+  }
+
   function monthGrid(monthKey) {
     const m = /^(\d{4})-(\d{2})$/.exec(String(monthKey == null ? '' : monthKey));
     if (!m) return [];
@@ -298,6 +313,7 @@
     monthOf,
     addMonths,
     monthGrid,
+    dayLabel,
     inVacation,
     scheduleOf,
     studentsOnDate,

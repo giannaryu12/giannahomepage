@@ -196,7 +196,7 @@
       (cell.iso === today ? ' is-today' : '');
 
     return '<td class="' + cls + '">' +
-      '<span class="gi-cal-day">' + cell.day + '</span>' +
+      '<span class="gi-cal-day">' + esc(S.dayLabel(cell)) + '</span>' +
       entriesOn(cell.iso).map(function (e) { return entryHtml(e, cell.iso); }).join('') +
       '</td>';
   }
