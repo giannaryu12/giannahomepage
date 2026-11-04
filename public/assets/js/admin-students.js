@@ -19,6 +19,8 @@
   let mode = 'new';
   // 수정 칸이 보고 있는 학생.
   let editId = '';
+  // 수정 칸의 학교급 드롭박스. 학생을 먼저 이 안에서 좁혀 찾는다.
+  let editLevel = '';
 
   /**
    * 학생 한 명의 학교급. 학년에서 먼저 읽고, 없으면 반 이름에서 읽는다.
@@ -33,10 +35,6 @@
     return CL.classLevel(s && s.grade) || CL.classLevel(s && s.className) || '';
   }
 
-  /** 화면에 적을 학년. '초5' → '초등부 5학년'. 학부모 화면도 같은 것을 쓴다. */
-  function gradeLabel(s) {
-    return CL.gradeLabel(s && s.grade, s && s.className);
-  }
 
   /** 학교급마다 있는 학년. 초등은 6학년까지, 중·고는 3학년까지다. */
   const GRADE_MAX = { elem: 6, mid: 3, high: 3 };
@@ -177,12 +175,6 @@
     return days.length ? kept[days[0]] : '';
   }
 
-  /** 적어 둔 요일·시간을 글로. 목록에서는 읽기만 한다. */
-  function schedTextHtml(raw) {
-    const text = S.formatSchedule(S.parseSchedule(raw));
-    return '<p class="gi-note gi-stu-when">' +
-      (text ? A.esc(text) : '요일·시간 미지정') + '</p>';
-  }
 
   /**
    * 학생 카드.
@@ -192,44 +184,82 @@
    * 적혀 있고, 고치는 일은 수정 탭 한 곳에서 한다. 열 하나가 350px인데
    * 입력 칸까지 넣으면 어느 것도 제 너비를 못 가진다.
    */
-  /**
-   * 이름 옆 한 줄.
-   *
-   * 반 이름은 적지 않는다 — '초등부 5학년 · 초등부 A'처럼 초등부가 두 번
-   * 나오고, 어느 열에 있는지로 이미 학교급을 안다. 반이 없을 때만 적는다.
-   * 그 학생은 기록을 열 수 없어서, 왜 안 되는지가 여기 적혀 있어야 한다.
-   */
-  function headNote(s, editable) {
-    const parts = [];
-    if (editable) parts.push(s.studentId);
+  /** 학년 칸에서 숫자만. '초5' → '5'. 없으면 빈 값. */
+  function gradeNum(s) {
+    const hit = /\d+/.exec(String((s && s.grade) || ''));
+    return hit ? hit[0] : '';
+  }
 
-    parts.push(gradeLabel(s) || '학년 없음');
-    if (s.school) parts.push(s.school);
+  /**
+   * 카드 머리 왼쪽 — 이름, 학교, 학년 숫자, 수업 시간.
+   *
+   * '초등부 5학년'이라 적지 않는다. 학교급은 오른쪽 끝에 한 번 서고,
+   * 어느 열에 있는지로도 이미 안다 — 한 줄에서 같은 말이 두 번 나오면
+   * 정작 다른 학생과 갈리는 값(학교·시간)이 밀려난다.
+   *
+   * 반 이름도 적지 않는다. 반이 없을 때만 적는다 — 그 학생은 기록을
+   * 열 수 없어서, 왜 안 되는지가 여기 적혀 있어야 한다.
+   */
+  function headLeft(s) {
+    const who = [s.school, gradeNum(s)].filter(function (v) { return v; }).join(' ');
+    const parts = [who || '학년 없음'];
+
+    const when = S.formatSchedule(S.parseSchedule(s.schedule));
+    if (when) parts.push(when);
 
     if (!s.active) parts.push('비활성');
     else if (!s.className) parts.push('반 없음');
 
-    return parts.join(' · ');
+    return s.name + ', ' + parts.join(' · ');
   }
 
+  /** 카드 머리 오른쪽 — 학교급 한 낱말. */
+  function headRight(s) {
+    const lv = CL.LEVELS.filter(function (l) { return l.key === levelOf(s); })[0];
+    return lv ? lv.label : '';
+  }
+
+  /**
+   * 등록 칸과 같은 모양의 네 칸 — 이름 · 학교급 · 학년 · 학교 이름.
+   *
+   * 고치는 칸이 등록 칸과 달라 보이면, 같은 값을 두 가지 방식으로
+   * 적는 셈이다. 학년도 등록할 때처럼 드롭박스로 고른다 — 글자로
+   * 적게 두면 '5학년'·'초5'·'5'가 섞여 쌓인다.
+   */
+  function editFieldsHtml(s) {
+    const key = levelOf(s) || 'elem';
+
+    return '<div class="gi-stu-new">' +
+        '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
+        '<select class="gi-select" data-field="level">' + levelOptionsHtml(key) + '</select>' +
+        '<select class="gi-select" data-field="gradeNum">' + gradeOptionsHtml(key, gradeNum(s)) + '</select>' +
+        '<input class="gi-input" type="text" data-field="school" placeholder="학교 이름" value="' + A.esc(s.school || '') + '">' +
+      '</div>' +
+      '<div class="gi-stu-row">' +
+        '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
+      '</div>';
+  }
+
+  /**
+   * 학생 카드.
+   *
+   * 목록에서는 머리 한 줄만 보인다. 이름을 누르면 아래가 열린다 —
+   * 카드마다 버튼 다섯 개가 늘 펼쳐져 있으면 한 열에 서너 명밖에
+   * 안 들어가고, 찾는 이름은 늘 스크롤 아래에 있다.
+   *
+   * editable이면(수정 칸) 늘 열려 있다. 고치려고 연 카드를 한 번 더
+   * 눌러 열게 할 까닭이 없다.
+   */
   function studentHtml(s, editable) {
     return '' +
       '<article class="gi-rec gi-stu" data-id="' + A.esc(s.studentId) + '">' +
-        '<div class="gi-stu-head">' +
-          '<span class="gi-rec-date">' + A.esc(s.name) + '</span>' +
-          // 학생 번호는 수정 칸에서만 보인다. 목록에서는 쓸 일이 없고,
-          // 350px 줄에서 학년을 밀어낸다.
-          '<span class="gi-note">' + A.esc(headNote(s, editable)) + '</span>' +
-        '</div>' +
-        '<div class="gi-stu-row">' +
-          (editable
-            ? '<div class="gi-stu-field">' +
-                '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
-                '<input class="gi-input" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
-                '<input class="gi-input" type="text" data-field="school" placeholder="학교 이름" value="' + A.esc(s.school || '') + '">' +
-                '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
-              '</div>'
-            : '') +
+        '<button class="gi-stu-head" type="button" data-act="fold"' +
+          ' aria-expanded="' + (editable ? 'true' : 'false') + '">' +
+          '<span class="gi-stu-who">' + A.esc(headLeft(s)) + '</span>' +
+          '<span class="gi-stu-lv">' + A.esc(headRight(s)) + '</span>' +
+        '</button>' +
+        '<div class="gi-stu-more"' + (editable ? '' : ' hidden') + '>' +
+          (editable ? editFieldsHtml(s) : '') +
           // 수정 칸에는 저장만 둔다. 기록 입력·링크·비활성화는 목록에서
           // 하는 일이고, 고치는 칸에 같이 두면 고치다 말고 누르게 된다.
           (editable ? '' :
@@ -241,9 +271,9 @@
               '<button class="gi-choice" type="button" data-act="toggle">' +
                 (s.active ? '비활성화' : '다시 활성화') + '</button>' +
             '</div>') +
+          (editable ? schedHtml(s.schedule, true) : '') +
+          '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
         '</div>' +
-        (editable ? schedHtml(s.schedule, true) : schedTextHtml(s.schedule)) +
-        '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
       '</article>';
   }
 
@@ -277,16 +307,26 @@
 
     const cur = findStudent(editId) || students[0];
     editId = cur.studentId;
+    // 고르는 칸을 열 때마다 그 학생의 학교급에서 시작한다.
+    editLevel = levelOf(cur) || editLevel || CL.LEVELS[0].key;
 
-    return '<select class="gi-select gi-stu-pick" id="editWho">' +
-        students.map(function (s) {
-          return '<option value="' + A.esc(s.studentId) + '"' +
-            (s.studentId === cur.studentId ? ' selected' : '') + '>' +
-            A.esc(s.name) +
-            (gradeLabel(s) ? ' (' + A.esc(gradeLabel(s)) + ')' : '') +
-            (s.active ? '' : ' · 비활성') + '</option>';
-        }).join('') +
-      '</select>' +
+    // 학교급을 먼저 좁히고 그 안에서 가나다로 찾는다. 스무 명이 넘으면
+    // 이름 하나를 고르려고 목록을 처음부터 끝까지 훑게 된다.
+    const mine = students.filter(function (s) { return levelOf(s) === editLevel; })
+      .sort(function (x, y) { return String(x.name).localeCompare(String(y.name), 'ko'); });
+
+    return '<div class="gi-stu-pick">' +
+        '<select class="gi-select" id="editLevel">' + levelOptionsHtml(editLevel) + '</select>' +
+        '<select class="gi-select" id="editWho">' +
+          (mine.length
+            ? mine.map(function (s) {
+                return '<option value="' + A.esc(s.studentId) + '"' +
+                  (s.studentId === cur.studentId ? ' selected' : '') + '>' +
+                  A.esc(s.name) + (s.active ? '' : ' · 비활성') + '</option>';
+              }).join('')
+            : '<option value="">이 학교급에는 학생이 없습니다</option>') +
+        '</select>' +
+      '</div>' +
       studentHtml(cur, true);
   }
 
@@ -311,7 +351,7 @@
       // 위 칸은 열 하나 너비다. 같은 격자에 넣어 폭을 맞춘다 — 숫자로
       // 따로 적으면 열 너비를 고칠 때마다 두 군데를 고쳐야 한다.
       '<div class="gi-stu-cols">' +
-        '<div>' +
+        '<div class="gi-stu-panel">' +
           // 탭을 두지 않는다. 고치는 일은 목록에서 그 학생의 '수정'을
           // 눌러 시작한다 — 탭에서 들어오면 드롭박스로 학생을 한 번 더
           // 찾아야 하고, 눈으로 이미 찾은 일을 또 하는 셈이다.
@@ -421,6 +461,14 @@
     const $msg = card.querySelector('[data-role="msg"]');
     const act = btn.dataset.act;
 
+    if (act === 'fold') {
+      const more = card.querySelector('.gi-stu-more');
+      const open = more.hidden;
+      more.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      return;
+    }
+
     if (act === 'edit') {
       // 위 수정 칸을 이 학생으로 연다. 드롭박스에서 같은 학생을 다시
       // 찾게 하면, 목록에서 눈으로 찾은 일을 한 번 더 하는 셈이다.
@@ -467,7 +515,9 @@
 
     if (act === 'save') {
       patch.name = card.querySelector('[data-field="name"]').value.trim();
-      patch.grade = card.querySelector('[data-field="grade"]').value.trim();
+      // 등록 칸과 같은 규칙으로 합친다. '초' + '5' → '초5'.
+      patch.grade = markOf(card.querySelector('[data-field="level"]').value) +
+        card.querySelector('[data-field="gradeNum"]').value;
       patch.school = card.querySelector('[data-field="school"]').value.trim();
       patch.classId = card.querySelector('[data-field="classId"]').value;
       patch.schedule = readSched(card);
@@ -495,7 +545,18 @@
   });
 
   $view.addEventListener('change', function (e) {
-    if (e.target.id !== 'editWho') return;
+    if (e.target.id === 'editLevel') {
+      editLevel = e.target.value;
+      // 그 학교급의 첫 학생을 연다. 고르던 학생을 그대로 두면 드롭박스는
+      // 중등부인데 카드는 초등부 학생인 채로 남는다.
+      const first = students.filter(function (s) { return levelOf(s) === editLevel; })
+        .sort(function (x, y) { return String(x.name).localeCompare(String(y.name), 'ko'); })[0];
+      if (first) editId = first.studentId;
+      render();
+      return;
+    }
+
+    if (e.target.id !== 'editWho' || !e.target.value) return;
 
     editId = e.target.value;
     render();

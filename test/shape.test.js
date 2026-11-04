@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   toParentRecord, toParentStudent, toParentPayload,
   hasParentContent_, PARENT_RECORD_FIELDS, toParentCalendar, mergeSameDay_,
-  parentFirstDate_,
+  parentFirstDate_, PARENT_SELF_ID,
 } from '../gas/lib/shape.js';
 
 describe('toParentRecord', () => {
@@ -334,6 +334,9 @@ describe('toParentCalendar — 학부모 달력', () => {
     });
     expect(cal.overrides).toHaveLength(1);
     expect(cal.overrides[0].overrideId).toBe('O1');
+    // 학생 번호는 화면이 쓰는 이름으로 바꿔 보낸다. 시트의 번호를 그대로
+    // 실어 보내면 화면이 조각을 그 학생에게 붙이지 못한다.
+    expect(cal.overrides[0].studentId).toBe(PARENT_SELF_ID);
   });
 
   it('날짜별 출결과 회차를 모은다', () => {

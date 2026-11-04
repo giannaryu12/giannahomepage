@@ -117,6 +117,9 @@
   function markOnly_(iso) {
     const m = marks[String(iso)];
     if (!m || OFF_MARKS.indexOf(m.attendance) !== -1) return [];
+    // 하루치 조각이 있는 날은 여기까지 오지 않는다 — 그 조각이 줄을
+    // 세우고 시간도 함께 들고 온다. 여기 오는 날은 적어 둔 시간이
+    // 어디에도 없는 날이라 시간 자리를 비운다.
     return [{ time: '', student: student, fromMark: true }];
   }
 

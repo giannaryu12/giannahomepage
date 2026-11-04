@@ -343,6 +343,20 @@ function parentFirstMonth_(student, records) {
  * 거르기 전 기록을 받는다. 결석한 날은 진도도 코멘트도 없어 학부모 목록에서
  * 빠지는데, 달력에서는 빠진 그날이야말로 보여야 하는 칸이다.
  */
+/**
+ * 학부모 화면이 그 학생을 가리키는 이름.
+ *
+ * 학부모에게는 학생 번호를 내려보내지 않는다(toParentStudent). 화면은
+ * 한 사람만 그리므로 번호가 필요 없고, 하루치 조각을 그 한 사람에
+ * 붙이기만 하면 된다. 그래서 양쪽이 같은 이름을 쓴다 —
+ * parent-schedule.js의 student.studentId도 'me'다.
+ *
+ * 전에는 조각에 시트의 진짜 번호를 그대로 실어 보냈다. 화면이 'me'로
+ * 찾으니 어느 조각도 붙지 못했고, 더해 둔 보강 수업이 달력에서 통째로
+ * 빠졌다 — 출결을 적어 둔 덕에 날짜만 겨우 섰고 시간은 빈 채였다.
+ */
+const PARENT_SELF_ID = 'me';
+
 function toParentCalendar(input) {
   const opts = input || {};
   const student = opts.student || {};
@@ -374,7 +388,7 @@ function toParentCalendar(input) {
         return {
           overrideId: String(o.overrideId),
           date: String(o.date),
-          studentId: sid,
+          studentId: PARENT_SELF_ID,
           time: String(o.time || ''),
           kind: String(o.kind),
           reason: String(o.reason || ''),
@@ -398,6 +412,7 @@ if (typeof module !== 'undefined') {
     toParentCalendar,
     parentFirstMonth_,
     parentFirstDate_,
+    PARENT_SELF_ID,
     hasParentContent_,
     mergeSameDay_,
   };

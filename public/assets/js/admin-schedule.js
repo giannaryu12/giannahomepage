@@ -113,8 +113,13 @@
     //
     // 더해 둔 줄에는 '보충'을 달지 않는다. 그날 무슨 수업이었는지는
     // 선생님이 하루 칸의 드롭박스에서 고른다 — 고르기도 전에 꼬리표가
-    // 붙어 있으면 이미 정해진 것처럼 보인다. 평소 요일에 없던 줄이라는
-    // 것은 이름 칸의 색(.is-extra)이 말없이 말해 준다.
+    // 붙어 있으면 이미 정해진 것처럼 보인다.
+    //
+    // 점선 네모도 마찬가지다. 더해 둔 날이 곧 보강은 아니다 — 날짜를
+    // 하루 옮기거나 시간만 바꾸려고 더하는 날도 있다. 드롭박스에서
+    // '보강'을 고른 줄에만 두른다.
+    const extra = m.word === '보강';
+
     const mark = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
@@ -122,7 +127,7 @@
         : '';
 
     return '<button class="gi-choice gi-cal-name' +
-      (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') +
+      (extra ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') +
       (m.last ? ' is-last' : '') + '"' +
       ' type="button" data-student="' + A.esc(s.studentId) + '" data-date="' + A.esc(iso) + '"' +
       // 동그라미는 이름 안에 넣는다. 밖에 두면 좁은 칸에서 시간 줄 끝에
