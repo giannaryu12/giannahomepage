@@ -218,13 +218,17 @@
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.skip.overrideId) +
           '">되돌리기</button>';
     } else if (e.overrideId) {
-      // '보충' 꼬리표는 달지 않는다. 그날 무슨 수업이었는지는 선생님이
-      // 옆 드롭박스에서 고른다 — 더해 두기만 하고 아직 고르지 않은 줄에
-      // 꼬리표가 먼저 붙어 있으면, 이미 정해진 것처럼 보여 드롭박스를
-      // 건드리지 않게 된다. 달력 쪽 꼬리표는 그대로 둔다 — 거기서는
+      // 더해 둔 줄도 다른 줄과 똑같이 보인다 — 드롭박스 옆에 '삭제'
+      // 하나. 선생님에게는 둘 다 '이 날 이 수업을 목록에서 뺀다'는
+      // 한 가지 일이다. 속으로 하는 일만 다르다(아래 removeAddedClass).
+      //
+      // '보충' 꼬리표도 달지 않는다. 그날 무슨 수업이었는지는 옆
+      // 드롭박스에서 고르는데, 고르기도 전에 꼬리표가 붙어 있으면 이미
+      // 정해진 것처럼 보인다. 달력 쪽 꼬리표는 그대로 둔다 — 거기서는
       // 평소 요일에 없던 줄이 왜 서 있는지를 말해 준다.
-      tail = '<button class="gi-choice" type="button" data-drop="' +
-        A.esc(e.overrideId) + '">지우기</button>';
+      tail = '<button class="gi-choice gi-day-del" type="button" data-drop-add="' +
+        A.esc(e.overrideId) + '" data-who="' + A.esc(e.student.studentId) +
+        '" aria-label="이 수업 삭제">삭제</button>';
     } else if (m.off) {
       // 이미 결석·변경으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 —
       // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.
@@ -390,6 +394,20 @@
     });
   }
 
+  /**
+   * 더해 둔 수업을 그날 목록에서 지운다.
+   *
+   * 적어 둔 출결이 있으면 먼저 지운다. 수업 줄만 사라지고 출결이 남으면,
+   * 학부모 달력은 '요일에 없는 날에 출결이 적혔다'고 읽고 그 날 수업을
+   * 혼자 다시 세운다(parent-schedule.js의 markOnly_).
+   */
+  function removeAddedClass(id, studentId) {
+    const had = markFor(openDate, studentId);
+    const first = had ? setAttendance(studentId, '') : Promise.resolve();
+
+    return first.then(function () { return dropOverride(id); });
+  }
+
   function dropOverride(id) {
     A.showError($('scheduleError'), '');
     return A.api.call('admin.deleteOverride', { sessionKey: A.getSessionKey(), overrideId: id })
@@ -450,6 +468,12 @@
   });
 
   $('dayEdit').addEventListener('click', function (e) {
+    const dropAdd = e.target.closest('[data-drop-add]');
+    if (dropAdd) {
+      removeAddedClass(dropAdd.dataset.dropAdd, dropAdd.dataset.who);
+      return;
+    }
+
     const drop = e.target.closest('[data-drop]');
     if (drop) {
       dropOverride(drop.dataset.drop);
