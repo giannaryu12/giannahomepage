@@ -118,9 +118,16 @@ function findRecordMatch(rows, studentId, date, kind) {
   return match || null;
 }
 
-/** 결석한 날인가. 회차를 세지 않는 유일한 출결이다. */
-function isAbsent_(attendance) {
-  return String(attendance || '') === '결석';
+/**
+ * 그날 수업을 안 한 출결인가. 회차를 세지 않는다.
+ *
+ * 결석은 수업이 사라진 날이고, 변경은 다른 날로 옮긴 날이다. 둘 다 그날은
+ * 수업을 하지 않았으므로 회차를 먹지 않는다 — 변경은 옮겨 간 날에 가서
+ * 세어진다. 화면(admin.js·parent-schedule.js)도 같은 규칙으로 둘을 묶는다.
+ */
+function isOffDay_(attendance) {
+  const a = String(attendance || '');
+  return a === '결석' || a === '변경';
 }
 
 /** 저장할 레코드 한 건의 시트 페이로드를 만든다. recordId·createdAt은 호출자가 신규 행일 때만 붙인다. */
@@ -142,11 +149,11 @@ function buildRecordPayload(rec, classId, clientRequestId, now) {
     homeworkStatus: rec.homeworkStatus || '',
     homeworkLevel: rec.homeworkLevel || '',
     // 회차. 0이나 빈 값을 `||`로 뭉개면 안 되므로 따로 본다.
-    // 결석한 날은 회차를 세지 않는다 — 수업을 안 했으니 다음에 오는 날이
+    // 수업을 안 한 날은 회차를 세지 않는다 — 안 했으니 다음에 오는 날이
     // 그 회차다. 화면이 보낸 값이 있어도 여기서 비운다. 출결을 고르기 전에
     // 회차가 먼저 채워져 있어서, 비우는 일을 화면에만 맡기면 눌러 둔 순서에
     // 따라 남기도 하고 안 남기도 한다.
-    sessionNo: isAbsent_(rec.attendance) ||
+    sessionNo: isOffDay_(rec.attendance) ||
       rec.sessionNo === '' || rec.sessionNo === null || rec.sessionNo === undefined
       ? '' : rec.sessionNo,
     testName: rec.testName || '',
@@ -207,10 +214,10 @@ function lastBooksOf(records) {
 function lastSessionNoOf(records, beforeDate) {
   const limit = String(beforeDate || '');
   const sorted = (records || []).filter(function (r) {
-    // 결석한 날은 세지 않는다. 저장할 때 회차를 비우지만, 그 규칙이 생기기
-    // 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를 이어받으면 안 온 날이
-    // 한 회차를 먹는다.
-    if (isAbsent_(r && r.attendance)) return false;
+    // 수업을 안 한 날(결석·변경)은 세지 않는다. 저장할 때 회차를 비우지만,
+    // 그 규칙이 생기기 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를
+    // 이어받으면 수업하지 않은 날이 한 회차를 먹는다.
+    if (isOffDay_(r && r.attendance)) return false;
     return !limit || String(r.date || '') < limit;
   }).sort(function (a, b) {
     return String(b.date || '').localeCompare(String(a.date || ''));

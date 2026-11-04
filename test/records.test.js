@@ -124,7 +124,16 @@ describe('buildRecordPayload', () => {
     expect(payload.attendance).toBe('결석');
   });
 
-  it('결석이 아니면 회차를 그대로 둔다', () => {
+  it('변경한 날도 회차를 비운다 — 옮긴 날에 가서 센다', () => {
+    const payload = buildRecordPayload(
+      { studentId: 'S001', date: '2026-08-30', attendance: '변경', sessionNo: 12 },
+      'C01', 'req-1', '2026-08-30T01:00:00.000Z'
+    );
+    expect(payload.sessionNo).toBe('');
+    expect(payload.attendance).toBe('변경');
+  });
+
+  it('결석·변경이 아니면 회차를 그대로 둔다', () => {
     ['출석', '지각', '보강', ''].forEach((att) => {
       const payload = buildRecordPayload(
         { studentId: 'S001', date: '2026-08-30', attendance: att, sessionNo: 12 },
@@ -280,6 +289,13 @@ describe('lastSessionNoOf', () => {
     expect(lastSessionNoOf([
       { date: '2026-08-16', sessionNo: 9 },
       { date: '2026-08-23', sessionNo: '' },
+    ])).toBe(9);
+  });
+
+  it('변경한 날은 세지 않는다 — 옮긴 날에 가서 세어진다', () => {
+    expect(lastSessionNoOf([
+      { date: '2026-08-16', sessionNo: 9 },
+      { date: '2026-08-23', sessionNo: 10, attendance: '변경' },
     ])).toBe(9);
   });
 

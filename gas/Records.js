@@ -227,7 +227,7 @@ function handleAdminSetAttendance(body) {
 
     // 수업을 안 한 날은 회차를 세지 않는다. 적어 둔 숫자가 있으면 비운다.
     // 다시 출석으로 돌리면 그날 앞의 기록에서 이어 간다.
-    const sessionNo = isAbsent_(attendance) || !attendance
+    const sessionNo = isOffDay_(attendance) || !attendance
       ? ''
       : (today && today.sessionNo) || (lastSessionNoOf(mine, date) + 1);
 
