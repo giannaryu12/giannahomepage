@@ -163,11 +163,17 @@
         ? '<span class="gi-cal-tag is-off">' + esc(m.word) + '</span>'
         : (extra ? '<span class="gi-cal-tag is-extra">보강</span>' : '');
 
+    // '수업'이라는 글자는 적지 않는다. 학부모 달력에는 그 학생 하나만
+    // 서므로 줄마다 같은 말이 반복될 뿐이고, 45px짜리 칸에서 그 두
+    // 글자가 시간과 회차를 밀어낸다.
+    //
+    // 동그라미는 시간 옆에 붙인다 — 무슨 날이었는지는 색이 말하고,
+    // 아래 칸의 범례가 그 색을 읽어 준다. 회차는 아랫줄로 내린다.
     return '<span class="gi-choice gi-cal-name' +
       (extra ? ' is-extra' : '') +
       (entry.skip || m.off ? ' is-off' : '') + '">' +
-      (entry.time ? '<span class="gi-cal-at">' + esc(entry.time) + '</span>' : '') +
-      '<span class="gi-cal-who">' + m.dot + '수업</span>' + m.no + tag + '</span>';
+      '<span class="gi-cal-at">' + esc(entry.time) + m.dot + '</span>' +
+      m.no + tag + '</span>';
   }
 
   function cellHtml(cell, today) {
