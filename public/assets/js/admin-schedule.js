@@ -50,7 +50,7 @@
   }
 
   // 빼기의 까닭. 시트에는 영어로 쌓고 화면에는 한글로 보인다.
-  const SKIP_LABEL = { absent: '결석', moved: '변경' };
+  const SKIP_LABEL = { absent: '결석', moved: '변경', off: '휴강' };
 
   // 출결 색. 출석이 초록이고 나머지는 저마다 다르다 — 한 가지만 칠하면
   // 지각·결석을 적어 둔 수업이 아직 안 적은 수업과 똑같아 보인다.
@@ -197,6 +197,16 @@
       '</select>';
   }
 
+  /**
+   * 평소 일정에서 온 줄을 그날 목록에서 빼는 단추.
+   *
+   * 보충 줄에는 달지 않는다 — 그쪽은 '지우기'가 조각 자체를 지운다.
+   */
+  function delHtml(e) {
+    return '<button class="gi-choice gi-day-del" type="button" data-del="' +
+      A.esc(e.student.studentId) + '" aria-label="이 수업 삭제">삭제</button>';
+  }
+
   function dayRowHtml(e) {
     const m = markHtml(openDate, e.student.studentId);
     let tail;
@@ -213,11 +223,12 @@
     } else if (m.off) {
       // 이미 결석·변경으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 —
       // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.
-      tail = '<span class="gi-badge is-bad">' + A.esc(m.word) + '</span>';
+      tail = '<span class="gi-badge is-bad">' + A.esc(m.word) + '</span>' + delHtml(e);
     } else {
-      // 빼는 일은 드롭박스에서 결석·변경을 고르는 것으로 한다. 같은 일을
-      // 하는 길이 둘이면 어느 쪽으로 뺐는지에 따라 화면이 달라진다.
-      tail = '';
+      // 결석·변경은 드롭박스에서 고른다. 삭제는 다른 일이다 — 그날 그
+      // 수업 자체가 없었던 것으로 목록에서 뺀다(휴강). 결석으로 적지
+      // 않으므로 학부모 달력에도 결석으로 뜨지 않는다.
+      tail = delHtml(e);
     }
 
     return '<li class="gi-day-row' + (e.skip || m.off ? ' is-off' : '') + '">' +
@@ -357,6 +368,23 @@
     });
   }
 
+  /**
+   * 그날 그 학생의 수업을 목록에서 뺀다 — 휴강.
+   *
+   * 적어 둔 출결이 있으면 먼저 지운다. 수업이 없던 날로 해 놓고 출결만
+   * 남으면 학부모 달력에 동그라미가 혼자 떠 있다.
+   */
+  function removeDayClass(studentId) {
+    const had = markFor(openDate, studentId);
+    const first = had ? setAttendance(studentId, '') : Promise.resolve();
+
+    return first.then(function () {
+      return saveOverride({
+        date: openDate, studentId: studentId, kind: 'skip', reason: 'off',
+      });
+    });
+  }
+
   function dropOverride(id) {
     A.showError($('scheduleError'), '');
     return A.api.call('admin.deleteOverride', { sessionKey: A.getSessionKey(), overrideId: id })
@@ -420,6 +448,12 @@
     const drop = e.target.closest('[data-drop]');
     if (drop) {
       dropOverride(drop.dataset.drop);
+      return;
+    }
+
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      removeDayClass(del.dataset.del);
       return;
     }
 

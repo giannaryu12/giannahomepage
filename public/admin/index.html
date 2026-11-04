@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104a">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261104a">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104b">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261104b">
 </head>
 <body class="gi">
 
@@ -59,7 +59,9 @@
     </div>
 
     <div id="recordView" hidden>
-      <button class="gi-btn gi-btn-outline" id="recordBack" type="button">← 돌아가기</button>
+      <!-- 탭 단추(수업 일정·학생 관리)와 같은 크기·글자다. 돌아가는 일은
+           탭을 옮기는 일과 같은 무게라, 혼자 커 보일 까닭이 없다. -->
+      <button class="gi-choice" id="recordBack" type="button">← 돌아가기</button>
       <h2 class="gi-h2" id="recordWho"></h2>
 
       <div class="gi-field">
@@ -76,13 +78,14 @@
         <button class="gi-choice" type="button" data-kind="exam" aria-pressed="false">시험대비</button>
       </div>
 
-      <div id="regularFields">
+      <!-- 회차는 두 갈래가 함께 쓴다. 시험대비도 그 학생에게는 한 회차다. -->
       <div class="gi-field">
         <label class="gi-label" for="recSessionNo">회차</label>
         <input class="gi-input" type="number" inputmode="numeric" min="1"
                id="recSessionNo" data-field="sessionNo" placeholder="예: 12">
       </div>
 
+      <div id="regularFields">
 
       <div class="gi-field gi-field-inline">
         <span class="gi-label">출결</span>
@@ -168,15 +171,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261104a"></script>
-<script src="/assets/js/api.js?v=20261104a"></script>
-<script src="/assets/js/progress-areas.js?v=20261104a"></script>
-<script src="/assets/js/exam-items.js?v=20261104a"></script>
-<script src="/assets/js/class-level.js?v=20261104a"></script>
-<script src="/assets/js/schedule.js?v=20261104a"></script>
-<script src="/assets/js/record-form.js?v=20261104a"></script>
-<script src="/assets/js/admin.js?v=20261104a"></script>
-<script src="/assets/js/admin-students.js?v=20261104a"></script>
-<script src="/assets/js/admin-schedule.js?v=20261104a"></script>
+<script src="/assets/js/config.js?v=20261104b"></script>
+<script src="/assets/js/api.js?v=20261104b"></script>
+<script src="/assets/js/progress-areas.js?v=20261104b"></script>
+<script src="/assets/js/exam-items.js?v=20261104b"></script>
+<script src="/assets/js/class-level.js?v=20261104b"></script>
+<script src="/assets/js/schedule.js?v=20261104b"></script>
+<script src="/assets/js/record-form.js?v=20261104b"></script>
+<script src="/assets/js/admin.js?v=20261104b"></script>
+<script src="/assets/js/admin-students.js?v=20261104b"></script>
+<script src="/assets/js/admin-schedule.js?v=20261104b"></script>
 </body>
 </html>

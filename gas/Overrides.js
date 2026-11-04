@@ -10,6 +10,7 @@
  *   skip — 그날은 오지 않는다. 까닭을 reason에 남긴다:
  *          absent 결석 — 학생이 안 왔다
  *          moved  변경 — 다른 날로 옮겼다
+ *          off    휴강 — 그날 그 수업 자체가 없다
  *          둘은 나중에 전혀 다른 뜻이 된다. 묻지 않고 빼면 달력에 왜
  *          빠졌는지가 남지 않는다.
  */
@@ -59,6 +60,12 @@ function handleAdminOverrides(body) {
   return ok({ overrides: listOverrides_(body.from, body.to) });
 }
 
+/** 빼는 까닭. 모르는 값은 결석으로 둔다 — 시트에 뜻 모를 글자가 쌓이지 않게. */
+function skipReason_(reason) {
+  const r = String(reason || '');
+  return (r === 'moved' || r === 'off') ? r : 'absent';
+}
+
 function handleAdminSaveOverride(body) {
   requireSession_(body.sessionKey);
 
@@ -68,7 +75,7 @@ function handleAdminSaveOverride(body) {
 
   // 까닭은 빼기에만 붙는다. 모르는 값은 결석으로 둔다 — 화면이 바뀌어도
   // 시트에 뜻 모를 글자가 쌓이지 않는다.
-  const reason = o.kind === 'skip' ? (o.reason === 'moved' ? 'moved' : 'absent') : '';
+  const reason = o.kind === 'skip' ? skipReason_(o.reason) : '';
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);

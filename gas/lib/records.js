@@ -211,8 +211,6 @@ function lastSessionNoOf(records, beforeDate) {
     // 전에 쌓인 기록에는 숫자가 남아 있다 — 그 숫자를 이어받으면 안 온 날이
     // 한 회차를 먹는다.
     if (isAbsent_(r && r.attendance)) return false;
-    // 시험대비는 회차를 세지 않는다. 정기수업 묶음과 다른 일이다.
-    if (recordKind_(r && r.kind) === 'exam') return false;
     return !limit || String(r.date || '') < limit;
   }).sort(function (a, b) {
     return String(b.date || '').localeCompare(String(a.date || ''));

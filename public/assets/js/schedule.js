@@ -180,6 +180,7 @@
    * 쉰 날과 없던 날이 구별된다. 그래서 줄에 skip을 달아 돌려준다:
    *   skip.reason 'absent' 결석 — 학생이 안 왔다
    *   skip.reason 'moved'  변경 — 다른 날로 옮겼다
+   *   skip.reason 'off'    휴강 — 그날 그 수업 자체가 없다
    * 시간을 적은 조각은 그 시간 하나만, 비운 조각은 그날 전부에 붙는다 —
    * 하루에 두 번 오는 학생의 한 번만 쉴 수 있게.
    *
@@ -230,9 +231,10 @@
 
   /** 빼기 조각 한 장 → 줄에 달아 둘 표시. 까닭이 비면 결석으로 읽는다. */
   function skipOf_(o) {
+    const r = String(o.reason);
     return {
       overrideId: o.overrideId,
-      reason: String(o.reason) === 'moved' ? 'moved' : 'absent',
+      reason: (r === 'moved' || r === 'off') ? r : 'absent',
     };
   }
 

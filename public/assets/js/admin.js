@@ -47,7 +47,7 @@
   // 화면에 띄우는 판 번호. 브라우저가 옛 페이지를 들고 있으면 눌러도
   // 아무 일이 없는데, 고장과 구별이 안 된다. 번호가 보이면 한눈에 갈린다.
   // 화면을 고칠 때마다 index.html의 ?v= 와 함께 올린다.
-  const BUILD = 'v20261104a';
+  const BUILD = 'v20261104b';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -432,8 +432,11 @@
     //
     // 그날 기록이 아직 없을 때만 채운다. 지난 기록을 고치러 열었을 때
     // 채우면 그때 쓰지 않던 최신 교재가 옛 기록에 들어앉는다.
-    if (!rec && currentKind === 'regular') {
-      values = RF.withBookDefaults(values, student.lastBooks);
+    if (!rec) {
+      // 교재는 정기수업만 물려받는다. 시험대비에는 영역 교재 칸이 없다.
+      if (currentKind === 'regular') {
+        values = RF.withBookDefaults(values, student.lastBooks);
+      }
       values = RF.withSessionDefault(values, student.lastSessionNo);
     }
 

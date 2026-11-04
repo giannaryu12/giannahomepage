@@ -228,6 +228,30 @@ describe('studentsOnDate', () => {
   });
 });
 
+describe('휴강으로 뺀 줄', () => {
+  it("까닭 'off'는 그대로 살아서 줄에 붙는다", () => {
+    // 결석으로 읽히면 학부모 달력에 결석 꼬리표가 뜬다. 수업 자체가 없던
+    // 날과 학생이 안 온 날은 다른 말이다.
+    const rows = applyOverrides(
+      [{ time: '17:00', student: { studentId: 'S1', name: '가' } }],
+      [{ overrideId: 'O1', date: '2026-11-09', studentId: 'S1', time: '', kind: 'skip', reason: 'off' }],
+      '2026-11-09',
+      [{ studentId: 'S1', name: '가' }]
+    );
+    expect(rows[0].skip.reason).toBe('off');
+  });
+
+  it('모르는 까닭은 결석으로 읽는다', () => {
+    const rows = applyOverrides(
+      [{ time: '17:00', student: { studentId: 'S1', name: '가' } }],
+      [{ overrideId: 'O1', date: '2026-11-09', studentId: 'S1', time: '', kind: 'skip', reason: '휴무' }],
+      '2026-11-09',
+      [{ studentId: 'S1', name: '가' }]
+    );
+    expect(rows[0].skip.reason).toBe('absent');
+  });
+});
+
 describe('applyOverrides — 하루치 일정 변경', () => {
   const students = [
     { studentId: 'S1', name: '김민준', schedule: '화 17:00' },
