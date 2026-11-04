@@ -339,9 +339,26 @@
       studentHtml(cur, true);
   }
 
+  /**
+   * 학년이 낮은 쪽부터, 같은 학년이면 가나다로.
+   *
+   * 시트에 적어 넣은 차례는 선생님 머릿속에 없다. 학년으로 먼저 묶으면
+   * 한 열 안에서도 또래끼리 모여, 같은 진도를 나가는 학생들이 붙어 선다.
+   *
+   * 학년을 아직 안 적은 학생은 맨 뒤로 보낸다 — 0으로 치면 1학년 앞에
+   * 서서, 가장 먼저 눈에 들어오는 자리를 빈 값이 차지한다.
+   */
+  function byGradeThenName_(x, y) {
+    const gx = Number(gradeNum(x)) || 99;
+    const gy = Number(gradeNum(y)) || 99;
+    if (gx !== gy) return gx - gy;
+    return String(x.name).localeCompare(String(y.name), 'ko');
+  }
+
   /** 한 학교급의 열. 비어 있어도 자리를 지킨다 — 열이 셋이어야 칸이 안 밀린다. */
   function columnHtml(level) {
-    const mine = students.filter(function (s) { return levelOf(s) === level.key; });
+    const mine = students.filter(function (s) { return levelOf(s) === level.key; })
+      .sort(byGradeThenName_);
 
     return '<section class="gi-stu-col">' +
       '<h3 class="gi-stu-col-title">' + level.label + ' (' + mine.length + '명)</h3>' +
@@ -353,7 +370,8 @@
   function render() {
     // 반도 학년도 초·중·고로 읽히지 않는 학생. 열에서 빠지면 등록은 했는데
     // 화면 어디에도 없는 학생이 된다.
-    const rest = students.filter(function (s) { return !levelOf(s); });
+    const rest = students.filter(function (s) { return !levelOf(s); })
+      .sort(byGradeThenName_);
 
     $view.innerHTML = '' +
       '<div id="studentsError" class="gi-error" hidden></div>' +
