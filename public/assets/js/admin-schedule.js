@@ -176,8 +176,19 @@
 
   /* ---------- 하루 고치기 ---------- */
 
+  /**
+   * 더할 학생 드롭박스. 가나다 순이다.
+   *
+   * 서버가 주는 차례는 시트에 적은 차례라 선생님 머릿속에 없다 — 이름을
+   * 찾으려면 목록을 처음부터 끝까지 훑어야 한다.
+   *
+   * slice()로 베껴서 세운다. 원본을 세우면 달력 줄 차례(시간 → 이름)가
+   * 함께 흔들린다.
+   */
   function studentOptionsHtml() {
-    return students.map(function (s) {
+    return students.slice().sort(function (x, y) {
+      return String(x.name).localeCompare(String(y.name), 'ko');
+    }).map(function (s) {
       return '<option value="' + A.esc(s.studentId) + '">' + A.esc(s.name) + '</option>';
     }).join('');
   }
