@@ -1004,10 +1004,17 @@ body.gi .gi-h2{ color:var(--text); }
    어느 쪽인지 알 수 없다. */
 /* 정규수업은 흔한 쪽이라 색을 주지 않는다. 둘 다 칠하면 어느 쪽이
    특별한 날인지가 사라진다. */
-.gi-rec-kind.is-regular{ color:var(--text-soft); font-weight:600; }
+/* 접힌 줄의 갈래 — 정규수업은 파랑, 시험대비는 빨강.
+
+   두 낱말은 길이도 모양도 닮아서(네 글자, 같은 굵기) 흐린 회색으로는
+   줄을 훑을 때 갈리지 않는다. 색이 다르면 글자를 읽기 전에 갈린다.
+
+   빨강은 잘못했다는 뜻이 아니다 — 시험 보는 날이라는 뜻이다. 출결·시험
+   꼬리표의 빨강(.gi-badge.is-bad)과 자리가 달라 섞이지 않는다. */
 .gi-rec-kind{
   white-space:nowrap;
- font-size:0.74rem;
- font-weight:700;
- color:var(--state-extra);
+  font-size:0.74rem;
+  font-weight:700;
+  color:var(--state-bad);
 }
+.gi-rec-kind.is-regular{ color:var(--state-extra); }
