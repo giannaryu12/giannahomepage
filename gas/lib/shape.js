@@ -296,24 +296,38 @@ function testAvgsOf_(summary) {
 }
 
 /**
- * 그 학생의 달력이 시작하는 달 'yyyy-MM'.
+ * 그 학생의 첫 수업 날짜 'yyyy-MM-dd'.
  *
- * 첫 수업 기록이 있는 달이다. 그 앞 달은 요일·시간만으로 그려지므로,
- * 다니지도 않던 때의 수업이 달력에 가득 찬 것처럼 보인다.
+ * 출결을 적어 둔 날 중 가장 이른 날이다. 출결이 그 학생이 실제로 그날
+ * 수업을 했다는 유일한 자취다 — 회차나 교재만 자동으로 채워진 채 저장된
+ * 날은 수업을 한 날이 아니다.
  *
- * 기록이 아직 없으면 등록한 달로, 그것도 없으면 빈 값으로 둔다 —
- * 화면이 이번 달을 쓴다.
+ * 그 앞은 요일·시간만으로 그려지므로, 다니지도 않던 때의 수업이 달력에
+ * 가득 찬 것처럼 보인다.
+ *
+ * 적어 둔 출결이 하나도 없으면 빈 값이다 — 자를 자리가 없다.
  */
-function parentFirstMonth_(student, records) {
+function parentFirstDate_(records) {
   let first = '';
 
   (records || []).forEach(function (r) {
     const d = String((r && r.date) || '');
-    if (!/^\d{4}-\d{2}/.test(d)) return;
-    const key = d.slice(0, 7);
-    if (!first || key < first) first = key;
+    if (!/^\d{4}-\d{2}-\d{2}/.test(d)) return;
+    if (!filled_(r && r.attendance)) return;
+    if (!first || d < first) first = d;
   });
-  if (first) return first;
+  return first ? first.slice(0, 10) : '';
+}
+
+/**
+ * 그 학생의 달력이 시작하는 달 'yyyy-MM'.
+ *
+ * 첫 수업이 있는 달이다. 그 수업이 아직 없으면 등록한 달로, 그것도
+ * 없으면 빈 값으로 둔다 — 화면이 이번 달을 쓴다.
+ */
+function parentFirstMonth_(student, records) {
+  const first = parentFirstDate_(records);
+  if (first) return first.slice(0, 7);
 
   const made = String((student && student.createdAt) || '');
   return /^\d{4}-\d{2}/.test(made) ? made.slice(0, 7) : '';
@@ -349,6 +363,9 @@ function toParentCalendar(input) {
   return {
     schedule: String(student.schedule == null ? '' : student.schedule),
     firstMonth: parentFirstMonth_(student, opts.records),
+    // 첫 수업 날짜. 그 달 안에서도 첫 수업 앞의 날에는 줄을 세우지
+    // 않는다 — 달만 맞추면 그 달 1일부터 수업이 있던 것처럼 보인다.
+    firstDate: parentFirstDate_(opts.records),
     // 하루치 조각은 그 학생 것만 내려보낸다. 다른 학생의 보강·결석이
     // 학부모 쪽으로 새어 나갈 길을 아예 두지 않는다.
     overrides: (opts.overrides || [])
@@ -380,6 +397,7 @@ if (typeof module !== 'undefined') {
     toParentPayload,
     toParentCalendar,
     parentFirstMonth_,
+    parentFirstDate_,
     hasParentContent_,
     mergeSameDay_,
   };

@@ -32,6 +32,10 @@
   // 것처럼 보인다. 학생마다 다르다 — 올해 온 학생에게 작년 달력을 열어
   // 줄 까닭이 없다.
   let firstMonth = '';
+  // 첫 수업 날짜. 그 앞의 날에는 줄을 세우지 않는다 — 첫 달만 맞추면
+  // 그 달 1일부터 다닌 것처럼 보인다. 서버가 보내지 않으면 비어 있고,
+  // 그때는 달만으로 자른다.
+  let firstDate = '';
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -121,6 +125,8 @@
   }
 
   function entriesOn(iso) {
+    if (firstDate && String(iso) < firstDate) return [];
+
     const list = S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student])
       .filter(function (e) { return !movedOut_(e, iso); });
 
@@ -200,6 +206,7 @@
     // 기록도 등록일도 없으면 이번 달이 첫 달이다. 빈 값을 그대로 두면
     // 모든 달이 '첫 달보다 앞'이 아니게 되어 한없이 뒤로 갈 수 있다.
     firstMonth = cal.firstMonth || S.monthOf(todayIso());
+    firstDate = cal.firstDate || '';
     month = thisMonth();
 
     if (!S.parseSchedule(student.schedule).length && !overrides.length) {

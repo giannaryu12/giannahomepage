@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   toParentRecord, toParentStudent, toParentPayload,
   hasParentContent_, PARENT_RECORD_FIELDS, toParentCalendar, mergeSameDay_,
+  parentFirstDate_,
 } from '../gas/lib/shape.js';
 
 describe('toParentRecord', () => {
@@ -284,10 +285,38 @@ describe('toParentCalendar — 학부모 달력', () => {
       records: [{ date: '2027-01-05', attendance: '출석' }, { date: '2026-12-08', attendance: '출석' }],
     });
     expect(cal.firstMonth).toBe('2026-12');
+    expect(cal.firstDate).toBe('2026-12-08');
+  });
+
+  it('출결을 적지 않은 날은 첫 수업으로 치지 않는다', () => {
+    // 회차와 교재만 자동으로 채워진 채 저장된 날이다. 그날 수업을
+    // 했다는 자취는 출결뿐이다.
+    const cal = toParentCalendar({
+      student: student,
+      records: [
+        { date: '2026-11-10', sessionNo: 1, vocabBook: '능률보카' },
+        { date: '2026-12-08', attendance: '출석' },
+      ],
+    });
+    expect(cal.firstMonth).toBe('2026-12');
+    expect(cal.firstDate).toBe('2026-12-08');
+  });
+
+  it('결석으로 시작해도 그날이 첫 수업이다', () => {
+    // 첫날부터 못 온 학생이다. 그날을 안 세면 달력이 다음 수업부터
+    // 시작해, 빠진 첫날이 학부모 쪽에서 사라진다.
+    const cal = toParentCalendar({
+      student: student,
+      records: [{ date: '2026-12-08', attendance: '결석' }],
+    });
+    expect(cal.firstDate).toBe('2026-12-08');
   });
 
   it('기록이 없으면 등록한 달부터다', () => {
-    expect(toParentCalendar({ student: student, records: [] }).firstMonth).toBe('2026-11');
+    const cal = toParentCalendar({ student: student, records: [] });
+    expect(cal.firstMonth).toBe('2026-11');
+    // 자를 날이 없다. 그 달은 통째로 보여 준다.
+    expect(cal.firstDate).toBe('');
   });
 
   it('기록도 등록일도 없으면 비워 둔다 — 화면이 이번 달을 쓴다', () => {
@@ -437,5 +466,29 @@ describe('mergeSameDay_ — 출결을 누른 쪽에 담기', () => {
   it('빈 목록과 없는 값에 흔들리지 않는다', () => {
     expect(mergeSameDay_([])).toEqual([]);
     expect(mergeSameDay_(null)).toEqual([]);
+  });
+});
+
+describe('parentFirstDate_ — 첫 수업 날짜', () => {
+  it('출결을 적은 날 중 가장 이른 날이다', () => {
+    expect(parentFirstDate_([
+      { date: '2026-12-08', attendance: '출석' },
+      { date: '2026-11-30', attendance: '지각' },
+      { date: '2027-01-05', attendance: '출석' },
+    ])).toBe('2026-11-30');
+  });
+
+  it('빈 출결과 날짜 아닌 값에 흔들리지 않는다', () => {
+    expect(parentFirstDate_([
+      { date: '2026-11-01', attendance: '   ' },
+      { date: '그날', attendance: '출석' },
+      { date: '2026-12-08', attendance: '출석' },
+    ])).toBe('2026-12-08');
+  });
+
+  it('하나도 없으면 빈 값이다', () => {
+    expect(parentFirstDate_([])).toBe('');
+    expect(parentFirstDate_(null)).toBe('');
+    expect(parentFirstDate_([{ date: '2026-11-01' }])).toBe('');
   });
 });
