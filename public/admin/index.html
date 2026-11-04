@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104g">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261104g">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104h">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261104h">
 </head>
 <body class="gi">
 
@@ -64,9 +64,10 @@
       <button class="gi-choice" id="recordBack" type="button">← 돌아가기</button>
       <h2 class="gi-h2" id="recordWho"></h2>
 
-      <!-- 날짜와 회차는 한 줄에 나란히, 같은 너비로. 둘 다 그 기록이 어느
-           수업인지를 가리키는 값이라 함께 읽힌다. 회차는 두 갈래가 함께
-           쓴다 — 시험대비도 그 학생에게는 한 회차다. -->
+      <!-- 날짜 · 회차 · 갈래를 한 줄에 둔다. 셋이 모두 '이 기록이 어느
+           수업인가'를 가리키는 값이라, 따로 떨어뜨리면 하나를 고치고 나머지
+           둘을 확인하러 눈이 위아래로 오간다. 회차는 두 갈래가 함께 쓴다 —
+           시험대비도 그 학생에게는 한 회차다. -->
       <div class="gi-field-pair">
         <div class="gi-field">
           <label class="gi-label" for="recordDateInput">수업 날짜</label>
@@ -78,16 +79,19 @@
           <input class="gi-input" type="number" inputmode="numeric" min="1"
                  id="recSessionNo" data-field="sessionNo" placeholder="예: 12">
         </div>
+
+        <!-- 정규수업과 시험대비는 같은 날에 따로 쌓인다. 탭을 옮기면 그 날의
+             그 갈래 기록을 연다 — 서버에 다시 묻지 않는다. -->
+        <div class="gi-field">
+          <span class="gi-label">갈래</span>
+          <div class="gi-choices gi-kind-tabs" id="recKindTabs">
+            <button class="gi-choice" type="button" data-kind="regular" aria-pressed="true">정규수업</button>
+            <button class="gi-choice" type="button" data-kind="exam" aria-pressed="false">시험대비</button>
+          </div>
+        </div>
       </div>
 
       <div id="recordError" class="gi-error" hidden></div>
-
-      <!-- 정규수업과 시험대비는 같은 날에 따로 쌓인다. 탭을 옮기면 그 날의
-           그 갈래 기록을 연다 — 서버에 다시 묻지 않는다. -->
-      <div class="gi-choices gi-kind-tabs" id="recKindTabs">
-        <button class="gi-choice" type="button" data-kind="regular" aria-pressed="true">정규수업</button>
-        <button class="gi-choice" type="button" data-kind="exam" aria-pressed="false">시험대비</button>
-      </div>
 
       <!-- 출결·과제·완성도도 두 갈래가 함께 쓴다. 시험대비 날에도 학생은
            오거나 안 오고, 숙제를 해 오거나 안 해 온다. -->
@@ -174,15 +178,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261104g"></script>
-<script src="/assets/js/api.js?v=20261104g"></script>
-<script src="/assets/js/progress-areas.js?v=20261104g"></script>
-<script src="/assets/js/exam-items.js?v=20261104g"></script>
-<script src="/assets/js/class-level.js?v=20261104g"></script>
-<script src="/assets/js/schedule.js?v=20261104g"></script>
-<script src="/assets/js/record-form.js?v=20261104g"></script>
-<script src="/assets/js/admin.js?v=20261104g"></script>
-<script src="/assets/js/admin-students.js?v=20261104g"></script>
-<script src="/assets/js/admin-schedule.js?v=20261104g"></script>
+<script src="/assets/js/config.js?v=20261104h"></script>
+<script src="/assets/js/api.js?v=20261104h"></script>
+<script src="/assets/js/progress-areas.js?v=20261104h"></script>
+<script src="/assets/js/exam-items.js?v=20261104h"></script>
+<script src="/assets/js/class-level.js?v=20261104h"></script>
+<script src="/assets/js/schedule.js?v=20261104h"></script>
+<script src="/assets/js/record-form.js?v=20261104h"></script>
+<script src="/assets/js/admin.js?v=20261104h"></script>
+<script src="/assets/js/admin-students.js?v=20261104h"></script>
+<script src="/assets/js/admin-schedule.js?v=20261104h"></script>
 </body>
 </html>
