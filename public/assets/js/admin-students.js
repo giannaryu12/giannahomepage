@@ -1,6 +1,9 @@
 /**
  * 학생 관리 탭 — 등록 / 수정 / 링크 복사 / 링크 재발급 / 비활성화.
  *
+ * 위 칸은 등록이 기본이다. 고치는 칸은 목록에서 그 학생의 '수정'을
+ * 누를 때만 열린다.
+ *
  * 링크 재발급은 PIN을 두지 않기로 한 결정의 상쇄 장치다 (설계 문서 §8).
  * 링크가 샜다고 판단되면 즉시 이전 링크를 무효화할 수 있어야 한다.
  */
@@ -201,6 +204,7 @@
     if (editable) parts.push(s.studentId);
 
     parts.push(gradeLabel(s) || '학년 없음');
+    if (s.school) parts.push(s.school);
 
     if (!s.active) parts.push('비활성');
     else if (!s.className) parts.push('반 없음');
@@ -222,6 +226,7 @@
             ? '<div class="gi-stu-field">' +
                 '<input class="gi-input" type="text" data-field="name" value="' + A.esc(s.name) + '">' +
                 '<input class="gi-input" type="text" data-field="grade" placeholder="학년" value="' + A.esc(s.grade || '') + '">' +
+                '<input class="gi-input" type="text" data-field="school" placeholder="학교 이름" value="' + A.esc(s.school || '') + '">' +
                 '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
               '</div>'
             : '') +
@@ -242,12 +247,19 @@
       '</article>';
   }
 
+  /**
+   * 등록 칸 — 이름 · 학교급 · 학년 · 학교 이름.
+   *
+   * 반 드롭박스는 여기 두지 않는다. 반 이름이 '초등부 A'라서 바로 옆
+   * 학교급 드롭박스와 '초등부'가 두 번 나오고, 등록하는 자리에서 둘 중
+   * 어느 쪽이 학교급인지 고르게 된다. 반은 나중에 목록에서 정한다.
+   */
   function newFormHtml() {
     return '<div class="gi-stu-new">' +
         '<input class="gi-input" type="text" id="newName" placeholder="이름">' +
         '<select class="gi-select" id="newLevel">' + levelOptionsHtml('elem') + '</select>' +
         '<select class="gi-select" id="newGrade">' + gradeOptionsHtml('elem', '') + '</select>' +
-        '<select class="gi-select" id="newClass">' + optionsHtml('') + '</select>' +
+        '<input class="gi-input" type="text" id="newSchool" placeholder="학교 이름">' +
         '<button class="gi-btn gi-btn-primary" id="addBtn" type="button">등록</button>' +
       '</div>' +
       '<div id="newSched">' + schedHtml('') + '</div>';
@@ -300,13 +312,14 @@
       // 따로 적으면 열 너비를 고칠 때마다 두 군데를 고쳐야 한다.
       '<div class="gi-stu-cols">' +
         '<div>' +
-          '<div class="gi-choices gi-stu-tabs">' +
-            '<button class="gi-choice" type="button" data-mode="new"' +
-              ' aria-pressed="' + (mode === 'new') + '">학생 등록</button>' +
-            '<button class="gi-choice" type="button" data-mode="edit"' +
-              ' aria-pressed="' + (mode === 'edit') + '">수정</button>' +
-          '</div>' +
-          (mode === 'edit' ? editFormHtml() : newFormHtml()) +
+          // 탭을 두지 않는다. 고치는 일은 목록에서 그 학생의 '수정'을
+          // 눌러 시작한다 — 탭에서 들어오면 드롭박스로 학생을 한 번 더
+          // 찾아야 하고, 눈으로 이미 찾은 일을 또 하는 셈이다.
+          (mode === 'edit'
+            ? '<div class="gi-choices gi-stu-tabs">' +
+                '<button class="gi-choice" type="button" data-mode="new">← 학생 등록</button>' +
+              '</div>' + editFormHtml()
+            : '<h3 class="gi-stu-col-title">학생 등록</h3>' + newFormHtml()) +
         '</div>' +
       '</div>' +
       '<h2 class="gi-h2">학생 목록 (' + students.length + '명)</h2>' +
@@ -360,7 +373,7 @@
       student: {
         name: name,
         grade: newGradeValue(),
-        classId: document.getElementById('newClass').value,
+        school: document.getElementById('newSchool').value.trim(),
         schedule: readSched(document.getElementById('newSched')),
       },
     }).then(load).catch(function (err) {
@@ -455,6 +468,7 @@
     if (act === 'save') {
       patch.name = card.querySelector('[data-field="name"]').value.trim();
       patch.grade = card.querySelector('[data-field="grade"]').value.trim();
+      patch.school = card.querySelector('[data-field="school"]').value.trim();
       patch.classId = card.querySelector('[data-field="classId"]').value;
       patch.schedule = readSched(card);
       if (!patch.name) { $msg.textContent = '이름은 비울 수 없습니다.'; return; }

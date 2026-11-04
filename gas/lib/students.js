@@ -14,7 +14,7 @@
  *
  * studentId(키)와 parentToken(전용 재발급 경로가 따로 있다)은 절대 넣지 않는다.
  */
-const STUDENT_PATCH_FIELDS = ['name', 'grade', 'classId', 'note', 'schedule'];
+const STUDENT_PATCH_FIELDS = ['name', 'grade', 'classId', 'school', 'note', 'schedule'];
 
 function buildStudentPatch(input) {
   const src = input || {};

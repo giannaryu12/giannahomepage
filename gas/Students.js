@@ -85,6 +85,9 @@ function handleAdminStudents(body) {
       name: s.name,
       grade: s.grade,
       classId: s.classId,
+      // 다니는 학교. 같은 학년이라도 학교마다 시험 범위와 날짜가
+      // 달라, 시험 대비를 짤 때 가장 먼저 보는 값이다.
+      school: s.school || '',
       className: names[String(s.classId)] || '',
       parentToken: s.parentToken,
       active: String(s.active).toUpperCase() === 'TRUE',
@@ -131,6 +134,7 @@ function handleAdminUpsertStudent(body) {
       // 등록한 해. 이 해가 지나야 승급 대상이 된다.
       gradeYear: String(currentYear_()),
       classId: input.classId || '',
+      school: input.school || '',
       parentToken: secureToken_(32),
       active: 'TRUE',
       note: input.note || '',

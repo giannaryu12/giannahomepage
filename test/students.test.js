@@ -69,3 +69,18 @@ describe('classNameMap', () => {
     expect(classNameMap(undefined)).toEqual({});
   });
 });
+
+describe('buildStudentPatch — 학교 이름', () => {
+  it('보낸 학교 이름은 반영한다', () => {
+    expect(buildStudentPatch({ school: '호매실고' }).school).toBe('호매실고');
+  });
+
+  it('빈 문자열은 비우라는 뜻이다', () => {
+    expect(buildStudentPatch({ school: '' }).school).toBe('');
+  });
+
+  it('안 보내면 건드리지 않는다', () => {
+    // 선생님이 시트에 직접 적은 값을 저장할 때마다 지우면 안 된다.
+    expect('school' in buildStudentPatch({ name: '테스트' })).toBe(false);
+  });
+});
