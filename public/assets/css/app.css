@@ -470,11 +470,13 @@ body.gi .gi-h2{ color:var(--text); }
   overflow:hidden;
   text-overflow:ellipsis;
 }
-/* 학교와 학년 숫자. 한 단계 작고 흐리게 — 찾고 나서 읽는 값이다. */
+/* 학교와 학년 숫자. 오른쪽 끝의 학교급(.gi-stu-lv)과 같은 크기·색이다 —
+   둘 다 그 학생이 어디 있는지를 말하는 값이라, 한쪽만 커 보이면 둘이
+   다른 무게로 읽힌다. */
 .gi-stu-at{
   flex:0 0 5.4rem;
-  font-size:0.76rem;
-  font-weight:600;
+  font-size:0.72rem;
+  font-weight:700;
   color:var(--text-soft);
   overflow:hidden;
   text-overflow:ellipsis;
