@@ -480,12 +480,19 @@
           '<p class="gi-say-text">' + esc(r.comment) + '</p>' +
         '</div>' : '';
 
-    // 시험대비에는 출결도 시험 점수도 없다. 적어 둔 칸만 그린다.
+    // 상태 · 시험 · 진도 · 숙제 차례는 두 갈래가 같다. 학부모가 먼저 찾는
+    // 것은 왔는지와 그날 본 시험이고, 진도와 숙제는 그 뒤에 읽는다.
+    //
+    // 시험대비도 출결을 적는다 — 그날도 학생은 오거나 안 온다. 아무것도
+    // 적지 않은 날은 상태 줄을 내지 않는다. 빈 줄이 하나 서 있으면
+    // 적기를 빠뜨린 것인지 그런 날인지 알 수 없다.
+    const state = badges
+      ? '<div class="gi-rec-row"><dt>상태</dt><dd>' + badges + '</dd></div>'
+      : '';
+
     const inner = isExam(r)
-      ? examTestRows(r) + examRows('진도', r.examItems) + examRows('숙제', r.examNext)
+      ? state + examTestRows(r) + examRows('진도', r.examItems) + examRows('숙제', r.examNext)
       : '<div class="gi-rec-row"><dt>상태</dt><dd>' + (badges || '—') + '</dd></div>' +
-        // 상태 · 시험 · 진도 · 숙제 차례다. 학부모가 먼저 찾는 것은
-        // 그날 본 시험 점수이고, 진도와 숙제는 그 뒤에 읽는다.
         testRows(r) + progressRows(r) + nextRows(r);
 
     // 접힌 줄에서도 어느 쪽 수업인지 보여야 한다. 같은 날 두 줄이 서면
