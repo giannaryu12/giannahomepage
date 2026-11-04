@@ -116,18 +116,17 @@
   function entryHtml(entry, iso) {
     const m = markHtml(iso);
 
+    // 출결에만 적힌 날에는 꼬리표를 달지 않는다. 적힌 말이 '출석'이면
+    // 꼬리표가 '출석'이 되는데, 동그라미가 이미 그 말을 하고 있다 —
+    // 다른 날과 같은 꼴로 시간·수업·회차만 선다.
     const tag = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
         ? '<span class="gi-cal-tag is-off">' + esc(m.word) + '</span>'
-        // 요일에 없던 날에 적힌 출결은 그 말을 그대로 단다 — '보강'이라고
-        // 적혀 있어야 왜 이 날에 수업이 서 있는지 읽힌다.
-        : entry.fromMark
-          ? '<span class="gi-cal-tag is-extra">' + esc(m.word) + '</span>'
-          : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+        : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
 
     return '<span class="gi-choice gi-cal-name' +
-      (entry.overrideId || entry.fromMark ? ' is-extra' : '') +
+      (entry.overrideId ? ' is-extra' : '') +
       (entry.skip || m.off ? ' is-off' : '') + '">' +
       (entry.time ? '<span class="gi-cal-at">' + esc(entry.time) + '</span>' : '') +
       '<span class="gi-cal-who">' + m.dot + '수업</span>' + m.no + tag + '</span>';

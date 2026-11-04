@@ -998,7 +998,6 @@ body.gi .gi-h2{ color:var(--text); }
    읽히고, 줄 높이가 낱말 수만큼 늘어난다. */
 .gi-rec-top{ flex-wrap:wrap; row-gap:0.3rem; }
 .gi-rec-top .gi-badge{ white-space:nowrap; margin-right:0; }
-.gi-rec-marks{ display:inline-flex; flex-wrap:wrap; gap:0.25rem; }
 
 /* 접힌 줄의 '시험대비' 꼬리표. 같은 날 두 줄이 설 수 있어 날짜만으로는
    어느 쪽인지 알 수 없다. */

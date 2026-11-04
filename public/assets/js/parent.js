@@ -425,22 +425,6 @@
       (next.length ? groupRow('숙제', next) : row('숙제', r.nextHomework));
   }
 
-  /**
-   * 접힌 줄에 다는 통과 여부. 그날 시험 칸이 여럿이면 여럿 단다.
-   *
-   * 펼치지 않고도 통과했는지가 보여야 한다 — 학부모가 가장 먼저 찾는 것이
-   * 그 한 낱말이다.
-   */
-  function examTailBadges(r) {
-    const tags = EI.parseItems(r && r.examTests).map(function (it) {
-      return it.result ? badge(it.result, EXAM_RESULT_TONE[it.result]) : '';
-    }).join('');
-
-    // 한 덩어리로 묶는다. 낱개로 두면 줄의 넓은 사이 간격이 꼬리표마다
-    // 끼어들어 날짜가 밀려난다.
-    return tags ? '<span class="gi-rec-marks">' + tags + '</span>' : '';
-  }
-
   /** 시험대비 기록인가. 빈 값은 정규수업이다. */
   function isExam(r) {
     return String((r && r.kind) || '') === 'exam';
@@ -484,10 +468,7 @@
       (no ? '<span class="gi-rec-progress">' + esc(no) + '</span>' : '') +
       '<span class="gi-rec-kind' + (isExam(r) ? '' : ' is-regular') + '">' +
         (isExam(r) ? '시험대비' : '정규수업') +
-      '</span>' +
-      // 정규수업 쪽에 출결을 누른 날에도 시험대비 칸이 함께 담길 수 있다.
-      // 갈래를 보고 꼬리표를 가리면 그날 통과 여부가 접힌 채로 묻힌다.
-      examTailBadges(r);
+      '</span>';
 
     return '' +
       '<article class="gi-rec">' +
