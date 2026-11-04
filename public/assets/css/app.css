@@ -266,6 +266,9 @@ body.gi .gi-h2{ color:var(--text); }
    초록 꼬리표는 화면 바탕에 묻힌다. */
 .gi-badge.is-info{ color:var(--state-extra); }
 .gi-badge.is-mid{ color:var(--state-mid); }
+/* 미응시 — 잘잘못이 아니라 '안 봤다'는 사실이라 색을 주지 않는다.
+   회색(.is-none)으로 흐리면 안 적은 칸처럼 보여 검정 그대로 둔다. */
+.gi-badge.is-plain{ color:var(--text); }
 
 /* ---------- 폼 ---------- */
 .gi-field{ margin-bottom:1rem; }

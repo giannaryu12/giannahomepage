@@ -218,8 +218,13 @@
         '<button class="gi-choice" type="button" data-drop="' + A.esc(e.skip.overrideId) +
           '">되돌리기</button>';
     } else if (e.overrideId) {
-      tail = '<span class="gi-badge is-extra">보충</span>' +
-        '<button class="gi-choice" type="button" data-drop="' + A.esc(e.overrideId) + '">지우기</button>';
+      // '보충' 꼬리표는 달지 않는다. 그날 무슨 수업이었는지는 선생님이
+      // 옆 드롭박스에서 고른다 — 더해 두기만 하고 아직 고르지 않은 줄에
+      // 꼬리표가 먼저 붙어 있으면, 이미 정해진 것처럼 보여 드롭박스를
+      // 건드리지 않게 된다. 달력 쪽 꼬리표는 그대로 둔다 — 거기서는
+      // 평소 요일에 없던 줄이 왜 서 있는지를 말해 준다.
+      tail = '<button class="gi-choice" type="button" data-drop="' +
+        A.esc(e.overrideId) + '">지우기</button>';
     } else if (m.off) {
       // 이미 결석·변경으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 —
       // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.

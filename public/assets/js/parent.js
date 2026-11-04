@@ -294,9 +294,9 @@
   const ATTENDANCE_TONE = { '출석': 'is-info', '보강': 'is-info', '지각': 'is-bad', '결석': 'is-bad' };
   const HOMEWORK_TONE = { '제출': 'is-info', '부분제출': 'is-mid', '미제출': 'is-bad', '해당없음': 'is-none' };
   const LEVEL_TONE = { '상': 'is-info', '중': 'is-mid', '하': 'is-bad' };
-  // 미통과는 빨강으로 두지 않는다. 시험 대비 기간에 기준에 못 미친 것은
-  // 더 하자는 뜻이고, 결석처럼 수업이 비어 버린 일과는 다르다.
-  const EXAM_RESULT_TONE = { '통과': 'is-good', '미통과': 'is-warn', '미응시': 'is-none' };
+  // 학생관리의 뜻풀이와 같은 색이다 — 선생님이 누를 때 본 색과 학부모가
+  // 읽는 색이 다르면, 같은 낱말을 두 사람이 다른 무게로 읽는다.
+  const EXAM_RESULT_TONE = { '통과': 'is-info', '미통과': 'is-bad', '미응시': 'is-plain' };
 
   function badge(text, tone) {
     if (!text) return '';
