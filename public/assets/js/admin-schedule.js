@@ -109,12 +109,17 @@
     const disabled = (s.classId && !entry.skip) ? '' : ' disabled';
     const m = markHtml(iso, s.studentId);
     // 꼬리표는 하나만 단다. 미리 뺀 까닭이 있으면 그것이 먼저다 — 왜 빠진
-    // 날인지를 말해 준다. 그다음이 적어 둔 결석, 그다음이 보충이다.
+    // 날인지를 말해 준다. 그다음이 적어 둔 결석이다.
+    //
+    // 더해 둔 줄에는 '보충'을 달지 않는다. 그날 무슨 수업이었는지는
+    // 선생님이 하루 칸의 드롭박스에서 고른다 — 고르기도 전에 꼬리표가
+    // 붙어 있으면 이미 정해진 것처럼 보인다. 평소 요일에 없던 줄이라는
+    // 것은 이름 칸의 색(.is-extra)이 말없이 말해 준다.
     const mark = entry.skip
       ? '<span class="gi-cal-tag is-off">' + SKIP_LABEL[entry.skip.reason] + '</span>'
       : m.off
         ? '<span class="gi-cal-tag is-off">' + A.esc(m.word) + '</span>'
-        : (entry.overrideId ? '<span class="gi-cal-tag is-extra">보충</span>' : '');
+        : '';
 
     return '<button class="gi-choice gi-cal-name' +
       (entry.overrideId ? ' is-extra' : '') + (entry.skip || m.off ? ' is-off' : '') +
