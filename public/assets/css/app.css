@@ -449,14 +449,32 @@ body.gi .gi-h2{ color:var(--text); }
 /* 한 줄로 민다. 접히면 카드 높이가 제각각이 되어 열이 어긋난다 —
    넘치는 쪽은 왼쪽 글이고, 끝을 '…'로 알린다. */
 .gi-stu-who{
+  display:flex;
+  align-items:baseline;
+  gap:0.35rem;
+  white-space:nowrap;
+  overflow:hidden;
+  min-width:0;
+}
+/* 이름만 제 크기다. 카드를 훑을 때 눈이 좇는 것은 이름 하나다. */
+.gi-stu-name{
   font-size:0.86rem;
   font-weight:700;
   color:var(--heading);
-  white-space:nowrap;
+  flex:none;
+}
+/* 학교와 학년 숫자. 한 단계 작고 흐리게 — 찾고 나서 읽는 값이다. */
+.gi-stu-at{ font-size:0.76rem; font-weight:600; color:var(--text-soft); flex:none; }
+/* 시간은 그보다 더 작다. 같은 요일·시간이 카드마다 되풀이된다. */
+.gi-stu-when{
+  font-size:0.68rem;
+  color:var(--text-soft);
   overflow:hidden;
   text-overflow:ellipsis;
   min-width:0;
 }
+/* 반이 없거나 그만둔 학생. 흐리게 두지 않는다 — 손봐야 할 줄이다. */
+.gi-stu-flag{ font-size:0.68rem; font-weight:700; color:var(--state-bad); flex:none; }
 /* 학교급은 오른쪽 끝에 붙어 열을 이룬다. 카드마다 같은 자리에 있어야
    훑을 때 눈이 그 줄만 따라간다. */
 .gi-stu-lv{

@@ -191,7 +191,12 @@
   }
 
   /**
-   * 카드 머리 왼쪽 — 이름, 학교, 학년 숫자, 수업 시간.
+   * 카드 머리 왼쪽 — 이름, 학교와 학년 숫자, 수업 시간.
+   *
+   * 이름만 제 크기로 읽힌다. 학교·시간은 한 단계씩 작고 흐리다 —
+   * 찾을 때 눈이 좇는 것은 이름이고, 나머지는 찾고 나서 읽는 값이다.
+   * 쉼표나 가운뎃점으로 잇지 않는다. 크기와 색이 이미 나누고 있어,
+   * 거기에 기호까지 넣으면 한 줄에 구분선이 두 겹으로 선다.
    *
    * '초등부 5학년'이라 적지 않는다. 학교급은 오른쪽 끝에 한 번 서고,
    * 어느 열에 있는지로도 이미 안다 — 한 줄에서 같은 말이 두 번 나오면
@@ -201,16 +206,17 @@
    * 열 수 없어서, 왜 안 되는지가 여기 적혀 있어야 한다.
    */
   function headLeft(s) {
-    const who = [s.school, gradeNum(s)].filter(function (v) { return v; }).join(' ');
-    const parts = [who || '학년 없음'];
-
+    const where = [s.school, gradeNum(s)].filter(function (v) { return v; }).join(' ');
     const when = S.formatSchedule(S.parseSchedule(s.schedule));
-    if (when) parts.push(when);
 
-    if (!s.active) parts.push('비활성');
-    else if (!s.className) parts.push('반 없음');
+    let flag = '';
+    if (!s.active) flag = '비활성';
+    else if (!s.className) flag = '반 없음';
 
-    return s.name + ', ' + parts.join(' · ');
+    return '<span class="gi-stu-name">' + A.esc(s.name) + '</span>' +
+      '<span class="gi-stu-at">' + A.esc(where || '학년 없음') + '</span>' +
+      (when ? '<span class="gi-stu-when">' + A.esc(when) + '</span>' : '') +
+      (flag ? '<span class="gi-stu-flag">' + A.esc(flag) + '</span>' : '');
   }
 
   /** 카드 머리 오른쪽 — 학교급 한 낱말. */
@@ -255,7 +261,7 @@
       '<article class="gi-rec gi-stu" data-id="' + A.esc(s.studentId) + '">' +
         '<button class="gi-stu-head" type="button" data-act="fold"' +
           ' aria-expanded="' + (editable ? 'true' : 'false') + '">' +
-          '<span class="gi-stu-who">' + A.esc(headLeft(s)) + '</span>' +
+          '<span class="gi-stu-who">' + headLeft(s) + '</span>' +
           '<span class="gi-stu-lv">' + A.esc(headRight(s)) + '</span>' +
         '</button>' +
         '<div class="gi-stu-more"' + (editable ? '' : ' hidden') + '>' +
