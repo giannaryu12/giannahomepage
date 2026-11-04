@@ -386,7 +386,7 @@ function toParentCalendar(input) {
     // 고른다(schedule.js의 scheduleOf) — 지난 학기 수업은 지난 학기
     // 시간으로, 방학 수업은 방학 시간으로 서야 한다.
     vacationSchedule: String(student.vacationSchedule == null ? '' : student.vacationSchedule),
-    vacation: opts.vacation || { from: '', to: '' },
+    vacations: opts.vacations || [],
     firstMonth: parentFirstMonth_(student, opts.records),
     // 첫 수업 날짜. 그 달 안에서도 첫 수업 앞의 날에는 줄을 세우지
     // 않는다 — 달만 맞추면 그 달 1일부터 수업이 있던 것처럼 보인다.

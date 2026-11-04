@@ -50,7 +50,7 @@ function dispatch_(parsed) {
     case 'admin.overrides':       return handleAdminOverrides(body);
     case 'admin.saveOverride':    return handleAdminSaveOverride(body);
     case 'admin.deleteOverride':  return handleAdminDeleteOverride(body);
-    case 'admin.saveVacation':    return handleAdminSaveVacation(body);
+    case 'admin.saveVacations':   return handleAdminSaveVacations(body);
     case 'parent.load':         return handleParentLoad(body);
     default:                    return fail('UNKNOWN_ACTION', '알 수 없는 요청입니다.');
   }

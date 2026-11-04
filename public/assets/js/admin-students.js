@@ -15,9 +15,9 @@
 
   let students = [];
   let classes = [];
-  // 학원 방학 기간. 네임카드에 어느 시간표를 낼지, 고치는 칸이 어느
+  // 학원 방학 기간들. 네임카드에 어느 시간표를 낼지, 고치는 칸이 어느
   // 쪽부터 열릴지를 이것으로 정한다.
-  let vacation = { from: '', to: '' };
+  let vacations = [];
   // 고치는 칸이 보고 있는 요일표. 'term' 학기중 | 'vacation' 방학중
   let schedKind = 'term';
   // 위 칸이 등록 중인지 수정 중인지. 'new' | 'edit'
@@ -90,7 +90,7 @@
 
   /** 오늘이 방학인가. 고치는 칸을 어느 쪽부터 열지에 쓴다. */
   function onVacation() {
-    return S.inVacation(todayIso(), vacation);
+    return S.inVacation(todayIso(), vacations);
   }
 
   function parentUrl(token) {
@@ -218,7 +218,7 @@
     const where = [s.school, gradeNum(s)].filter(function (v) { return v; }).join(' ');
     // 오늘 따르는 요일표 하나만 낸다. 둘을 나란히 적으면 카드마다 줄이
     // 두 배가 되고, 지금 몇 시에 오는 학생인지가 오히려 흐려진다.
-    const when = S.formatSchedule(S.parseSchedule(S.scheduleOf(s, todayIso(), vacation)));
+    const when = S.formatSchedule(S.parseSchedule(S.scheduleOf(s, todayIso(), vacations)));
 
     let flag = '';
     if (!s.active) flag = '비활성';
@@ -270,9 +270,12 @@
    * 줄을 건드리기도 쉽다. 한 번에 한 쪽만 열고 그쪽만 저장한다.
    */
   function schedPickHtml() {
-    const label = vacation.from
-      ? '방학 ' + vacation.from + ' ~ ' + vacation.to
-      : '방학 기간을 아직 안 정했습니다';
+    // 오늘 또는 다음에 올 방학 하나만 적는다. 목록을 다 적으면 요일
+    // 단추보다 날짜가 길어진다.
+    const soon = vacations.filter(function (v) { return v.to >= todayIso(); })[0];
+    const label = soon
+      ? '방학 ' + soon.from + ' ~ ' + soon.to
+      : '다가오는 방학이 없습니다';
 
     return '<div class="gi-choices gi-sched-kind">' +
         '<button class="gi-choice" type="button" data-sk="term"' +
@@ -465,7 +468,7 @@
     A.api.call('admin.students', { sessionKey: A.getSessionKey() }).then(function (data) {
       students = data.students;
       classes = data.classes;
-      vacation = data.vacation || { from: '', to: '' };
+      vacations = data.vacations || [];
       render();
     }).catch(function (err) {
       if (!A.handleAuthLoss(err)) {

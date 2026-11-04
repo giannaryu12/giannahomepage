@@ -358,7 +358,8 @@ describe('applyOverrides — 하루치 일정 변경', () => {
 });
 
 describe('inVacation — 그날이 방학인가', () => {
-  const vac = { from: '2026-12-22', to: '2027-01-31' };
+  // 기간은 목록이다 — 방학은 해마다 두세 번 돌아온다.
+  const vac = [{ from: '2026-12-22', to: '2027-01-31' }];
 
   it('기간 안과 양 끝날은 방학이다', () => {
     expect(inVacation('2026-12-22', vac)).toBe(true);
@@ -372,14 +373,15 @@ describe('inVacation — 그날이 방학인가', () => {
   });
 
   it('한쪽만 적힌 기간은 기간이 아니다', () => {
-    expect(inVacation('2027-01-05', { from: '2026-12-22', to: '' })).toBe(false);
-    expect(inVacation('2027-01-05', { from: '', to: '2027-01-31' })).toBe(false);
+    expect(inVacation('2027-01-05', [{ from: '2026-12-22', to: '' }])).toBe(false);
+    expect(inVacation('2027-01-05', [{ from: '', to: '2027-01-31' }])).toBe(false);
     expect(inVacation('2027-01-05', null)).toBe(false);
   });
 });
 
 describe('scheduleOf — 그날 따르는 요일표', () => {
-  const vac = { from: '2026-12-22', to: '2027-01-31' };
+  // 기간은 목록이다 — 방학은 해마다 두세 번 돌아온다.
+  const vac = [{ from: '2026-12-22', to: '2027-01-31' }];
   const student = { schedule: '월 16:00', vacationSchedule: '화 10:00' };
 
   it('학기중에는 평소 요일표다', () => {
@@ -399,13 +401,14 @@ describe('scheduleOf — 그날 따르는 요일표', () => {
       .toBe('월 16:00');
   });
 
-  it('방학 기간을 안 정했으면 늘 평소 요일표다', () => {
-    expect(scheduleOf(student, '2027-01-05', { from: '', to: '' })).toBe('월 16:00');
+  it('방학 기간이 없으면 늘 평소 요일표다', () => {
+    expect(scheduleOf(student, '2027-01-05', [])).toBe('월 16:00');
   });
 });
 
 describe('studentsOnDate — 방학 요일표로 세운다', () => {
-  const vac = { from: '2026-12-22', to: '2027-01-31' };
+  // 기간은 목록이다 — 방학은 해마다 두세 번 돌아온다.
+  const vac = [{ from: '2026-12-22', to: '2027-01-31' }];
   const student = { studentId: 'S1', schedule: '월 16:00', vacationSchedule: '화 10:00' };
 
   it('방학 중 화요일에는 방학 시간으로 선다', () => {
@@ -430,5 +433,29 @@ describe('studentsOnDate — 방학 요일표로 세운다', () => {
   it('방학 기간을 안 넘기면 평소 요일표만 본다', () => {
     expect(studentsOnDate([student], '2027-01-05')).toHaveLength(0);
     expect(studentsOnDate([student], '2027-01-04')).toHaveLength(1);
+  });
+});
+
+describe('inVacation — 기간이 여럿일 때', () => {
+  const many = [
+    { from: '2026-01-05', to: '2026-02-28' },
+    { from: '2026-07-20', to: '2026-08-20' },
+    { from: '2026-12-22', to: '2027-01-31' },
+  ];
+
+  it('어느 기간에든 들면 방학이다', () => {
+    expect(inVacation('2026-01-20', many)).toBe(true);
+    expect(inVacation('2026-08-01', many)).toBe(true);
+    expect(inVacation('2027-01-10', many)).toBe(true);
+  });
+
+  it('기간 사이의 학기는 방학이 아니다', () => {
+    expect(inVacation('2026-05-01', many)).toBe(false);
+    expect(inVacation('2026-10-01', many)).toBe(false);
+  });
+
+  it('지난 방학도 그대로 방학이다', () => {
+    // 다음 방학을 더해도 지난 방학 날들이 학기중으로 되돌아가지 않는다.
+    expect(inVacation('2026-01-20', many)).toBe(true);
   });
 });

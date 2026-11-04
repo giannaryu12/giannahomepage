@@ -154,17 +154,24 @@
   /**
    * 그날이 방학인가.
    *
+   * 기간이 여럿이다. 방학은 해마다 두세 번 돌아오고, 지난 방학에 한
+   * 수업도 그때 시간표로 서 있어야 한다 — 기간을 하나만 들고 다음
+   * 방학으로 갈아 끼우면 지난 겨울 날들이 학기중 시간으로 되돌아간다.
+   *
    * 두 날짜가 다 있어야 기간이다. 한쪽만 적힌 기간은 '언제부터 끝까지'가
    * 되어, 적다 만 것인지 그렇게 정한 것인지 알 수 없다.
    */
-  function inVacation(iso, vacation) {
-    const v = vacation || {};
-    const from = String(v.from || '');
-    const to = String(v.to || '');
-    if (!from || !to) return false;
-
+  function inVacation(iso, vacations) {
     const day = String(iso || '');
-    return day >= from && day <= to;
+    const list = vacations || [];
+
+    for (let i = 0; i < list.length; i++) {
+      const v = list[i] || {};
+      const from = String(v.from || '');
+      const to = String(v.to || '');
+      if (from && to && day >= from && day <= to) return true;
+    }
+    return false;
   }
 
   /**
@@ -178,13 +185,13 @@
    * 방학에도 평소대로다 — 비운 칸을 '그날 수업 없음'으로 읽으면,
    * 적기를 빠뜨린 학생이 달력에서 조용히 사라진다.
    */
-  function scheduleOf(student, iso, vacation) {
+  function scheduleOf(student, iso, vacations) {
     const s = student || {};
     const vac = String(s.vacationSchedule || '').trim();
-    return (vac && inVacation(iso, vacation)) ? vac : s.schedule;
+    return (vac && inVacation(iso, vacations)) ? vac : s.schedule;
   }
 
-  function studentsOnDate(students, iso, vacation) {
+  function studentsOnDate(students, iso, vacations) {
     const idx = weekdayIndex(iso);
     if (idx < 0) return [];
 
@@ -192,7 +199,7 @@
     const out = [];
 
     (students || []).forEach(function (s) {
-      parseSchedule(scheduleOf(s, iso, vacation)).forEach(function (e) {
+      parseSchedule(scheduleOf(s, iso, vacations)).forEach(function (e) {
         if (e.day === day) out.push({ time: e.time, student: s });
       });
     });

@@ -19,9 +19,9 @@
   // 이미 적어 둔 출결. '날짜|학생' → { attendance, sessionNo }.
   // 달력에서 기록을 마친 수업과 아직 안 적은 수업을 가르는 값이다.
   let marks = {};
-  // 학원 전체의 방학 기간. 이 사이의 날은 학생마다 적어 둔 방학
+  // 학원 전체의 방학 기간들. 이 사이의 날은 학생마다 적어 둔 방학
   // 요일표로 그린다(schedule.js의 scheduleOf).
-  let vacation = { from: '', to: '' };
+  let vacations = [];
   // 화면에 그려진 달 'YYYY-MM'. 비어 있으면 아직 한 번도 안 열어 본 것이다.
   let month = '';
   // 아래에 펼쳐 둔 날짜. 늘 하루가 펼쳐져 있다 — 비워 두면 무엇을 눌러야
@@ -115,7 +115,7 @@
    */
   function entriesOn(iso) {
     return S.applyOverrides(
-      S.studentsOnDate(students, iso, vacation), overrides, iso, students)
+      S.studentsOnDate(students, iso, vacations), overrides, iso, students)
       .map(function (e) {
         const m = markFor(iso, e.student.studentId);
         const kept = m && m.classTime;
@@ -274,9 +274,10 @@
         A.esc(e.overrideId) + '" data-who="' + A.esc(e.student.studentId) +
         '" aria-label="이 수업 삭제">삭제</button>';
     } else if (m.off) {
-      // 이미 결석·변경으로 적어 둔 날이다. 미리 빼는 버튼은 내린다 —
-      // 적어 둔 결석 옆에 '결석' 버튼이 또 있으면 무엇이 무엇인지 모른다.
-      tail = '<span class="gi-badge is-bad">' + A.esc(m.word) + '</span>' + delHtml(e);
+      // 꼬리표를 달지 않는다. 바로 옆 드롭박스에 '결석'·'변경'이 이미
+      // 골라져 있어서, 같은 말이 한 줄에 두 번 선다. 줄의 칸 수도
+      // 달라져 다른 줄과 어긋난다.
+      tail = delHtml(e);
     } else {
       // 결석·변경은 드롭박스에서 고른다. 삭제는 다른 일이다 — 그날 그
       // 수업 자체가 없었던 것으로 목록에서 뺀다(휴강). 결석으로 적지
@@ -382,9 +383,8 @@
     ]).then(function (res) {
       // 비활성 학생은 달력에 넣지 않는다. 그만둔 학생이 계속 칸을 차지한다.
       students = (res[0].students || []).filter(function (s) { return s.active; });
-      vacation = res[0].vacation || { from: '', to: '' };
-      $('vacFrom').value = vacation.from || '';
-      $('vacTo').value = vacation.to || '';
+      vacations = res[0].vacations || [];
+      renderVacations();
       overrides = res[1].overrides || [];
 
       marks = {};
@@ -400,27 +400,75 @@
   }
 
   /**
-   * 방학 기간을 적는다.
+   * 적어 둔 방학 기간들 + 하나 더 적는 빈 줄.
+   *
+   * 지난 방학도 지우지 않고 남긴다. 지우면 그때 한 수업이 학기중
+   * 시간으로 되돌아간다 — 적어 둔 출결은 제 시각을 들고 있지만,
+   * 아직 안 적은 날은 요일표를 따라 다시 그려진다.
+   */
+  function renderVacations() {
+    const rows = vacations.map(function (v, i) {
+      return '<div class="gi-vac-row">' +
+        '<input class="gi-input" type="date" data-vac="from" data-at="' + i + '" value="' +
+          A.esc(v.from) + '">' +
+        '<span class="gi-vac-tilde">~</span>' +
+        '<input class="gi-input" type="date" data-vac="to" data-at="' + i + '" value="' +
+          A.esc(v.to) + '">' +
+        '<button class="gi-choice gi-vac-del" type="button" data-vac-del="' + i +
+          '" aria-label="이 방학 기간 삭제">삭제</button>' +
+      '</div>';
+    }).join('');
+
+    // 맨 아래 빈 줄은 늘 하나 둔다. '추가'를 먼저 눌러야 칸이 나오면,
+    // 처음 쓰는 사람은 어디에 적는지부터 찾는다.
+    $('vacBox').innerHTML =
+      '<span class="gi-vac-label">방학 기간</span>' +
+      '<div class="gi-vac-list">' +
+        rows +
+        '<div class="gi-vac-row">' +
+          '<input class="gi-input" type="date" data-vac="from" data-at="new">' +
+          '<span class="gi-vac-tilde">~</span>' +
+          '<input class="gi-input" type="date" data-vac="to" data-at="new">' +
+          '<button class="gi-choice" type="button" data-vac-add>추가</button>' +
+        '</div>' +
+      '</div>' +
+      '<span class="gi-note" id="vacMsg"></span>';
+  }
+
+  /**
+   * 기간 목록을 통째로 저장한다.
    *
    * 저장하면 달력을 다시 그린다 — 기간이 바뀌면 그 사이 날들이 어느
-   * 요일표를 따르는지가 통째로 바뀐다. 두 칸을 다 비우고 저장하면
-   * '방학 아님'이다.
+   * 요일표를 따르는지가 통째로 바뀐다.
    */
-  function saveVacation() {
-    const want = { from: $('vacFrom').value, to: $('vacTo').value };
+  function saveVacations(next) {
     $('vacMsg').textContent = '저장 중…';
 
-    A.api.call('admin.saveVacation', {
-      sessionKey: A.getSessionKey(), vacation: want,
+    A.api.call('admin.saveVacations', {
+      sessionKey: A.getSessionKey(), vacations: next,
     }).then(function (data) {
-      vacation = data.vacation;
-      $('vacFrom').value = vacation.from || '';
-      $('vacTo').value = vacation.to || '';
-      $('vacMsg').textContent = vacation.from ? '저장됨' : '방학 기간 없음';
+      vacations = data.vacations || [];
+      renderVacations();
+      $('vacMsg').textContent = vacations.length ? '저장됨' : '방학 기간 없음';
       render();
     }).catch(function (err) {
-      if (!A.handleAuthLoss(err)) $('vacMsg').textContent = err.message;
+      if (!A.handleAuthLoss(err)) {
+        renderVacations();
+        $('vacMsg').textContent = err.message;
+      }
     });
+  }
+
+  /** 화면의 칸을 그대로 읽는다. 맨 아래 빈 줄은 비어 있으면 버려진다. */
+  function readVacations() {
+    return [].slice.call($('vacBox').querySelectorAll('.gi-vac-row'))
+      .map(function (row) {
+        return {
+          from: row.querySelector('[data-vac="from"]').value,
+          to: row.querySelector('[data-vac="to"]').value,
+        };
+      })
+      .filter(function (v) { return v.from || v.to; });
   }
 
   function saveOverride(o) {
@@ -605,7 +653,26 @@
     });
   });
 
-  $('vacSave').addEventListener('click', saveVacation);
+  $('vacBox').addEventListener('click', function (e) {
+    if (e.target.closest('[data-vac-add]')) {
+      saveVacations(readVacations());
+      return;
+    }
+
+    const del = e.target.closest('[data-vac-del]');
+    if (!del) return;
+
+    const at = Number(del.dataset.vacDel);
+    saveVacations(vacations.filter(function (v, i) { return i !== at; }));
+  });
+
+  // 적어 둔 줄의 날짜를 고치면 바로 저장한다. 따로 저장 단추를 두면
+  // 고쳐 놓고 안 누른 채 다른 달로 넘어가기 쉽다.
+  $('vacBox').addEventListener('change', function (e) {
+    const box = e.target.closest('[data-vac]');
+    if (!box || box.dataset.at === 'new') return;
+    saveVacations(readVacations());
+  });
 
   $('dayEdit').addEventListener('click', function (e) {
     const fix = e.target.closest('[data-time-edit]');

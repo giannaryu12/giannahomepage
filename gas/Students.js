@@ -68,31 +68,51 @@ function handleAdminClasses(body) {
   return ok({ classes: listClasses_() });
 }
 
+const VACATIONS_KEY = 'VACATIONS';
+// 기간을 하나만 들던 때의 칸. 한 번 읽어 목록으로 옮기고 나면 쓰지 않는다.
 const VACATION_FROM_KEY = 'VACATION_FROM';
 const VACATION_TO_KEY = 'VACATION_TO';
 
-/** 적어 둔 방학 기간. 안 적었으면 두 날짜가 다 빈 값이다. */
-function readVacation_() {
+/**
+ * 적어 둔 방학 기간들. 이른 날부터.
+ *
+ * 깨진 글자가 들어 있어도 던지지 않는다 — 속성은 손으로도 고칠 수 있고,
+ * 한 칸이 깨졌다고 달력이 통째로 빈 화면이 되면 안 된다.
+ */
+function readVacations_() {
   const props = PropertiesService.getScriptProperties();
-  return {
-    from: props.getProperty(VACATION_FROM_KEY) || '',
-    to: props.getProperty(VACATION_TO_KEY) || '',
-  };
-}
+  const raw = props.getProperty(VACATIONS_KEY);
 
-function handleAdminSaveVacation(body) {
-  requireSession_(body.sessionKey);
-
-  const clean = cleanVacation(body.vacation);
-  if (!clean) {
-    return fail('BAD_PARAM', '방학 기간은 시작과 끝을 모두 적어야 하고, 끝이 시작보다 뒤여야 합니다.');
+  if (raw) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+    return cleanVacations(Array.isArray(parsed) ? parsed : []) || [];
   }
 
-  PropertiesService.getScriptProperties().setProperties({
-    VACATION_FROM: clean.from,
-    VACATION_TO: clean.to,
+  // 기간을 하나만 들던 때에 적어 둔 것. 목록으로 읽어 준다.
+  const one = cleanVacation({
+    from: props.getProperty(VACATION_FROM_KEY) || '',
+    to: props.getProperty(VACATION_TO_KEY) || '',
   });
-  return ok({ vacation: clean });
+  return one ? [one] : [];
+}
+
+function handleAdminSaveVacations(body) {
+  requireSession_(body.sessionKey);
+
+  const clean = cleanVacations(body.vacations);
+  if (!clean) {
+    return fail('BAD_PARAM',
+      '방학 기간은 시작과 끝을 모두 적어야 하고, 끝이 시작보다 뒤여야 하며, 서로 겹칠 수 없습니다.');
+  }
+
+  PropertiesService.getScriptProperties()
+    .setProperty(VACATIONS_KEY, JSON.stringify(clean));
+  return ok({ vacations: clean });
 }
 
 /** 선생님 화면용 — 토큰을 포함한다. 학부모에게는 절대 이 형태를 주지 않는다. */
@@ -128,7 +148,7 @@ function handleAdminStudents(body) {
   return ok({
     students: students,
     classes: listClasses_(classRows),
-    vacation: readVacation_(),
+    vacations: readVacations_(),
   });
 }
 

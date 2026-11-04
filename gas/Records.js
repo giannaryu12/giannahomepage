@@ -160,7 +160,7 @@ function handleParentLoad(body) {
     student: student,
     records: records,
     overrides: listOverrides_('', ''),
-    vacation: readVacation_(),
+    vacations: readVacations_(),
   });
 
   return ok(payload);
