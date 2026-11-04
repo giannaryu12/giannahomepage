@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104i">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261104i">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261104j">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261104j">
 </head>
 <body class="gi">
 
@@ -139,11 +139,13 @@
           <div id="examTests"></div>
           <button class="gi-choice gi-exam-add" type="button" data-exam-add="examTests">+ 칸 추가</button>
           <!-- 세 낱말의 뜻을 적어 둔다. 미통과와 미응시는 학부모에게 아주
-               다른 말인데, 적어 두지 않으면 누르는 사람마다 달리 쓴다. -->
+               다른 말인데, 적어 두지 않으면 누르는 사람마다 달리 쓴다.
+               낱말만 색과 굵기로 띄우고 뜻은 흐리게 잇는다 — 세 줄로
+               쌓으면 적는 칸보다 뜻풀이가 더 커 보인다. -->
           <p class="gi-note gi-exam-legend">
-            통과: 기준 점수 이상<br>
-            미통과: 응시했지만 기준 미달<br>
-            미응시: 결석·연기 등으로 시험을 안 봄
+            <b class="is-pass">통과</b> 기준 점수 이상 ·
+            <b class="is-fail">미통과</b> 응시했지만 기준 미달 ·
+            <b class="is-skip">미응시</b> 결석·연기 등으로 시험을 안 봄
           </p>
         </div>
 
@@ -178,15 +180,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261104i"></script>
-<script src="/assets/js/api.js?v=20261104i"></script>
-<script src="/assets/js/progress-areas.js?v=20261104i"></script>
-<script src="/assets/js/exam-items.js?v=20261104i"></script>
-<script src="/assets/js/class-level.js?v=20261104i"></script>
-<script src="/assets/js/schedule.js?v=20261104i"></script>
-<script src="/assets/js/record-form.js?v=20261104i"></script>
-<script src="/assets/js/admin.js?v=20261104i"></script>
-<script src="/assets/js/admin-students.js?v=20261104i"></script>
-<script src="/assets/js/admin-schedule.js?v=20261104i"></script>
+<script src="/assets/js/config.js?v=20261104j"></script>
+<script src="/assets/js/api.js?v=20261104j"></script>
+<script src="/assets/js/progress-areas.js?v=20261104j"></script>
+<script src="/assets/js/exam-items.js?v=20261104j"></script>
+<script src="/assets/js/class-level.js?v=20261104j"></script>
+<script src="/assets/js/schedule.js?v=20261104j"></script>
+<script src="/assets/js/record-form.js?v=20261104j"></script>
+<script src="/assets/js/admin.js?v=20261104j"></script>
+<script src="/assets/js/admin-students.js?v=20261104j"></script>
+<script src="/assets/js/admin-schedule.js?v=20261104j"></script>
 </body>
 </html>

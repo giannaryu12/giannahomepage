@@ -983,7 +983,15 @@ body.gi .gi-h2{ color:var(--text); }
 }
 .gi-exam-bar > .gi-choices{ margin:0; }
 /* 세 낱말의 뜻. 누르는 단추 바로 아래, 작게. */
-.gi-exam-legend{ margin-top:0.4rem; line-height:1.5; }
+/* 뜻풀이는 한 줄로 흘린다. 선생님이 한 번 읽고 나면 다시 읽지 않는 글이라
+   자리를 크게 차지할 까닭이 없다. */
+.gi-exam-legend{ margin-top:0.4rem; font-size:0.62rem; line-height:1.6; }
+/* 낱말 셋만 눈에 걸리면 된다. 통과는 파랑, 미통과는 빨강, 미응시는 검정 —
+   미응시는 잘잘못이 아니라 '안 봤다'는 사실이라 색을 주지 않는다. */
+.gi-exam-legend b{ font-weight:700; }
+.gi-exam-legend .is-pass{ color:var(--state-extra); }
+.gi-exam-legend .is-fail{ color:var(--state-bad); }
+.gi-exam-legend .is-skip{ color:var(--text); }
 
 
 /* 꼬리표는 글자 안에서 접히지 않는다. 접히면 '시험대' / '비'처럼 끊겨
