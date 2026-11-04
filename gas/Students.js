@@ -68,6 +68,33 @@ function handleAdminClasses(body) {
   return ok({ classes: listClasses_() });
 }
 
+const VACATION_FROM_KEY = 'VACATION_FROM';
+const VACATION_TO_KEY = 'VACATION_TO';
+
+/** 적어 둔 방학 기간. 안 적었으면 두 날짜가 다 빈 값이다. */
+function readVacation_() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    from: props.getProperty(VACATION_FROM_KEY) || '',
+    to: props.getProperty(VACATION_TO_KEY) || '',
+  };
+}
+
+function handleAdminSaveVacation(body) {
+  requireSession_(body.sessionKey);
+
+  const clean = cleanVacation(body.vacation);
+  if (!clean) {
+    return fail('BAD_PARAM', '방학 기간은 시작과 끝을 모두 적어야 하고, 끝이 시작보다 뒤여야 합니다.');
+  }
+
+  PropertiesService.getScriptProperties().setProperties({
+    VACATION_FROM: clean.from,
+    VACATION_TO: clean.to,
+  });
+  return ok({ vacation: clean });
+}
+
 /** 선생님 화면용 — 토큰을 포함한다. 학부모에게는 절대 이 형태를 주지 않는다. */
 function handleAdminStudents(body) {
   requireSession_(body.sessionKey);
@@ -94,9 +121,15 @@ function handleAdminStudents(body) {
       note: s.note,
       // 수업 요일·시간. '화 17:00, 목 19:00' 한 칸에 적는다 (schedule.js).
       schedule: s.schedule || '',
+      // 방학 때 따르는 요일·시간. 비어 있으면 방학에도 평소대로다.
+      vacationSchedule: s.vacationSchedule || '',
     };
   });
-  return ok({ students: students, classes: listClasses_(classRows) });
+  return ok({
+    students: students,
+    classes: listClasses_(classRows),
+    vacation: readVacation_(),
+  });
 }
 
 function handleAdminUpsertStudent(body) {
@@ -139,6 +172,7 @@ function handleAdminUpsertStudent(body) {
       active: 'TRUE',
       note: input.note || '',
       schedule: input.schedule || '',
+      vacationSchedule: input.vacationSchedule || '',
       createdAt: new Date().toISOString(),
     });
     SpreadsheetApp.flush();

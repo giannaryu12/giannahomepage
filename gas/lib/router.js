@@ -22,6 +22,8 @@ const ACTIONS = {
   'admin.overrides':      { auth: 'session', required: [] },
   'admin.saveOverride':   { auth: 'session', required: ['override'] },
   'admin.deleteOverride': { auth: 'session', required: ['overrideId'] },
+  // 방학 기간. 두 날짜를 다 비워 보내면 '방학 아님'으로 되돌린다.
+  'admin.saveVacation':   { auth: 'session', required: ['vacation'] },
 };
 
 function ok(data) {

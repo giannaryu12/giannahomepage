@@ -348,9 +348,23 @@ describe('toParentCalendar — 학부모 달력', () => {
   it('날짜별 출결과 회차를 모은다', () => {
     const cal = toParentCalendar({
       student: student,
-      records: [{ date: '2026-11-03', attendance: '출석', sessionNo: 7 }, { date: '2026-11-05' }],
+      records: [
+        { date: '2026-11-03', attendance: '출석', sessionNo: 7, classTime: '16:00' },
+        { date: '2026-11-05' },
+      ],
     });
-    expect(cal.marks).toEqual({ '2026-11-03': { attendance: '출석', sessionNo: '7' } });
+    expect(cal.marks).toEqual({
+      '2026-11-03': { attendance: '출석', sessionNo: '7', classTime: '16:00' },
+    });
+  });
+
+  it('시각을 안 적어 둔 날은 빈 값이다', () => {
+    // 요일표가 생기기 전에 쌓인 기록이다. 화면이 요일표에서 시각을 찾는다.
+    const cal = toParentCalendar({
+      student: student,
+      records: [{ date: '2026-11-03', attendance: '출석' }],
+    });
+    expect(cal.marks['2026-11-03'].classTime).toBe('');
   });
 });
 

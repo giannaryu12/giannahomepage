@@ -151,7 +151,40 @@
    * 같은 시간이면 이름 순이다. 매번 순서가 바뀌면 어제 본 자리에 오늘은
    * 다른 학생이 있어 눈이 다시 처음부터 훑어야 한다.
    */
-  function studentsOnDate(students, iso) {
+  /**
+   * 그날이 방학인가.
+   *
+   * 두 날짜가 다 있어야 기간이다. 한쪽만 적힌 기간은 '언제부터 끝까지'가
+   * 되어, 적다 만 것인지 그렇게 정한 것인지 알 수 없다.
+   */
+  function inVacation(iso, vacation) {
+    const v = vacation || {};
+    const from = String(v.from || '');
+    const to = String(v.to || '');
+    if (!from || !to) return false;
+
+    const day = String(iso || '');
+    return day >= from && day <= to;
+  }
+
+  /**
+   * 그날 그 학생이 따르는 요일표.
+   *
+   * 방학에는 학원 전체가 시간을 바꾼다. 평소 요일표를 고쳐 쓰면 방학이
+   * 끝날 때 학생 수만큼 되돌려야 하고, 요일표에는 날짜가 없으므로 지난
+   * 학기 수업까지 방학 시간으로 다시 그려진다.
+   *
+   * 그래서 둘을 따로 들고 날짜로 고른다. 방학 요일표를 안 적은 학생은
+   * 방학에도 평소대로다 — 비운 칸을 '그날 수업 없음'으로 읽으면,
+   * 적기를 빠뜨린 학생이 달력에서 조용히 사라진다.
+   */
+  function scheduleOf(student, iso, vacation) {
+    const s = student || {};
+    const vac = String(s.vacationSchedule || '').trim();
+    return (vac && inVacation(iso, vacation)) ? vac : s.schedule;
+  }
+
+  function studentsOnDate(students, iso, vacation) {
     const idx = weekdayIndex(iso);
     if (idx < 0) return [];
 
@@ -159,7 +192,7 @@
     const out = [];
 
     (students || []).forEach(function (s) {
-      parseSchedule(s && s.schedule).forEach(function (e) {
+      parseSchedule(scheduleOf(s, iso, vacation)).forEach(function (e) {
         if (e.day === day) out.push({ time: e.time, student: s });
       });
     });
@@ -258,6 +291,8 @@
     monthOf,
     addMonths,
     monthGrid,
+    inVacation,
+    scheduleOf,
     studentsOnDate,
     applyOverrides,
     activeOnly,

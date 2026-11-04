@@ -32,6 +32,8 @@
   // 것처럼 보인다. 학생마다 다르다 — 올해 온 학생에게 작년 달력을 열어
   // 줄 까닭이 없다.
   let firstMonth = '';
+  // 학원 방학 기간. 그 사이의 날은 방학 요일표로 그린다.
+  let vacation = { from: '', to: '' };
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -118,9 +120,9 @@
     const m = marks[String(iso)];
     if (!m || OFF_MARKS.indexOf(m.attendance) !== -1) return [];
     // 하루치 조각이 있는 날은 여기까지 오지 않는다 — 그 조각이 줄을
-    // 세우고 시간도 함께 들고 온다. 여기 오는 날은 적어 둔 시간이
-    // 어디에도 없는 날이라 시간 자리를 비운다.
-    return [{ time: '', student: student, fromMark: true }];
+    // 세우고 시간도 함께 들고 온다. 여기 오는 날에는 출결과 함께 적어
+    // 둔 시각이 있으면 그것을 쓰고, 그마저 없으면 자리를 비운다.
+    return [{ time: String(m.classTime || ''), student: student, fromMark: true }];
   }
 
   /**
@@ -140,8 +142,14 @@
     const key = String(iso);
     if (!marks[key] && key < todayIso()) return [];
 
-    const list = S.applyOverrides(S.studentsOnDate([student], iso), overrides, iso, [student])
-      .filter(function (e) { return !movedOut_(e, iso); });
+    const kept = (marks[key] && marks[key].classTime) || '';
+
+    const list = S.applyOverrides(
+      S.studentsOnDate([student], iso, vacation), overrides, iso, [student])
+      .filter(function (e) { return !movedOut_(e, iso); })
+      // 적어 둔 시각이 있으면 그것을 쓴다. 요일표를 고쳐도 지나간
+      // 수업은 그날 그 시각 그대로 서야 한다.
+      .map(function (e) { return kept ? Object.assign({}, e, { time: kept }) : e; });
 
     return list.length ? list : markOnly_(iso);
   }
@@ -226,7 +234,9 @@
       studentId: (data && data.student && data.student.studentId) || 'me',
       name: (data && data.student && data.student.name) || '',
       schedule: cal.schedule || '',
+      vacationSchedule: cal.vacationSchedule || '',
     };
+    vacation = cal.vacation || { from: '', to: '' };
     overrides = cal.overrides || [];
     marks = cal.marks || {};
     // 기록도 등록일도 없으면 이번 달이 첫 달이다. 빈 값을 그대로 두면
@@ -234,7 +244,8 @@
     firstMonth = cal.firstMonth || S.monthOf(todayIso());
     month = thisMonth();
 
-    if (!S.parseSchedule(student.schedule).length && !overrides.length) {
+    if (!S.parseSchedule(student.schedule).length &&
+        !S.parseSchedule(student.vacationSchedule).length && !overrides.length) {
       document.getElementById('planTab').innerHTML =
         '<p class="gi-note">아직 등록된 수업 요일이 없습니다. 선생님께 문의해 주세요.</p>';
       return;

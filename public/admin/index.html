@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>수업 기록 입력 · 지아나영어</title>
-<link rel="stylesheet" href="/assets/css/tokens.css?v=20261105r">
-<link rel="stylesheet" href="/assets/css/app.css?v=20261105r">
+<link rel="stylesheet" href="/assets/css/tokens.css?v=20261105s">
+<link rel="stylesheet" href="/assets/css/app.css?v=20261105s">
 </head>
 <body class="gi">
 
@@ -47,6 +47,17 @@
         <span class="gi-week-label" id="weekLabel"></span>
         <button class="gi-choice" id="weekNext" type="button">다음달 →</button>
         <button class="gi-choice" id="weekToday" type="button">이번 달</button>
+      </div>
+
+      <!-- 방학 기간. 학원 전체가 함께 쓰는 값 하나다. 이 사이의 날은
+           학생마다 적어 둔 방학 요일·시간으로 달력이 그려진다. -->
+      <div class="gi-vac">
+        <span class="gi-vac-label">방학 기간</span>
+        <input class="gi-input" type="date" id="vacFrom">
+        <span class="gi-vac-tilde">~</span>
+        <input class="gi-input" type="date" id="vacTo">
+        <button class="gi-choice" id="vacSave" type="button">저장</button>
+        <span class="gi-note" id="vacMsg"></span>
       </div>
 
       <div id="scheduleError" class="gi-error" hidden></div>
@@ -180,15 +191,15 @@
 
 </main>
 
-<script src="/assets/js/config.js?v=20261105r"></script>
-<script src="/assets/js/api.js?v=20261105r"></script>
-<script src="/assets/js/progress-areas.js?v=20261105r"></script>
-<script src="/assets/js/exam-items.js?v=20261105r"></script>
-<script src="/assets/js/class-level.js?v=20261105r"></script>
-<script src="/assets/js/schedule.js?v=20261105r"></script>
-<script src="/assets/js/record-form.js?v=20261105r"></script>
-<script src="/assets/js/admin.js?v=20261105r"></script>
-<script src="/assets/js/admin-students.js?v=20261105r"></script>
-<script src="/assets/js/admin-schedule.js?v=20261105r"></script>
+<script src="/assets/js/config.js?v=20261105s"></script>
+<script src="/assets/js/api.js?v=20261105s"></script>
+<script src="/assets/js/progress-areas.js?v=20261105s"></script>
+<script src="/assets/js/exam-items.js?v=20261105s"></script>
+<script src="/assets/js/class-level.js?v=20261105s"></script>
+<script src="/assets/js/schedule.js?v=20261105s"></script>
+<script src="/assets/js/record-form.js?v=20261105s"></script>
+<script src="/assets/js/admin.js?v=20261105s"></script>
+<script src="/assets/js/admin-students.js?v=20261105s"></script>
+<script src="/assets/js/admin-schedule.js?v=20261105s"></script>
 </body>
 </html>

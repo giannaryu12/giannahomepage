@@ -3,6 +3,7 @@ import {
   WEEKDAYS, parseSchedule, formatSchedule,
   weekdayIndex, mondayOf, addDays,
   monthOf, addMonths, monthGrid, studentsOnDate, applyOverrides, activeOnly,
+  inVacation, scheduleOf,
 } from '../public/assets/js/schedule.js';
 
 describe('parseSchedule', () => {
@@ -353,5 +354,81 @@ describe('applyOverrides — 하루치 일정 변경', () => {
     const ov = [{ overrideId: 'O3', date: TUE, studentId: 'S3', time: '17:00', kind: 'add' }];
     expect(applyOverrides(base(), ov, TUE, students).map((e) => e.student.name))
       .toEqual(['김민준', '이서연', '최예준']);
+  });
+});
+
+describe('inVacation — 그날이 방학인가', () => {
+  const vac = { from: '2026-12-22', to: '2027-01-31' };
+
+  it('기간 안과 양 끝날은 방학이다', () => {
+    expect(inVacation('2026-12-22', vac)).toBe(true);
+    expect(inVacation('2027-01-05', vac)).toBe(true);
+    expect(inVacation('2027-01-31', vac)).toBe(true);
+  });
+
+  it('하루 앞뒤는 방학이 아니다', () => {
+    expect(inVacation('2026-12-21', vac)).toBe(false);
+    expect(inVacation('2027-02-01', vac)).toBe(false);
+  });
+
+  it('한쪽만 적힌 기간은 기간이 아니다', () => {
+    expect(inVacation('2027-01-05', { from: '2026-12-22', to: '' })).toBe(false);
+    expect(inVacation('2027-01-05', { from: '', to: '2027-01-31' })).toBe(false);
+    expect(inVacation('2027-01-05', null)).toBe(false);
+  });
+});
+
+describe('scheduleOf — 그날 따르는 요일표', () => {
+  const vac = { from: '2026-12-22', to: '2027-01-31' };
+  const student = { schedule: '월 16:00', vacationSchedule: '화 10:00' };
+
+  it('학기중에는 평소 요일표다', () => {
+    expect(scheduleOf(student, '2026-12-01', vac)).toBe('월 16:00');
+    expect(scheduleOf(student, '2027-02-02', vac)).toBe('월 16:00');
+  });
+
+  it('방학에는 방학 요일표다', () => {
+    expect(scheduleOf(student, '2027-01-05', vac)).toBe('화 10:00');
+  });
+
+  it('방학 요일표를 안 적었으면 방학에도 평소대로다', () => {
+    // 빈 칸을 '그날 수업 없음'으로 읽으면, 적기를 빠뜨린 학생이 달력에서
+    // 조용히 사라진다.
+    expect(scheduleOf({ schedule: '월 16:00' }, '2027-01-05', vac)).toBe('월 16:00');
+    expect(scheduleOf({ schedule: '월 16:00', vacationSchedule: '   ' }, '2027-01-05', vac))
+      .toBe('월 16:00');
+  });
+
+  it('방학 기간을 안 정했으면 늘 평소 요일표다', () => {
+    expect(scheduleOf(student, '2027-01-05', { from: '', to: '' })).toBe('월 16:00');
+  });
+});
+
+describe('studentsOnDate — 방학 요일표로 세운다', () => {
+  const vac = { from: '2026-12-22', to: '2027-01-31' };
+  const student = { studentId: 'S1', schedule: '월 16:00', vacationSchedule: '화 10:00' };
+
+  it('방학 중 화요일에는 방학 시간으로 선다', () => {
+    // 2027-01-05는 화요일.
+    const out = studentsOnDate([student], '2027-01-05', vac);
+    expect(out).toHaveLength(1);
+    expect(out[0].time).toBe('10:00');
+  });
+
+  it('방학 중 월요일에는 아무도 서지 않는다', () => {
+    // 2027-01-04는 월요일 — 방학 요일표에 월요일이 없다.
+    expect(studentsOnDate([student], '2027-01-04', vac)).toHaveLength(0);
+  });
+
+  it('학기중 월요일에는 평소 시간으로 선다', () => {
+    // 2026-12-07은 월요일.
+    const out = studentsOnDate([student], '2026-12-07', vac);
+    expect(out).toHaveLength(1);
+    expect(out[0].time).toBe('16:00');
+  });
+
+  it('방학 기간을 안 넘기면 평소 요일표만 본다', () => {
+    expect(studentsOnDate([student], '2027-01-05')).toHaveLength(0);
+    expect(studentsOnDate([student], '2027-01-04')).toHaveLength(1);
   });
 });

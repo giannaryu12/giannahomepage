@@ -19,6 +19,9 @@
   // 이미 적어 둔 출결. '날짜|학생' → { attendance, sessionNo }.
   // 달력에서 기록을 마친 수업과 아직 안 적은 수업을 가르는 값이다.
   let marks = {};
+  // 학원 전체의 방학 기간. 이 사이의 날은 학생마다 적어 둔 방학
+  // 요일표로 그린다(schedule.js의 scheduleOf).
+  let vacation = { from: '', to: '' };
   // 화면에 그려진 달 'YYYY-MM'. 비어 있으면 아직 한 번도 안 열어 본 것이다.
   let month = '';
   // 아래에 펼쳐 둔 날짜. 늘 하루가 펼쳐져 있다 — 비워 두면 무엇을 눌러야
@@ -100,8 +103,24 @@
     };
   }
 
+  /**
+   * 그날 세울 줄. 출결을 적어 둔 날은 그날의 시각을 쓴다.
+   *
+   * 요일표에는 날짜가 없다. 그래서 요일·시간을 고치면 지나간 수업까지
+   * 새 시각으로 다시 그려졌다 — 3월에 5시였던 수업이 오늘 7시로 바꾸자
+   * 3월 달력에서도 7시가 되었다.
+   *
+   * 출결을 적을 때 그날의 시각을 함께 적어 두므로, 적어 둔 날은 그것을
+   * 쓴다. 요일표 고치기는 앞날에만 미친다.
+   */
   function entriesOn(iso) {
-    return S.applyOverrides(S.studentsOnDate(students, iso), overrides, iso, students);
+    return S.applyOverrides(
+      S.studentsOnDate(students, iso, vacation), overrides, iso, students)
+      .map(function (e) {
+        const m = markFor(iso, e.student.studentId);
+        const kept = m && m.classTime;
+        return kept ? Object.assign({}, e, { time: String(kept) }) : e;
+      });
   }
 
   /* ---------- 달력 ---------- */
@@ -363,6 +382,9 @@
     ]).then(function (res) {
       // 비활성 학생은 달력에 넣지 않는다. 그만둔 학생이 계속 칸을 차지한다.
       students = (res[0].students || []).filter(function (s) { return s.active; });
+      vacation = res[0].vacation || { from: '', to: '' };
+      $('vacFrom').value = vacation.from || '';
+      $('vacTo').value = vacation.to || '';
       overrides = res[1].overrides || [];
 
       marks = {};
@@ -374,6 +396,30 @@
       if (!A.handleAuthLoss(err)) {
         $('timetable').innerHTML = '<div class="gi-error">' + A.esc(err.message) + '</div>';
       }
+    });
+  }
+
+  /**
+   * 방학 기간을 적는다.
+   *
+   * 저장하면 달력을 다시 그린다 — 기간이 바뀌면 그 사이 날들이 어느
+   * 요일표를 따르는지가 통째로 바뀐다. 두 칸을 다 비우고 저장하면
+   * '방학 아님'이다.
+   */
+  function saveVacation() {
+    const want = { from: $('vacFrom').value, to: $('vacTo').value };
+    $('vacMsg').textContent = '저장 중…';
+
+    A.api.call('admin.saveVacation', {
+      sessionKey: A.getSessionKey(), vacation: want,
+    }).then(function (data) {
+      vacation = data.vacation;
+      $('vacFrom').value = vacation.from || '';
+      $('vacTo').value = vacation.to || '';
+      $('vacMsg').textContent = vacation.from ? '저장됨' : '방학 기간 없음';
+      render();
+    }).catch(function (err) {
+      if (!A.handleAuthLoss(err)) $('vacMsg').textContent = err.message;
     });
   }
 
@@ -407,14 +453,22 @@
     A.showError($('scheduleError'), '');
     const key = openDate + '|' + studentId;
 
+    // 그날 달력에 서 있는 시각을 함께 보낸다. 이 시각이 그 수업과 함께
+    // 굳어, 나중에 요일표를 고쳐도 이 날은 움직이지 않는다.
+    const row = entriesOn(openDate).filter(function (e) {
+      return String(e.student.studentId) === String(studentId);
+    })[0];
+    const time = (row && row.time) || '';
+
     return A.api.call('admin.setAttendance', {
-      sessionKey: A.getSessionKey(), studentId: studentId, date: openDate, attendance: value,
+      sessionKey: A.getSessionKey(), studentId: studentId, date: openDate,
+      attendance: value, time: time,
     }).then(function (data) {
       if (!value) delete marks[key];
       else {
         marks[key] = {
           date: openDate, studentId: studentId, attendance: value,
-          sessionNo: String(data.sessionNo || ''),
+          sessionNo: String(data.sessionNo || ''), classTime: time,
         };
       }
       render();
@@ -478,6 +532,17 @@
       return saveOverride({
         date: openDate, studentId: studentId, time: time, kind: 'add',
       });
+    }).then(function () {
+      // 이미 출결을 적어 둔 날이면 굳어 있는 시각도 함께 옮긴다.
+      // 안 그러면 줄은 새 시각에 서는데 적어 둔 시각은 옛날 그대로다.
+      const m = markFor(openDate, studentId);
+      if (!m) return null;
+
+      m.classTime = time;
+      return A.api.call('admin.setAttendance', {
+        sessionKey: A.getSessionKey(), studentId: studentId, date: openDate,
+        attendance: m.attendance, time: time,
+      });
     });
   }
 
@@ -539,6 +604,8 @@
       if (!A.handleAuthLoss(err)) A.showError($('scheduleError'), err.message);
     });
   });
+
+  $('vacSave').addEventListener('click', saveVacation);
 
   $('dayEdit').addEventListener('click', function (e) {
     const fix = e.target.closest('[data-time-edit]');

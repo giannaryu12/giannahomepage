@@ -15,6 +15,11 @@
 
   let students = [];
   let classes = [];
+  // 학원 방학 기간. 네임카드에 어느 시간표를 낼지, 고치는 칸이 어느
+  // 쪽부터 열릴지를 이것으로 정한다.
+  let vacation = { from: '', to: '' };
+  // 고치는 칸이 보고 있는 요일표. 'term' 학기중 | 'vacation' 방학중
+  let schedKind = 'term';
   // 위 칸이 등록 중인지 수정 중인지. 'new' | 'edit'
   let mode = 'new';
   // 수정 칸이 보고 있는 학생.
@@ -74,6 +79,18 @@
     const key = document.getElementById('newLevel').value;
     const num = document.getElementById('newGrade').value;
     return markOf(key) + num;
+  }
+
+  function todayIso() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      ('0' + (d.getMonth() + 1)).slice(-2) + '-' +
+      ('0' + d.getDate()).slice(-2);
+  }
+
+  /** 오늘이 방학인가. 고치는 칸을 어느 쪽부터 열지에 쓴다. */
+  function onVacation() {
+    return S.inVacation(todayIso(), vacation);
   }
 
   function parentUrl(token) {
@@ -199,7 +216,9 @@
    */
   function headLeft(s) {
     const where = [s.school, gradeNum(s)].filter(function (v) { return v; }).join(' ');
-    const when = S.formatSchedule(S.parseSchedule(s.schedule));
+    // 오늘 따르는 요일표 하나만 낸다. 둘을 나란히 적으면 카드마다 줄이
+    // 두 배가 되고, 지금 몇 시에 오는 학생인지가 오히려 흐려진다.
+    const when = S.formatSchedule(S.parseSchedule(S.scheduleOf(s, todayIso(), vacation)));
 
     let flag = '';
     if (!s.active) flag = '비활성';
@@ -239,6 +258,28 @@
       '</div>' +
       '<div class="gi-stu-row">' +
         '<select class="gi-select" data-field="classId">' + optionsHtml(s.classId) + '</select>' +
+      '</div>' +
+      schedPickHtml();
+  }
+
+  /**
+   * 학기중 · 방학중 고르기.
+   *
+   * 한 칸에 둘을 함께 펼치지 않는다. 요일 단추 일곱 개가 두 줄이면
+   * 어느 줄이 지금 쓰는 시간표인지 매번 읽어야 하고, 고치다가 다른
+   * 줄을 건드리기도 쉽다. 한 번에 한 쪽만 열고 그쪽만 저장한다.
+   */
+  function schedPickHtml() {
+    const label = vacation.from
+      ? '방학 ' + vacation.from + ' ~ ' + vacation.to
+      : '방학 기간을 아직 안 정했습니다';
+
+    return '<div class="gi-choices gi-sched-kind">' +
+        '<button class="gi-choice" type="button" data-sk="term"' +
+          ' aria-pressed="' + (schedKind === 'term') + '">학기중</button>' +
+        '<button class="gi-choice" type="button" data-sk="vacation"' +
+          ' aria-pressed="' + (schedKind === 'vacation') + '">방학중</button>' +
+        '<span class="gi-note gi-sched-when">' + A.esc(label) + '</span>' +
       '</div>';
   }
 
@@ -273,7 +314,9 @@
               '<button class="gi-choice" type="button" data-act="toggle">' +
                 (s.active ? '비활성화' : '다시 활성화') + '</button>' +
             '</div>') +
-          (editable ? schedHtml(s.schedule) : '') +
+          (editable
+            ? schedHtml(schedKind === 'vacation' ? s.vacationSchedule : s.schedule)
+            : '') +
           '<p class="gi-note gi-stu-msg" data-role="msg"></p>' +
         '</div>' +
       '</article>';
@@ -422,6 +465,7 @@
     A.api.call('admin.students', { sessionKey: A.getSessionKey() }).then(function (data) {
       students = data.students;
       classes = data.classes;
+      vacation = data.vacation || { from: '', to: '' };
       render();
     }).catch(function (err) {
       if (!A.handleAuthLoss(err)) {
@@ -501,6 +545,9 @@
       // 찾게 하면, 목록에서 눈으로 찾은 일을 한 번 더 하는 셈이다.
       mode = 'edit';
       editId = id;
+      // 지금 쓰는 시간표부터 연다 — 방학 중에 고치러 들어오면 고치려는
+      // 것도 방학 시간표다.
+      schedKind = onVacation() ? 'vacation' : 'term';
       render();
       $view.scrollIntoView({ block: 'start', behavior: 'smooth' });
       return;
@@ -547,7 +594,10 @@
         card.querySelector('[data-field="gradeNum"]').value;
       patch.school = card.querySelector('[data-field="school"]').value.trim();
       patch.classId = card.querySelector('[data-field="classId"]').value;
-      patch.schedule = readSched(card);
+      // 보고 있는 쪽만 적는다. 안 보이는 쪽까지 함께 쓰면 빈 칸을 읽어
+      // 반대쪽 요일표가 지워진다.
+      if (schedKind === 'vacation') patch.vacationSchedule = readSched(card);
+      else patch.schedule = readSched(card);
       if (!patch.name) { $msg.textContent = '이름은 비울 수 없습니다.'; return; }
     } else if (act === 'toggle') {
       patch.active = !student.active;
@@ -564,6 +614,13 @@
   });
 
   $view.addEventListener('click', function (e) {
+    const sk = e.target.closest('[data-sk]');
+    if (sk) {
+      schedKind = sk.dataset.sk;
+      render();
+      return;
+    }
+
     const tab = e.target.closest('[data-mode]');
     if (!tab) return;
 

@@ -373,11 +373,20 @@ function toParentCalendar(input) {
     marks[date] = {
       attendance: attendance,
       sessionNo: r.sessionNo === null || r.sessionNo === undefined ? '' : String(r.sessionNo),
+      // 그날 그 수업을 한 시각. 요일표를 고쳐도 지나간 수업은 이 시각
+      // 그대로 선다 — 지난달 리포트의 시간이 오늘 바꾼 시간으로
+      // 둔갑하면, 학부모는 자기가 잘못 기억한 줄 안다.
+      classTime: String((r && r.classTime) || ''),
     };
   });
 
   return {
     schedule: String(student.schedule == null ? '' : student.schedule),
+    // 방학 요일표와 그 기간. 날짜마다 어느 쪽을 따르는지는 화면이
+    // 고른다(schedule.js의 scheduleOf) — 지난 학기 수업은 지난 학기
+    // 시간으로, 방학 수업은 방학 시간으로 서야 한다.
+    vacationSchedule: String(student.vacationSchedule == null ? '' : student.vacationSchedule),
+    vacation: opts.vacation || { from: '', to: '' },
     firstMonth: parentFirstMonth_(student, opts.records),
     // 첫 수업 날짜. 그 달 안에서도 첫 수업 앞의 날에는 줄을 세우지
     // 않는다 — 달만 맞추면 그 달 1일부터 수업이 있던 것처럼 보인다.

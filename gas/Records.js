@@ -160,6 +160,7 @@ function handleParentLoad(body) {
     student: student,
     records: records,
     overrides: listOverrides_('', ''),
+    vacation: readVacation_(),
   });
 
   return ok(payload);
@@ -189,6 +190,9 @@ function handleAdminAttendance(body) {
         attendance: String(r.attendance),
         sessionNo: r.sessionNo === '' || r.sessionNo === null || r.sessionNo === undefined
           ? '' : String(r.sessionNo),
+        // 그날 그 수업을 한 시각. 적어 둔 날은 요일표가 바뀌어도
+        // 이 시각 그대로 선다.
+        classTime: String(r.classTime || ''),
       };
     });
 
@@ -211,6 +215,9 @@ function handleAdminSetAttendance(body) {
   const studentId = String(body.studentId || '');
   const date = String(body.date || '');
   const attendance = String(body.attendance || '');
+  // 그날 달력에 서 있던 시각. 화면이 보내 준다 — 서버는 요일표를
+  // 다시 풀지 않는다(그 셈은 schedule.js 한 곳에만 둔다).
+  const classTime = String(body.time || '');
   if (!studentId || !date) return fail('MISSING_PARAM', '학생과 날짜가 필요합니다.');
 
   // 빈 값은 '아직 안 적음'으로 되돌리는 것이다.
@@ -232,11 +239,15 @@ function handleAdminSetAttendance(body) {
       : (today && today.sessionNo) || (lastSessionNoOf(mine, date) + 1);
 
     if (today) {
-      updateRowById(SHEETS.RECORDS, 'recordId', today.recordId, {
+      const patch = {
         attendance: attendance,
         sessionNo: sessionNo,
         updatedAt: new Date().toISOString(),
-      });
+      };
+      // 시각을 안 보냈으면 적어 둔 것을 그대로 둔다. 빈 값으로 덮으면
+      // 지난 수업이 다시 요일표를 따라가 버린다.
+      if (classTime) patch.classTime = classTime;
+      updateRowById(SHEETS.RECORDS, 'recordId', today.recordId, patch);
       SpreadsheetApp.flush();
       return ok({ recordId: today.recordId, sessionNo: sessionNo });
     }
@@ -255,6 +266,7 @@ function handleAdminSetAttendance(body) {
       date: date,
       attendance: attendance,
       sessionNo: sessionNo,
+      classTime: classTime,
       clientRequestId: 'cal-' + recordId,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),

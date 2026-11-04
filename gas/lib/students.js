@@ -14,7 +14,12 @@
  *
  * studentId(키)와 parentToken(전용 재발급 경로가 따로 있다)은 절대 넣지 않는다.
  */
-const STUDENT_PATCH_FIELDS = ['name', 'grade', 'classId', 'school', 'note', 'schedule'];
+const STUDENT_PATCH_FIELDS = [
+  'name', 'grade', 'classId', 'school', 'note',
+  // 평소 요일표와 방학 요일표. 둘을 따로 들고 날짜로 고른다
+  // (public/assets/js/schedule.js의 scheduleOf).
+  'schedule', 'vacationSchedule',
+];
 
 function buildStudentPatch(input) {
   const src = input || {};
