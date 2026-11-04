@@ -12,7 +12,7 @@
 (function () {
   const S = window.GI_SCHEDULE;
 
-  const SKIP_LABEL = { absent: '결석', moved: '변경', off: '휴강' };
+  const SKIP_LABEL = { absent: '결석', moved: '변경' };
 
   const MARK_CLASS = {
     '출석': 'is-good', '지각': 'is-warn', '결석': 'is-bad', '변경': 'is-bad',
