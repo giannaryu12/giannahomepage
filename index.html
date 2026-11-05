@@ -447,11 +447,11 @@
     }
     .about .section-head{ margin-bottom:0; }
     /* graph spans the whole right column: leftmost name and rightmost text line up with the image/form edges */
-    .steps{ grid-template-columns:1fr 2.6rem 14px auto; column-gap:1rem; padding-right:0; min-width:0; --step-gap:1.4rem; }
-    .step span.desc{ padding-left:0.25rem; }
+    .steps{ grid-template-columns:1fr 2.6rem 14px auto; column-gap:0.75rem; padding-right:0; min-width:0; --step-gap:1.4rem; }
+    .step span.desc{ padding-left:0.5rem; }
   }
   @media (min-width: 1001px) and (max-width: 1150px){
-    .steps{ column-gap:0.5rem; grid-template-columns:1fr 2.2rem 14px auto; }
+    .steps{ column-gap:0.3rem; grid-template-columns:1fr 2.2rem 14px auto; }
   }
   .step{
     display:grid;
@@ -488,13 +488,21 @@
       radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
       linear-gradient(var(--heading), var(--heading)) center bottom / 2px 50% no-repeat;
   }
+  /* last dot: solid above, dashed below (leading to the arrowhead) */
+  .step:last-child::before{
+    margin:calc(-1 * (var(--step-gap) + 0.83rem)) 0;   /* tail below the dot = same length as the other segments (dot to dot) */
+    background:
+      radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
+      linear-gradient(var(--heading), var(--heading)) center top / 2px 50% no-repeat,
+      repeating-linear-gradient(to bottom, var(--heading) 0 3px, transparent 3px 6px) center bottom / 2px 50% no-repeat;
+  }
   /* thin "v" arrowhead at the end, pointing down */
   .step:last-child::after{
     content:"";
     grid-column:3; grid-row:1;
     justify-self:center; align-self:end;
-    width:9px; height:9px;
-    margin-bottom:calc(var(--step-gap) / -2 - 0.45rem + 5px);
+    width:7px; height:7px;
+    margin-bottom:calc(-1 * (var(--step-gap) + 0.83rem) + 3.5px);
     border-right:1.5px solid var(--heading);
     border-bottom:1.5px solid var(--heading);
     transform:scale(1, 1.4) rotate(45deg);   /* same width, taller: narrower angle than a right-angle v */
