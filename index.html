@@ -35,6 +35,7 @@
     --hero-text-soft: rgba(216,195,165,0.78);
     --hero-border: rgba(216,195,165,0.18);
 
+    --sec-h: 22rem;
     --font-main: 'Poppins', 'SUIT', 'Apple SD Gothic Neo', 'Malgun Gothic', ui-sans-serif, system-ui, sans-serif;
     --font-display: var(--font-main);
     --font-body: var(--font-main);
@@ -289,14 +290,13 @@
   /* ---------- Hero ---------- */
   .hero{
     position:relative;
-    padding-block:0;
     color:#1b4332;
     background:#ffffff;
     overflow:hidden;
   }
   .hero-inner{
     position:relative;
-    padding-block:clamp(2rem, 5.5vw, 4.7rem);
+    padding-block:0;
     display:grid;
     grid-template-columns:1.1fr 1fr;
     gap:clamp(1.5rem, 4vw, 3rem);
@@ -342,25 +342,25 @@
     color:#565f57;
   }
 
-  @media (max-width: 780px){
+  @media (max-width: 700px){
     .hero-inner{ grid-template-columns:1fr; }
   }
 
   /* ---------- Sections ---------- */
-  section{ padding-block:clamp(4rem, 9vw, 7rem); }
+  section{ padding-block:clamp(1.75rem, 3.4vw, 2.5rem); }
 
   .section-head{
     display:flex;
     flex-direction:column;
     gap:1rem;
     max-width:40rem;
-    margin-bottom:clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom:clamp(1.1rem, 2vw, 1.4rem);
   }
   .section-head h2{ font-size:clamp(1.9rem, 3.8vw, 2.8rem); }
   .section-head p{ color:var(--text-soft); font-size:1.05rem; }
   /* hero text, 성장 단계 head, 지아나영어 이야기 head share one type scale */
-  .hero h1, .stages .section-head h2, .about .section-head h2{ font-size:clamp(1.4rem, 2.8vw, 2.1rem); }
-  .hero .eyebrow, .stages .section-head p.eyebrow, .about .section-head p.eyebrow{ font-size:0.95rem; }
+  .hero h1, .stages .section-head h2, .about .section-head h2, .talk .section-head h2, .contact h2{ font-size:clamp(1.4rem, 2.8vw, 2.1rem); }
+  .hero .eyebrow, .stages .section-head p.eyebrow, .about .section-head p.eyebrow, .talk .section-head p.eyebrow, .contact .eyebrow{ font-size:0.95rem; }
   .hero-lede, .stages .section-head p:not(.eyebrow), .about .section-head p:not(.eyebrow){ font-size:0.85rem; margin-top:-0.45rem; }
 
   .head-row{
@@ -369,12 +369,13 @@
     justify-content:space-between;
     align-items:flex-end;
     gap:1rem;
-    margin-bottom:clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom:clamp(1.1rem, 2vw, 1.4rem);
   }
   .head-row .section-head{ margin-bottom:0; }
 
   /* Stages */
   .stages{ background:var(--bg); padding-top:clamp(2rem, 4vw, 3rem); padding-bottom:clamp(1.5rem, 3vw, 2.5rem); }
+  .stages .section-head{ margin-bottom:clamp(2.5rem, 5vw, 3.5rem); }
   .stages-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
@@ -424,7 +425,7 @@
   }
 
   /* About */
-  .about{ background:var(--surface-dim); padding-top:clamp(2rem, 4vw, 3rem); }
+  .about{ background:var(--surface-dim); }
   .steps{
     position:relative;
     list-style:none;
@@ -453,12 +454,12 @@
   .step{
     position:relative;
     display:grid;
-    grid-template-columns:auto 1fr;
-    column-gap:0.75rem;
+    grid-template-columns:auto auto 1fr;
+    column-gap:0.6rem;
     row-gap:0.5rem;
     align-items:baseline;
   }
-  .step .desc{ grid-column:1 / -1; }
+
   .step-num{
     font-family:var(--font-main);
     font-weight:500;
@@ -467,7 +468,7 @@
     color:var(--heading);
   }
   .step strong{ font-size:1.15rem; color:var(--heading); }
-  .step span.desc{ color:var(--text-soft); font-size:0.95rem; }
+  .step span.desc{ color:var(--text-soft); font-size:0.85rem; line-height:1.6; }
 
   /* dot on the line for each step */
   .step::before{
@@ -531,15 +532,23 @@
   .shelf span:nth-child(3n+2){ background:var(--gold); }
   .shelf span:nth-child(3n){ background:rgba(216,195,165,0.5); }
 
-  @media (max-width: 820px){
+  @media (max-width: 700px){
     .reading-inner{ grid-template-columns:1fr; }
   }
 
-  /* Talk */
+  /* Talk: white background with fixed dark-green text (same in light and dark mode) */
+  .talk{ background:#ffffff; color:#1b4332; }
+  .talk .eyebrow{ color:#1b4332; }
+  .talk .eyebrow::before{ background:linear-gradient(90deg, #1b4332, transparent); }
+  .talk .text-link{ color:#1b4332; border-bottom-color:rgba(27,67,50,0.3); }
+  .talk .text-link:hover{ border-bottom-color:#1b4332; }
   .talk-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
+    grid-template-columns:repeat(3, 1fr);
     gap:1.5rem;
+  }
+  @media (max-width: 700px){
+    .talk-grid{ grid-template-columns:1fr; }
   }
   .talk-card{
     display:flex;
@@ -559,24 +568,25 @@
   .talk-card .sum{ color:var(--text-soft); font-size:0.95rem; }
 
   /* Contact */
-  .contact{ background:var(--surface-dim); }
+  .contact{ background:var(--bg); }
   .contact-inner{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:clamp(2.5rem, 6vw, 4rem);
     align-items:start;
   }
-  .contact h2{ font-size:clamp(1.9rem, 3.8vw, 2.8rem); margin-top:1rem; }
-  .contact-copy p.lede{ margin-top:1.1rem; color:var(--text-soft); font-size:1.05rem; max-width:30rem; }
-  .contact-lines{ margin-top:1.8rem; display:flex; flex-direction:column; gap:0.35rem; }
+  .contact-copy{ display:flex; flex-direction:column; align-items:flex-start; gap:1rem; }
+  .contact h2{ line-height:1.3; margin:0; }
+  .contact-copy p.lede{ margin-top:-0.45rem; color:var(--text-soft); font-size:0.85rem; max-width:30rem; }
+  .contact-lines{ margin-top:0.2rem; display:flex; flex-direction:column; gap:0.2rem; font-size:0.9rem; }
   .consult-form{
     background:var(--surface);
     border:1px solid var(--border);
     box-shadow:var(--shadow);
     padding:clamp(1.5rem, 3vw, 2.2rem);
-    display:flex;
-    flex-direction:column;
-    gap:1.2rem;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0.9rem;
   }
   .consult-form label{
     display:flex;
@@ -598,20 +608,39 @@
     font-weight:400;
   }
   .consult-form input:focus-visible, .consult-form select:focus-visible{ outline:2px solid var(--heading); outline-offset:2px; }
-  .consult-form .btn{ width:100%; padding:0.95rem 1.6rem; font-size:1rem; }
+  .consult-form .btn{ width:100%; align-self:end; min-height:3rem; padding:0.7rem 1.6rem; font-size:1rem; }
   .hp{ position:absolute; left:-9999px; }
 
-  @media (max-width: 820px){
+  @media (max-width: 700px){
     .contact-inner{ grid-template-columns:1fr; }
+  }
+  @media (max-width: 520px){
+    .consult-form{ grid-template-columns:1fr; }
+  }
+
+  /* desktop: every box except 성장 단계 gets the same height as the first box */
+  @media (min-width: 701px){
+    main > section:not(#stages):not(#about){
+      min-height:var(--sec-h);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    main > section:not(#stages):not(#about) > .container{ width:100%; }
   }
 
   /* Footer */
   footer{
-    background:var(--hero-bg);
+    background:linear-gradient(90deg, #163628 0%, #1b4332 45%, #2f6b47 100%);
     color:var(--hero-text-soft);
-    padding-block:2.8rem;
+    padding-block:0.8rem;
+    min-height:6.6rem;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
     border-top:1px solid var(--hero-border);
   }
+  footer > .container{ width:100%; }
   .footer-inner{
     display:flex;
     flex-wrap:wrap;
@@ -621,6 +650,8 @@
     font-size:0.88rem;
   }
   .footer-col{ display:flex; flex-direction:column; gap:0.4rem; }
+  .footer-col:first-child{ gap:0.05rem; }
+  .footer-col:first-child > span{ font-size:0.75rem; line-height:1.35; }
   .footer-brand{ display:flex; align-items:center; gap:0.6rem; color:var(--hero-text); font-family:'Poppins', var(--font-body); font-weight:500; font-size:1.05rem; letter-spacing:0.08em; margin-bottom:0.3rem; }
   .footer-crest{ width:1.8rem; height:auto; }
   .footer-col a{ color:var(--hero-text); text-decoration:none; }
@@ -749,27 +780,6 @@
     </div>
   </section>
 
-  <section class="reading" id="reading">
-    <div class="container reading-inner">
-      <div class="reading-copy">
-        <p class="eyebrow">READING ROOM</p>
-        <h2>스스로 읽는 힘이<br>자라는 책장</h2>
-        <p class="lede">보유 원서 1,268권을 레벨별로 골라 읽고, 읽은 책이 내 책장에 하나씩 쌓입니다.</p>
-        <a class="btn btn-primary" href="#reading-login">학생 로그인</a>
-      </div>
-      <div class="shelf" aria-hidden="true">
-        <span style="height:41%"></span>
-        <span style="height:55%"></span>
-        <span style="height:47%"></span>
-        <span style="height:68%"></span>
-        <span style="height:60%"></span>
-        <span style="height:80%"></span>
-        <span style="height:72%"></span>
-        <span style="height:89%"></span>
-      </div>
-    </div>
-  </section>
-
   <section class="talk" id="talk">
     <div class="container">
       <div class="head-row">
@@ -799,12 +809,33 @@
     </div>
   </section>
 
+  <section class="reading" id="reading">
+    <div class="container reading-inner">
+      <div class="reading-copy">
+        <p class="eyebrow">READING ROOM</p>
+        <h2>스스로 읽는 힘이<br>자라는 책장</h2>
+        <p class="lede">보유 원서 1,268권을 레벨별로 골라 읽고<br>읽은 책이 내 책장에 하나씩 쌓입니다.</p>
+        <a class="btn btn-primary" href="#reading-login">학생 로그인</a>
+      </div>
+      <div class="shelf" aria-hidden="true">
+        <span style="height:41%"></span>
+        <span style="height:55%"></span>
+        <span style="height:47%"></span>
+        <span style="height:68%"></span>
+        <span style="height:60%"></span>
+        <span style="height:80%"></span>
+        <span style="height:72%"></span>
+        <span style="height:89%"></span>
+      </div>
+    </div>
+  </section>
+
   <section class="contact" id="contact">
     <div class="container contact-inner">
       <div class="contact-copy">
         <p class="eyebrow">상담 신청</p>
         <h2>좋은 곳보다,<br>우리 아이에게 맞는 곳.</h2>
-        <p class="lede">맞는 곳인지 먼저 이야기 나눠 보세요. 남겨 주시면 직접 연락드립니다.</p>
+        <p class="lede">맞는 곳인지 먼저 이야기 나눠 보세요<br>남겨 주시면 직접 연락드립니다</p>
         <div class="contact-lines">
           <span>전화 [전화번호]</span>
           <span>카카오톡 채널 [채널명]</span>
