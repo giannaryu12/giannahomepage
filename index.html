@@ -431,7 +431,8 @@
     display:grid;
     grid-template-columns:1fr 2.6rem 14px 1fr;
     column-gap:0.7rem;
-    row-gap:0.5rem;
+    --step-gap:0.5rem;
+    row-gap:var(--step-gap);
   }
   @media (min-width: 701px){
     .steps{ padding-right:9rem; }
@@ -446,11 +447,11 @@
     }
     .about .section-head{ margin-bottom:0; }
     /* graph spans the whole right column: leftmost name and rightmost text line up with the image/form edges */
-    .steps{ grid-template-columns:1fr 2.6rem 14px auto; column-gap:1.25rem; padding-right:0; min-width:0; }
-    .step span.desc{ padding-left:0; }
+    .steps{ grid-template-columns:1fr 2.6rem 14px auto; column-gap:1rem; padding-right:0; min-width:0; --step-gap:1.4rem; }
+    .step span.desc{ padding-left:0.25rem; }
   }
   @media (min-width: 1001px) and (max-width: 1150px){
-    .steps{ column-gap:0.6rem; grid-template-columns:1fr 2.2rem 14px auto; }
+    .steps{ column-gap:0.5rem; grid-template-columns:1fr 2.2rem 14px auto; }
   }
   .step{
     display:grid;
@@ -465,7 +466,7 @@
     grid-column:2; grid-row:1; justify-self:center; text-align:center;
     font-family:var(--font-main);
     font-weight:500;
-    font-size:1.4rem;
+    font-size:1.25rem;
     line-height:1.1;
     color:var(--heading);
   }
@@ -476,26 +477,27 @@
     content:"";
     grid-column:3; grid-row:1;
     align-self:stretch;
-    margin:-0.7rem 0;
+    margin:calc(var(--step-gap) / -2 - 0.45rem) 0;
     background:
       radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
       linear-gradient(var(--heading), var(--heading)) center / 2px 100% no-repeat;
   }
+  /* first dot: the line starts at the dot and goes down only */
   .step:first-child::before{
-    margin-top:0;
     background:
       radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
-      linear-gradient(var(--heading), var(--heading)) center bottom / 2px calc(50% + 0.7rem) no-repeat;
+      linear-gradient(var(--heading), var(--heading)) center bottom / 2px 50% no-repeat;
   }
-  /* arrow at the end, pointing down */
+  /* thin "v" arrowhead at the end, pointing down */
   .step:last-child::after{
     content:"";
     grid-column:3; grid-row:1;
     justify-self:center; align-self:end;
-    margin-bottom:-1rem;
-    border-top:12px solid var(--heading);
-    border-left:7px solid transparent;
-    border-right:7px solid transparent;
+    width:9px; height:9px;
+    margin-bottom:calc(var(--step-gap) / -2 - 0.45rem + 5px);
+    border-right:1.5px solid var(--heading);
+    border-bottom:1.5px solid var(--heading);
+    transform:scale(1, 1.4) rotate(45deg);   /* same width, taller: narrower angle than a right-angle v */
   }
 
   /* Reading Room */
