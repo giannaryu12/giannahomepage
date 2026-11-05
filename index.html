@@ -446,11 +446,11 @@
     }
     .about .section-head{ margin-bottom:0; }
     /* graph spans the whole right column: leftmost name and rightmost text line up with the image/form edges */
-    .steps{ grid-template-columns:auto 2.6rem 14px auto; justify-content:space-between; padding-right:0; min-width:0; }
+    .steps{ grid-template-columns:1fr 2.6rem 14px auto; column-gap:1.25rem; padding-right:0; min-width:0; }
     .step span.desc{ padding-left:0; }
   }
   @media (min-width: 1001px) and (max-width: 1150px){
-    .steps{ column-gap:0.45rem; grid-template-columns:auto 2.2rem 14px auto; }
+    .steps{ column-gap:0.6rem; grid-template-columns:1fr 2.2rem 14px auto; }
   }
   .step{
     display:grid;
