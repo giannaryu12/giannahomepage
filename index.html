@@ -374,7 +374,7 @@
   .head-row .section-head{ margin-bottom:0; }
 
   /* Stages */
-  .stages{ background:var(--bg); padding-top:clamp(2rem, 4vw, 3rem); }
+  .stages{ background:var(--bg); padding-top:clamp(2rem, 4vw, 3rem); padding-bottom:clamp(1.5rem, 3vw, 2.5rem); }
   .stages-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
@@ -426,20 +426,39 @@
   /* About */
   .about{ background:var(--surface-dim); padding-top:clamp(2rem, 4vw, 3rem); }
   .steps{
+    position:relative;
     list-style:none;
     margin:0;
-    padding:0;
+    padding:1.9rem 0 0;
     display:grid;
     grid-template-columns:repeat(4, 1fr);
     gap:1.5rem;
   }
-  .step{
-    border-top:2px solid var(--heading);
-    padding-top:1.2rem;
-    display:flex;
-    flex-direction:column;
-    gap:0.5rem;
+  /* straight line with an arrow pointing right */
+  .steps::before{
+    content:"";
+    position:absolute;
+    top:6px; left:0; right:10px;
+    height:2px;
+    background:var(--heading);
   }
+  .steps::after{
+    content:"";
+    position:absolute;
+    top:0; right:0;
+    border-left:12px solid var(--heading);
+    border-top:7px solid transparent;
+    border-bottom:7px solid transparent;
+  }
+  .step{
+    position:relative;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    column-gap:0.75rem;
+    row-gap:0.5rem;
+    align-items:baseline;
+  }
+  .step .desc{ grid-column:1 / -1; }
   .step-num{
     font-family:var(--font-main);
     font-weight:500;
@@ -450,11 +469,29 @@
   .step strong{ font-size:1.15rem; color:var(--heading); }
   .step span.desc{ color:var(--text-soft); font-size:0.95rem; }
 
-  @media (max-width: 900px){
-    .steps{ grid-template-columns:repeat(2, 1fr); }
+  /* dot on the line for each step */
+  .step::before{
+    content:"";
+    position:absolute;
+    top:-1.9rem; left:0;
+    width:14px; height:14px;
+    border-radius:50%;
+    background:var(--heading);
+    box-shadow:0 0 0 4px var(--surface-dim);
   }
-  @media (max-width: 520px){
-    .steps{ grid-template-columns:1fr; }
+
+  /* small screens: the line runs downward */
+  @media (max-width: 900px){
+    .steps{ grid-template-columns:1fr; padding:0 0 1.2rem 2rem; gap:1.6rem; }
+    .steps::before{ top:7px; bottom:10px; left:6px; right:auto; width:2px; height:auto; }
+    .steps::after{
+      top:auto; bottom:0; left:0; right:auto;
+      border-left:7px solid transparent;
+      border-right:7px solid transparent;
+      border-top:12px solid var(--heading);
+      border-bottom:0;
+    }
+    .step::before{ top:0.5rem; left:-2rem; }
   }
 
   /* Reading Room */
@@ -472,9 +509,11 @@
     gap:clamp(2.5rem, 6vw, 4rem);
     align-items:center;
   }
-  .reading h2{ font-size:clamp(1.9rem, 3.8vw, 2.8rem); margin-top:1rem; }
-  .reading p.lede{ margin-top:1.1rem; color:var(--hero-text-soft); font-size:1.05rem; max-width:32rem; }
-  .reading .btn{ margin-top:1.8rem; }
+  .reading-copy{ display:flex; flex-direction:column; align-items:flex-start; gap:1rem; }
+  .reading .eyebrow{ font-size:0.95rem; }
+  .reading h2{ font-size:clamp(1.4rem, 2.8vw, 2.1rem); line-height:1.3; margin:0; }
+  .reading p.lede{ margin-top:-0.45rem; color:var(--hero-text-soft); font-size:0.85rem; max-width:32rem; }
+  .reading .btn{ margin-top:0.6rem; }
   .shelf{
     display:flex;
     align-items:flex-end;
@@ -712,7 +751,7 @@
 
   <section class="reading" id="reading">
     <div class="container reading-inner">
-      <div>
+      <div class="reading-copy">
         <p class="eyebrow">READING ROOM</p>
         <h2>스스로 읽는 힘이<br>자라는 책장</h2>
         <p class="lede">보유 원서 1,268권을 레벨별로 골라 읽고, 읽은 책이 내 책장에 하나씩 쌓입니다.</p>
