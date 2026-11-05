@@ -351,8 +351,8 @@
   .head-row .section-head{ margin-bottom:0; }
 
   /* Stages */
-  .stages{ background:var(--surface-dim); padding-top:clamp(2rem, 4vw, 3rem); padding-bottom:clamp(1.5rem, 3vw, 2.5rem); }
-  .stages .section-head{ margin-bottom:clamp(2.5rem, 5vw, 3.5rem); }
+  .stages{ background:var(--surface-dim); padding-block:1.3rem; }
+  .stages .section-head{ margin-bottom:0.8rem; }
   .stages-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
@@ -362,7 +362,7 @@
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:2px;
-    padding:1.3rem 1.3rem;
+    padding:1rem 1.3rem;
     display:flex;
     flex-direction:column;
     gap:0.45rem;
@@ -378,7 +378,7 @@
     display:grid;
     grid-template-columns:2.4rem 1fr;
     column-gap:0.9rem;
-    row-gap:0.45rem;
+    row-gap:0.3rem;
     align-content:start;
   }
   .stage-card > *:not(.stage-icon){ grid-column:2; }
@@ -397,21 +397,27 @@
     white-space:nowrap;
   }
 
+  @media (min-width: 901px) and (max-width: 1150px){
+    .stages-grid{ gap:1rem; }
+    .stage-card{ padding-right:4.6rem; padding-left:1rem; column-gap:0.6rem; }
+    .stage-card .text-link{ right:0.8rem; font-size:0.78rem; }
+    .stage-card p{ font-size:0.8rem; line-height:1.5; }
+  }
   @media (max-width: 900px){
     .stages-grid{ grid-template-columns:1fr; }
   }
 
   /* About */
-  .about{ background:var(--bg); }
+  .about{ background:var(--bg); padding-block:1.3rem; }
   /* vertical line in the middle; name + number on the left, text on the right */
   .steps{
     list-style:none;
     margin:0;
-    padding:0.4rem 0 1rem;
+    padding:0.4rem 0 0.4rem;
     display:grid;
     grid-template-columns:1fr 2.6rem 14px 1fr;
     column-gap:0.7rem;
-    row-gap:1.4rem;
+    row-gap:0.9rem;
   }
   @media (min-width: 701px){
     .steps{ padding-right:9rem; }
@@ -585,15 +591,16 @@
     .consult-form{ grid-template-columns:1fr; }
   }
 
-  /* desktop: every box except 성장 단계 gets the same height as the first box */
+  /* desktop: all seven boxes (6 sections + footer) share the first box height */
   @media (min-width: 701px){
-    main > section:not(#stages):not(#about){
+    main > section{
       min-height:var(--sec-h);
       display:flex;
       flex-direction:column;
       justify-content:center;
     }
-    main > section:not(#stages):not(#about) > .container{ width:100%; }
+    main > section > .container{ width:100%; }
+    html footer{ min-height:var(--sec-h); }
   }
 
   /* Footer */
@@ -601,7 +608,7 @@
     background:linear-gradient(90deg, #163628 0%, #1b4332 45%, #2f6b47 100%);
     color:var(--hero-text-soft);
     padding-block:0.8rem;
-    min-height:6.6rem;
+    min-height:6.6rem; /* desktop: raised to --sec-h below */
     display:flex;
     flex-direction:column;
     justify-content:center;
