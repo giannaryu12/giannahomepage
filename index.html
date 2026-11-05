@@ -41,32 +41,9 @@
     --font-body: var(--font-main);
     --font-kr-display: var(--font-main);
     --font-kr-body: var(--font-main);
+    color-scheme: light;
   }
 
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg: #1b1b1b;
-      --bg-elevated: #295439;
-      --surface: #295439;
-      --surface-dim: #16261c;
-      --text: #d8c3a5;
-      --text-soft: #95a897;
-      --heading: #d8c3a5;
-      --border: rgba(216,195,165,0.14);
-      --shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
-    }
-  }
-  :root[data-theme="dark"]{
-    --bg: #1b1b1b;
-    --bg-elevated: #295439;
-    --surface: #295439;
-    --surface-dim: #16261c;
-    --text: #d8c3a5;
-    --text-soft: #95a897;
-    --heading: #d8c3a5;
-    --border: rgba(216,195,165,0.14);
-    --shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
-  }
 
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
@@ -374,7 +351,7 @@
   .head-row .section-head{ margin-bottom:0; }
 
   /* Stages */
-  .stages{ background:var(--bg); padding-top:clamp(2rem, 4vw, 3rem); padding-bottom:clamp(1.5rem, 3vw, 2.5rem); }
+  .stages{ background:var(--surface-dim); padding-top:clamp(2rem, 4vw, 3rem); padding-bottom:clamp(1.5rem, 3vw, 2.5rem); }
   .stages .section-head{ margin-bottom:clamp(2.5rem, 5vw, 3.5rem); }
   .stages-grid{
     display:grid;
@@ -425,74 +402,64 @@
   }
 
   /* About */
-  .about{ background:var(--surface-dim); }
+  .about{ background:var(--bg); }
+  /* vertical line in the middle; name + number on the left, text on the right */
   .steps{
-    position:relative;
     list-style:none;
     margin:0;
-    padding:1.9rem 0 0;
+    padding:0.4rem 0 1rem;
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:1.5rem;
+    grid-template-columns:1fr 2.6rem 14px 1fr;
+    column-gap:0.7rem;
+    row-gap:1.4rem;
   }
-  /* straight line with an arrow pointing right */
-  .steps::before{
-    content:"";
-    position:absolute;
-    top:6px; left:0; right:10px;
-    height:2px;
-    background:var(--heading);
-  }
-  .steps::after{
-    content:"";
-    position:absolute;
-    top:0; right:0;
-    border-left:12px solid var(--heading);
-    border-top:7px solid transparent;
-    border-bottom:7px solid transparent;
+  @media (min-width: 701px){
+    .steps{ padding-right:9rem; }
   }
   .step{
-    position:relative;
     display:grid;
-    grid-template-columns:auto auto 1fr;
-    column-gap:0.6rem;
-    row-gap:0.5rem;
-    align-items:baseline;
+    grid-column:1 / -1;
+    grid-template-columns:subgrid;
+    align-items:center;
+    position:relative;
   }
-
+  .step strong, .step-num, .step span.desc{ position:relative; top:0.25rem; }
+  .step strong{ grid-column:1; grid-row:1; justify-self:end; text-align:right; font-size:0.95rem; color:var(--heading); }
   .step-num{
+    grid-column:2; grid-row:1; justify-self:center; text-align:center;
     font-family:var(--font-main);
     font-weight:500;
-    font-size:1.8rem;
+    font-size:1.4rem;
     line-height:1.1;
     color:var(--heading);
   }
-  .step strong{ font-size:1.15rem; color:var(--heading); }
-  .step span.desc{ color:var(--text-soft); font-size:0.85rem; line-height:1.6; }
+  .step span.desc{ grid-column:4; grid-row:1; padding-left:0.5rem; color:var(--text-soft); font-size:0.85rem; line-height:1.6; }
 
-  /* dot on the line for each step */
+  /* line segment + dot for each step (column 3) */
   .step::before{
     content:"";
-    position:absolute;
-    top:-1.9rem; left:0;
-    width:14px; height:14px;
-    border-radius:50%;
-    background:var(--heading);
-    box-shadow:0 0 0 4px var(--surface-dim);
+    grid-column:3; grid-row:1;
+    align-self:stretch;
+    margin:-0.7rem 0;
+    background:
+      radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
+      linear-gradient(var(--heading), var(--heading)) center / 2px 100% no-repeat;
   }
-
-  /* small screens: the line runs downward */
-  @media (max-width: 900px){
-    .steps{ grid-template-columns:1fr; padding:0 0 1.2rem 2rem; gap:1.6rem; }
-    .steps::before{ top:7px; bottom:10px; left:6px; right:auto; width:2px; height:auto; }
-    .steps::after{
-      top:auto; bottom:0; left:0; right:auto;
-      border-left:7px solid transparent;
-      border-right:7px solid transparent;
-      border-top:12px solid var(--heading);
-      border-bottom:0;
-    }
-    .step::before{ top:0.5rem; left:-2rem; }
+  .step:first-child::before{
+    margin-top:0;
+    background:
+      radial-gradient(circle at 50% 50%, var(--heading) 0 4.5px, transparent 5px),
+      linear-gradient(var(--heading), var(--heading)) center bottom / 2px calc(50% + 0.7rem) no-repeat;
+  }
+  /* arrow at the end, pointing down */
+  .step:last-child::after{
+    content:"";
+    grid-column:3; grid-row:1;
+    justify-self:center; align-self:end;
+    margin-bottom:-1rem;
+    border-top:12px solid var(--heading);
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
   }
 
   /* Reading Room */
@@ -731,6 +698,22 @@
     </div>
   </section>
 
+  <section class="about" id="about">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">지아나영어 이야기</p>
+        <h2>먼저 듣고, 그다음 가르칩니다.</h2>
+        <p>잘 키운다는 건, 잘 듣는다는 것. 한 아이를 오래 지켜보는 선생님이 되겠습니다.</p>
+      </div>
+      <ol class="steps">
+        <li class="step reveal"><span class="step-num">01</span><strong>상담</strong><span class="desc">학부모님과 아이의 이야기를 먼저 듣습니다.</span></li>
+        <li class="step reveal"><span class="step-num">02</span><strong>진단</strong><span class="desc">지금 아이의 읽는 힘과 학습 상태를 확인합니다.</span></li>
+        <li class="step reveal"><span class="step-num">03</span><strong>맞춤 수업</strong><span class="desc">이 시기에 꼭 필요한 것부터 수업을 짭니다.</span></li>
+        <li class="step reveal"><span class="step-num">04</span><strong>오래 지켜보기</strong><span class="desc">첫 원서부터 마지막 내신까지 함께합니다.</span></li>
+      </ol>
+    </div>
+  </section>
+
   <section class="stages" id="stages">
     <div class="container">
       <div class="section-head">
@@ -761,22 +744,6 @@
           <a class="text-link" href="#stage-high">자세히 보기 →</a>
         </article>
       </div>
-    </div>
-  </section>
-
-  <section class="about" id="about">
-    <div class="container">
-      <div class="section-head">
-        <p class="eyebrow">지아나영어 이야기</p>
-        <h2>먼저 듣고, 그다음 가르칩니다.</h2>
-        <p>잘 키운다는 건, 잘 듣는다는 것. 한 아이를 오래 지켜보는 선생님이 되겠습니다.</p>
-      </div>
-      <ol class="steps">
-        <li class="step reveal"><span class="step-num">01</span><strong>상담</strong><span class="desc">학부모님과 아이의 이야기를 먼저 듣습니다.</span></li>
-        <li class="step reveal"><span class="step-num">02</span><strong>진단</strong><span class="desc">지금 아이의 읽는 힘과 학습 상태를 확인합니다.</span></li>
-        <li class="step reveal"><span class="step-num">03</span><strong>맞춤 수업</strong><span class="desc">이 시기에 꼭 필요한 것부터 수업을 짭니다.</span></li>
-        <li class="step reveal"><span class="step-num">04</span><strong>오래 지켜보기</strong><span class="desc">첫 원서부터 마지막 내신까지 함께합니다.</span></li>
-      </ol>
     </div>
   </section>
 
