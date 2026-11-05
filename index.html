@@ -277,8 +277,8 @@
     position:relative;
     padding-block:0;
     display:grid;
-    grid-template-columns:1.1fr 1fr;
-    gap:clamp(1.5rem, 4vw, 3rem);
+    grid-template-columns:1fr 1fr;
+    gap:clamp(2.5rem, 6vw, 4rem);
     align-items:center;
   }
   .hero .eyebrow{ color:#1b4332; }
@@ -321,6 +321,9 @@
     color:#565f57;
   }
 
+  @media (min-width: 701px){
+    .ph-hero{ aspect-ratio:auto; height:270px; }
+  }
   @media (max-width: 700px){
     .hero-inner{ grid-template-columns:1fr; }
   }
@@ -430,6 +433,22 @@
   }
   @media (min-width: 701px){
     .steps{ padding-right:9rem; }
+  }
+  /* wide screens: heading on the left, timeline on the right (like the Reading Room shelf) */
+  @media (min-width: 1001px){
+    .about .container{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:clamp(2.5rem, 6vw, 4rem);
+      align-items:center;
+    }
+    .about .section-head{ margin-bottom:0; }
+    /* graph spans the whole right column: leftmost name and rightmost text line up with the image/form edges */
+    .steps{ grid-template-columns:auto 2.6rem 14px auto; justify-content:space-between; padding-right:0; min-width:0; }
+    .step span.desc{ padding-left:0; }
+  }
+  @media (min-width: 1001px) and (max-width: 1150px){
+    .steps{ column-gap:0.45rem; grid-template-columns:auto 2.2rem 14px auto; }
   }
   .step{
     display:grid;
